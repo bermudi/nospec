@@ -183,9 +183,9 @@ append_evidence() {
     echo '```'
     echo
     echo "Worker output:"
-    echo '```text'
+    echo '````text'
     cat "$agent_out"
-    echo '```'
+    echo '````'
     echo
     echo "What this proves:"
     if [[ "$status" == "done" ]]; then
