@@ -29,7 +29,7 @@ Done means:
 - `cli/embedded/skills/` is in sync with `../.agents/skills/`.
 - No external Go dependencies.
 
-Status: pending
+Status: done
 
 ## `skills check` validates that skills follow the agentskills.io spec
 
@@ -52,7 +52,7 @@ Done means:
 - Malformed skills are caught with actionable error messages.
 - No regression in `skills init` tests.
 
-Status: pending
+Status: done
 
 ## `validate` checks that QUEUE.md work units are well-formed
 
@@ -75,12 +75,12 @@ Done means:
 - Malformed queues are caught with unit-level error messages.
 - No regression in prior command tests.
 
-Status: pending
+Status: done
 
 ## `decisions list|show|check` and `status` provide ADR management and the decision coverage gate
 
 Why:
-The decision coverage gate is the user's second stated priority and the one novel CLI feature from DESIGN.md. `status` gives the human a quick snapshot of loop state. This unit delivers both together since they share the ADR/queue parsing layer.
+The decision coverage gate is the user's second stated priority and the one novel CLI feature from DESIGN.md. `status` gives the human a quick snapshot of loop state. This unit delivers both together since they share the ADR/queue parsing layer. The `knack` binary name itself is established by ADR-0003.
 
 Work:
 - `knack decisions list` — lists ADRs in `decisions/` (number, title, status).
@@ -100,7 +100,7 @@ Done means:
 - `status` reports accurate counts on a fixture.
 - No regression in prior command tests.
 
-Status: pending
+Status: done
 
 ## `glossary check` and `instructions` round out the CLI command set
 
@@ -124,4 +124,4 @@ Done means:
 - All prior command tests still pass.
 - The CLI command set is complete per DESIGN.md.
 
-Status: pending
+Status: done

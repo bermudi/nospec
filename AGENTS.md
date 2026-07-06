@@ -7,7 +7,7 @@
 It is three separate artifacts with three separate concerns:
 - **Skills** (`.agents/skills/`) — the workflow as procedural knowledge, agent-agnostic via agentskills.io
 - **Loop** (`loop.sh`) — external bash script, agent-agnostic, owns the verify gate
-- **CLI** (Go binary, TBD) — read-only validator + context provider
+- **CLI** (Go binary, `cli/`) — read-only validator + context provider. Packages the default skills via `go:embed`.
 
 Code is the source of truth. Specs are disposable. Decisions and skills are durable.
 
@@ -19,7 +19,7 @@ See `DESIGN.md` for the full design.
 
 ## Current state
 
-The loop (`loop.sh`) and all seven skills are built. The loop supports per-unit `Agent:` overrides, `LOOP_AGENT_CMD` for agent-agnosticism, and writes `.loop/HANDOFF.md` on non-clean exits. The skills cover the full explore → plan → build → review → fix flow plus two shared skills (decide, domain-modeling). The Go CLI (read-only validator + context provider) is not yet built.
+The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop supports per-unit `Agent:` overrides, `LOOP_AGENT_CMD` for agent-agnosticism, and writes `.loop/HANDOFF.md` on non-clean exits. The skills cover the full explore → plan → build → review → fix flow plus two shared skills (decide, domain-modeling). The CLI (`cli/`) provides `skills init|check`, `validate`, `decisions list|show|check`, `status`, `glossary check`, and `instructions`. It embeds the default skills via `go:embed` and scaffolds them into target projects.
 
 ## Core artifacts
 
@@ -64,3 +64,18 @@ After meaningful changes, run:
 ```bash
 ./tests/run.sh
 ```
+
+For CLI-only work, also run the Go tests directly:
+
+```bash
+cd cli && go test ./...
+```
+
+## Lessons learned
+
+- **The loop works end-to-end with Devin as the worker.** `LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --model kimi-k2.7 --permission-mode dangerous'` drove all 5 CLI units to verified completion in one run. The `--permission-mode dangerous` flag is required for the worker to actually write code and run `go test` without hanging on approval prompts.
+- **The worker prompt must name the skill explicitly.** `prompts/worker.md` now tells the worker to load the `build` skill. Trigger-based discovery is not reliable enough across agents; naming the skill is.
+- **`go test ./...` as a verify command compounds.** Each unit's verify runs all prior units' tests too, so regressions across units are caught at the next unit's gate. This makes the verify gate stronger as the queue progresses.
+- **Review catches what verify can't.** The queue parser regex `^##\s*(.*)$` matched `###` subheadings as work units — a real bug that diverged from `loop.sh`'s behavior. `go test` passed because no fixture used `###`. Adversarial review against the actual codebase (comparing to `loop.sh`'s parser) found it. The fix: exclude `###` lines explicitly in `isUnitHeader`.
+- **Embedded skills must stay in sync with `.agents/skills/`.** `cli/sync-skills.sh` re-copies from `../.agents/skills/`. Run it after editing skills. `diff -r .agents/skills cli/embedded/skills` verifies sync.
+- **`go vet` doesn't catch unused test helpers.** `fileExists` in `queue_test.go` was dead code that `go vet` missed. Review caught it.
