@@ -136,7 +136,11 @@ assert_contains "$repo4/.loop/QUEUE.md" "Status: done"
 test -f "$repo4/override.done"
 
 if command -v skills-ref >/dev/null 2>&1; then
-  skills-ref validate "$root/.agents/skills/plan"
+  for skill_dir in "$root/.agents/skills"/*; do
+    if [[ -d "$skill_dir" ]]; then
+      skills-ref validate "$skill_dir"
+    fi
+  done
 fi
 
 echo "sliceloop tests passed"

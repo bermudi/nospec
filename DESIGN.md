@@ -87,19 +87,19 @@ Agent-agnostic. Every major coding agent (Codex, Claude Code, Devin, Pi, opencod
 
 ### Skill responsibilities by phase
 
-**explore** — read the codebase, grill the intent, stress-test ideas. No artifacts produced except ADRs and glossary entries written inline when decisions crystallize. Pure conversation. Delegates to `domain-modeling` for vocabulary.
+**explore** — read the codebase and any existing loop state (`.loop/HANDOFF.md`, `.loop/QUEUE.md`), grill the intent, stress-test ideas. No artifacts produced except ADRs and glossary entries written inline when decisions crystallize. Pure conversation. Delegates to `domain-modeling` for vocabulary.
 
-**plan** — decompose intent into verifiable work units. Writes `.loop/QUEUE.md`. Each work unit has a goal and a verify command. Rejects horizontal phases ("Phase 1: types / Phase 2: wiring") using the tracer-bullets heuristic — but this is a heuristic, not a gate. For big/greenfield work, *optionally* produces disposable specs (proposal, design) in `.loop/specs/` — consumed during build, then discarded, never canonized. Delegates to `domain-modeling` and `decide`.
+**plan** — decompose intent into deterministic, verifiable work units. Writes `.loop/QUEUE.md`; reads and discards stale queues if present. Each work unit has a goal and a deterministic verify command. Rejects horizontal phases ("Phase 1: types / Phase 2: wiring") using the tracer-bullets heuristic — but this is a heuristic, not a gate. For big/greenfield work, *optionally* produces disposable specs (proposal, design) in `.loop/specs/` — consumed during build, then discarded, never canonized. Delegates to `domain-modeling` and `decide`.
 
-**build** — implement one work unit. Don't self-certify. The loop owns the gate. If you discover decisions, write ADRs to `decisions/` via the `decide` skill. If you learn operational knowledge, write it to `AGENTS.md` or propose a skill update.
+**build** — implement one work unit, planning around its deterministic `Verify` command and staying within the runner's hard stops. Don't self-certify. The loop owns the gate. If you discover decisions, write ADRs to `decisions/` via the `decide` skill. If you learn operational knowledge, write it to `AGENTS.md` or propose a skill update.
 
-**review** — two-axis parallel review (pattern from mattpocock's `code-review`):
+**review** — two-axis parallel review (pattern from mattpocock's `code-review`), starting from the work unit and `.loop/EVIDENCE.md`:
 1. **Standards** — does the change follow the repo's coding conventions and codebase patterns?
-2. **Intent** — does the change do what the work unit said it would?
+2. **Intent** — does the change do what the work unit said it would? (This is a judgment check, not a deterministic gate.)
 
-Both axes run as parallel sub-agents so neither pollutes the other. Review against the actual codebase, not against a spec that may have rotted. Findings become new work units in `.loop/QUEUE.md`.
+Both axes run as parallel sub-agents so neither pollutes the other. Review against the actual codebase, not against a spec that may have rotted. Findings become new work units in `.loop/QUEUE.md` with deterministic `Verify` commands.
 
-**fix** — address review findings. Generate new work units from findings, feed back into `.loop/QUEUE.md`, run another loop pass.
+**fix** — address review findings. Read the existing `.loop/QUEUE.md`, append new work units generated from findings, and run another loop pass.
 
 **decide** (shared) — when you make an architectural ruling, capture it as an ADR in `decisions/`. Decisions persist; specs don't. A decision made 6 months ago is still valid even if the code moved on — it explains *why* the code is the way it is. ([[decision-extraction]].)
 
@@ -373,6 +373,7 @@ Status: pending
 
 - **The work unit is whatever shape the work is.** Slice, patch, dedup, move, investigation, bug fix. Not forced into one named shape. "Vertical slice" is a heuristic against horizontal phases, not a required format.
 - **The verify gate is the load-bearing field.** A work unit without a verify command is not loop-ready. That's the actual gate, not verticality.
+- **The verify command must be deterministic and executable by the runner.** Tests, type checks, builds — not an LLM-as-judge. The loop provides mechanical backpressure.
 - **"Why" is optional.** Filled in only when there's non-obvious context worth preserving. No padding.
 - **No "Why this is vertical" field.** The planner skill treats vertical/horizontal as a warning about decomposition patterns, not a format requirement.
 
