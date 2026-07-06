@@ -6,7 +6,7 @@ usage() {
 Usage:
   ./loop.sh run <queue> [--repo DIR] [--max-ticks N] [--dry-run]
 
-The queue is usually .loop/QUEUE.md in the target repo. Use --repo when the
+The queue is usually .loop/<name>/QUEUE.md in the target repo. Use --repo when the
 queue lives outside the repository it should operate on.
 EOF
 }
