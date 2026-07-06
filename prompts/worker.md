@@ -1,4 +1,4 @@
-# Sliceloop Worker
+# Knack Worker
 
 You are one worker tick in a bounded loop. Complete exactly one work unit, then stop.
 
