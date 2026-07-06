@@ -1,11 +1,11 @@
 ---
 name: plan
-description: Use when converting a software task, bug, cleanup, or vague human intent into a disposable `.loop/QUEUE.md` loop packet of verifiable work units. Triggers on "plan this", "break this down", "how should we approach", "split this into steps", "decompose", "create a queue", "what's the work plan", or when intent needs to become independently verifiable units for a bounded agent loop.
+description: Use when converting a software task, bug, cleanup, or vague human intent into a disposable `.loop/<name>/QUEUE.md` loop packet of verifiable work units. The planner picks a short, descriptive name for the cycle (e.g., `go-cli`, `parser-bug`).
 ---
 
 # Plan
 
-Convert intent into a `.loop/QUEUE.md` loop packet: a bounded queue of disposable, independently verifiable work units.
+Convert intent into a `.loop/<name>/QUEUE.md` loop packet: a bounded queue of disposable, independently verifiable work units. Pick a short, descriptive name for the cycle (e.g., `go-cli`, `parser-bug`).
 
 The goal is not to create durable specs. The goal is to give the loop runner work units that can be attempted one at a time and externally verified. When the work is done, the queue is deleted.
 
@@ -20,7 +20,7 @@ If you're entering directly and the work is large or greenfield (no existing cod
 
 ## When a queue already exists
 
-If `.loop/QUEUE.md` already exists, read it before writing. If it is stale, doesn't match the current code, or no longer reflects the real goal, discard it and write a fresh queue. Plans are disposable coordination state; regenerating from the actual codebase is cheaper than salvaging a drifting plan.
+If `.loop/<name>/QUEUE.md` already exists, read it before writing. If it is stale, doesn't match the current code, or no longer reflects the real goal, discard it and write a fresh queue. Plans are disposable coordination state; regenerating from the actual codebase is cheaper than salvaging a drifting plan.
 
 ## Work unit types
 
@@ -87,8 +87,8 @@ This is a heuristic, not a gate. If a unit genuinely can't be vertical (a patch,
 
 For greenfield or large work where there's no existing code to ground against, optionally produce disposable planning artifacts before decomposing into units:
 
-- `.loop/specs/proposal.md` — what we're building and why. One page.
-- `.loop/specs/design.md` — architecture sketch. How the pieces fit. One page.
+- `.loop/<name>/specs/proposal.md` — what we're building and why. One page.
+- `.loop/<name>/specs/design.md` — architecture sketch. How the pieces fit. One page.
 
 These are **disposable**. They're consumed during build, then deleted. They are never canonized, never merged, never treated as source of truth. Code is the source of truth. These exist only to help the agent think before the code exists.
 
@@ -143,4 +143,4 @@ Status: pending
 
 ## Disposability
 
-`.loop/QUEUE.md` is disposable coordination state. When the work is done and verified, delete the `.loop/` directory. What persists: code, tests, decisions in `decisions/`, glossary entries in `glossary.md`, ADRs, AGENTS.md. The queue is not an artifact — it's a scratchpad.
+`.loop/<name>/QUEUE.md` is disposable coordination state. When the work is done and verified, delete the cycle's `.loop/<name>/` subdirectory. What persists: code, tests, decisions in `decisions/`, glossary entries in `glossary.md`, ADRs, AGENTS.md. The queue is not an artifact — it's a scratchpad.

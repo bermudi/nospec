@@ -23,7 +23,7 @@ Review is not a gate the loop enforces — it's a skill the user or agent invoke
 
 ## Before you review
 
-Read the work unit from `.loop/QUEUE.md` and the evidence from `.loop/EVIDENCE.md` for the unit you're reviewing. The evidence tells you what the verify command actually proved; the work unit tells you what was promised. Review against the actual codebase, not the specs.
+Read the work unit from `.loop/<name>/QUEUE.md` and the evidence from `.loop/<name>/EVIDENCE.md` for the unit you're reviewing. The evidence tells you what the verify command actually proved; the work unit tells you what was promised. Review against the actual codebase, not the specs.
 
 ## Two-axis review
 
@@ -59,7 +59,7 @@ Run both axes. They can be parallel (two passes over the same diff) or sequentia
 
 ## Findings become input to the fix skill
 
-Review findings are not just notes — they are the input to the `fix` skill, which triages them and appends actionable ones as new work units in `.loop/QUEUE.md`.
+Review findings are not just notes — they are the input to the `fix` skill, which triages them and appends actionable ones as new work units in `.loop/<name>/QUEUE.md`.
 
 - **Trivial** findings (a typo, a missing newline) can be fixed inline during review.
 - **Actionable** findings are handed to the `fix` skill. Do not write the work units yourself; `fix` owns the triage and formatting.
@@ -83,5 +83,5 @@ Summarize findings per axis:
 Classify each finding as trivial / actionable / disputed / deferred.
 
 Then either:
-- Hand actionable findings to the `fix` skill, which will triage and append work units to `.loop/QUEUE.md`, or
+- Hand actionable findings to the `fix` skill, which will triage and append work units to `.loop/<name>/QUEUE.md`, or
 - Report "no action needed" if the work is clean.

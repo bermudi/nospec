@@ -26,7 +26,7 @@ explore  plan  build  review  fix     │                          │
   │       │      │                   runs verify gate        provides context
   │       │      │                   appends evidence        manages ADR list
   │       ▼      │                          │                     │
-  │   writes .loop/QUEUE.md ───────────────►│                     │
+  │   writes .loop/<name>/QUEUE.md ───────────────►│                     │
   │                                         │                     │
   │                                         │  may call between ticks
   │                                         └─────────────────────►│
@@ -59,8 +59,8 @@ Agent-agnostic. Every major coding agent (Codex, Claude Code, Devin, Pi, opencod
 │                             # captures ADRs inline as decisions crystallize
 │                             # delegates to domain-modeling for vocabulary
 ├── plan/SKILL.md             # decompose intent into verifiable work units
-│                             # writes .loop/QUEUE.md
-│                             # for big work: optionally writes .loop/specs/ (disposable)
+│                             # writes .loop/<name>/QUEUE.md
+│                             # for big work: optionally writes .loop/<name>/specs/ (disposable)
 │                             # rejects horizontal phases (tracer-bullets heuristic, not gate)
 ├── build/SKILL.md            # implement one work unit, don't self-certify
 │                             # captures decisions as ADRs during implementation
@@ -87,19 +87,19 @@ Agent-agnostic. Every major coding agent (Codex, Claude Code, Devin, Pi, opencod
 
 ### Skill responsibilities by phase
 
-**explore** — read the codebase and any existing loop state (`.loop/HANDOFF.md`, `.loop/QUEUE.md`), grill the intent, stress-test ideas. No artifacts produced except ADRs and glossary entries written inline when decisions crystallize. Pure conversation. Delegates to `domain-modeling` for vocabulary.
+**explore** — read the codebase and any existing loop state (`.loop/<name>/HANDOFF.md`, `.loop/<name>/QUEUE.md`), grill the intent, stress-test ideas. No artifacts produced except ADRs and glossary entries written inline when decisions crystallize. Pure conversation. Delegates to `domain-modeling` for vocabulary.
 
-**plan** — decompose intent into deterministic, verifiable work units. Writes `.loop/QUEUE.md`; reads and discards stale queues if present. Each work unit has a goal and a deterministic verify command. Rejects horizontal phases ("Phase 1: types / Phase 2: wiring") using the tracer-bullets heuristic — but this is a heuristic, not a gate. For big/greenfield work, *optionally* produces disposable specs (proposal, design) in `.loop/specs/` — consumed during build, then discarded, never canonized. Delegates to `domain-modeling` and `decide`.
+**plan** — decompose intent into deterministic, verifiable work units. Writes `.loop/<name>/QUEUE.md`; reads and discards stale queues if present. Each work unit has a goal and a deterministic verify command. Rejects horizontal phases ("Phase 1: types / Phase 2: wiring") using the tracer-bullets heuristic — but this is a heuristic, not a gate. For big/greenfield work, *optionally* produces disposable specs (proposal, design) in `.loop/<name>/specs/` — consumed during build, then discarded, never canonized. Delegates to `domain-modeling` and `decide`.
 
 **build** — implement one work unit, planning around its deterministic `Verify` command and staying within the runner's hard stops. Don't self-certify. The loop owns the gate. If you discover decisions, write ADRs to `decisions/` via the `decide` skill. If you learn operational knowledge, write it to `AGENTS.md` or propose a skill update.
 
-**review** — two-axis parallel review (pattern from mattpocock's `code-review`), starting from the work unit and `.loop/EVIDENCE.md`:
+**review** — two-axis parallel review (pattern from mattpocock's `code-review`), starting from the work unit and `.loop/<name>/EVIDENCE.md`:
 1. **Standards** — does the change follow the repo's coding conventions and codebase patterns?
 2. **Intent** — does the change do what the work unit said it would? (This is a judgment check, not a deterministic gate.)
 
-Both axes run as parallel sub-agents so neither pollutes the other. Review against the actual codebase, not against a spec that may have rotted. Findings become new work units in `.loop/QUEUE.md` with deterministic `Verify` commands.
+Both axes run as parallel sub-agents so neither pollutes the other. Review against the actual codebase, not against a spec that may have rotted. Findings become new work units in `.loop/<name>/QUEUE.md` with deterministic `Verify` commands.
 
-**fix** — address review findings. Read the existing `.loop/QUEUE.md`, append new work units generated from findings, and run another loop pass.
+**fix** — address review findings. Read the existing `.loop/<name>/QUEUE.md`, append new work units generated from findings, and run another loop pass.
 
 **decide** (shared) — when you make an architectural ruling, capture it as an ADR in `decisions/`. Decisions persist; specs don't. A decision made 6 months ago is still valid even if the code moved on — it explains *why* the code is the way it is. ([[decision-extraction]].)
 
@@ -118,12 +118,12 @@ LOOP_AGENT_CMD="opencode run"               # opencode
 
 ### Per-tick behavior
 
-1. Read the first `Status: pending` work unit from `.loop/QUEUE.md`.
+1. Read the first `Status: pending` work unit from `.loop/<name>/QUEUE.md`.
 2. Mark it `in_progress`.
 3. Invoke the coding agent with the build skill + the work unit (fresh context per tick — [[ralph-loop]], [[smart-zone-dumb-zone]]).
 4. Agent does the work and exits.
 5. Loop runs the work unit's `Verify:` command **outside** the agent ([[backpressure]], [[compounding-loops]]).
-6. On success: mark `done`, append to `.loop/EVIDENCE.md`.
+6. On success: mark `done`, append to `.loop/<name>/EVIDENCE.md`.
 7. On failure: mark `verify_failed` or `no_progress`, append evidence, stop or retry once.
 8. Hard stops: max ticks, two no-progress strikes, verify-red after real change ([[agent-loop]]).
 9. Halts when queue is empty or stop condition met.
@@ -143,20 +143,20 @@ Default: use `LOOP_AGENT_CMD`. Override: use the work unit's `Agent:` line. Enab
 **Optional worktree isolation** (from opengsd):
 
 ```bash
-loop.sh run --worktree .loop/QUEUE.md
+loop.sh run --worktree .loop/<name>/QUEUE.md
 # creates a git worktree, runs all work units there, squash-merges on success
 ```
 
 Keeps main clean until verification passes. Optional, not default.
 
-**Handoff file on pause/stop** (from opengsd). The loop writes `.loop/HANDOFF.md` on exit:
+**Handoff file on pause/stop** (from opengsd). The loop writes `.loop/<name>/HANDOFF.md` on exit:
 
 ````markdown
 # Handoff: <queue name>
 Generated: <timestamp>
 
 ## Completed
-- Slice 1: <outcome> (evidence: .loop/EVIDENCE.md#L<line>)
+- Slice 1: <outcome> (evidence: .loop/<name>/EVIDENCE.md#L<line>)
 - Slice 2: <outcome>
 
 ## In progress
@@ -232,12 +232,13 @@ project/
 │   └── domain-modeling/SKILL.md # shared: glossary/vocabulary
 │
 ├── .loop/                       # disposable work state (plan-disposability)
-│   ├── QUEUE.md                 # bounded queue of verifiable work units
-│   ├── EVIDENCE.md              # append-only log of what each tick proved
-│   ├── HANDOFF.md               # cross-session handoff (written on pause/stop)
-│   └── specs/                   # OPTIONAL — only for big/greenfield work
-│       ├── proposal.md          # disposable planning artifacts
-│       └── design.md            # consumed during build, then discarded
+│   └── <name>/                  # each work cycle in a named subdirectory
+│       ├── QUEUE.md             # bounded queue of verifiable work units
+│       ├── EVIDENCE.md          # append-only log of what each tick proved
+│       ├── HANDOFF.md           # cross-session handoff (written on pause/stop)
+│       └── specs/               # OPTIONAL — only for big/greenfield work
+│           ├── proposal.md      # disposable planning artifacts
+│           └── design.md        # consumed during build, then discarded
 │                                # never merged to a canon, never archived
 │
 ├── decisions/                   # DURABLE — ADRs (decision-extraction)
@@ -261,10 +262,10 @@ project/
 - `.agents/skills/` — procedural knowledge. The workflow itself. Evolves ([[evolving-context]]).
 
 **Disposable (consumed then discarded):**
-- `.loop/QUEUE.md` — the work queue. When the work is done, it's done. Delete it.
-- `.loop/EVIDENCE.md` — the log of what each tick proved. Useful for audit during the work, disposable after.
-- `.loop/HANDOFF.md` — cross-session handoff. Snapshot of coordination state.
-- `.loop/specs/` — planning artifacts for big work. Proposal, design. Consumed during build, then discarded ([[doc-rot]], [[plan-disposability]]).
+- `.loop/<name>/QUEUE.md` — the work queue. When the work is done, it's done. Delete it.
+- `.loop/<name>/EVIDENCE.md` — the log of what each tick proved. Useful for audit during the work, disposable after.
+- `.loop/<name>/HANDOFF.md` — cross-session handoff. Snapshot of coordination state.
+- `.loop/<name>/specs/` — planning artifacts for big work. Proposal, design. Consumed during build, then discarded ([[doc-rot]], [[plan-disposability]]).
 
 The key inversion from litespec: **specs are disposable, code is durable.** litespec had it backwards — specs were the canon, code was downstream. The wiki says the opposite.
 
@@ -280,9 +281,9 @@ The key inversion from litespec: **specs are disposable, code is durable.** lite
         │
 2. PLAN (agent, guided by plan skill)
    agent decomposes intent into verifiable work units
-   writes .loop/QUEUE.md
+   writes .loop/<name>/QUEUE.md
    each unit: goal + verify command + work instructions
-   for big work: optionally writes .loop/specs/ (disposable)
+   for big work: optionally writes .loop/<name>/specs/ (disposable)
    CLI validates work units are well-formed
         │
 3. BUILD (the loop runs, agent-agnostic)
@@ -312,7 +313,7 @@ The key inversion from litespec: **specs are disposable, code is durable.** lite
    same per-tick behavior as step 3
         │
 6. DONE
-   .loop/ discarded (queue, evidence, handoff, specs)
+   .loop/<name>/ discarded (queue, evidence, handoff, specs)
    what remains: code, tests, decisions, glossary, skills, AGENTS.md
    the code IS the specification now
 ```
@@ -476,6 +477,6 @@ Migration path (not yet executed):
 2. **Split the planner skill.** The current `vertical-slice-planner` becomes `plan`. The `explore`, `build`, `review`, `fix`, `decide`, and `domain-modeling` skills are new and need to be authored.
 3. **Rename `SLICELOOP_AGENT_CMD` → `LOOP_AGENT_CMD`** in `loop.sh` (already supported, just needs rename for agent-agnosticism).
 4. **Add per-work-unit `Agent:` override** parsing to `loop.sh`.
-5. **Add handoff file generation** to `loop.sh` (`.loop/HANDOFF.md` on pause/stop).
+5. **Add handoff file generation** to `loop.sh` (`.loop/<name>/HANDOFF.md` on pause/stop).
 6. **Build the CLI** from scratch in Go — no existing CLI code to migrate.
 7. **Update `tests/run.sh`** to validate the new skill set, not just the planner.

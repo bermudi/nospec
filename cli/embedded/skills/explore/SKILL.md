@@ -21,8 +21,8 @@ Explore is the phase where you figure out what the problem actually is.
 
 If the project already has loop state, read it first:
 
-- `.loop/HANDOFF.md` — what the previous session left behind
-- `.loop/QUEUE.md` — any pending work units
+- `.loop/<name>/HANDOFF.md` — what the previous session left behind
+- `.loop/<name>/QUEUE.md` — any pending work units
 - `AGENTS.md`, `decisions/`, `glossary.md` — durable project context
 
 These are part of the shared design concept. The goal of explore is to get you and the codebase on the same theory before any work is planned.

@@ -23,9 +23,9 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 
 ## Core artifacts
 
-- `.loop/QUEUE.md` — disposable queue of verifiable work units.
-- `.loop/EVIDENCE.md` — append-only ledger of what each tick proved.
-- `.loop/HANDOFF.md` — cross-session handoff (written on pause/stop).
+- `.loop/<name>/QUEUE.md` — disposable queue of verifiable work units.
+- `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved.
+- `.loop/<name>/HANDOFF.md` — cross-session handoff (written on pause/stop).
 - `decisions/` — durable ADRs (architectural rulings, not current behavior).
 - `glossary.md` — durable ubiquitous language.
 - `.agents/skills/` — procedural knowledge (explore, plan, build, review, fix, decide, domain-modeling).
@@ -34,7 +34,7 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 ## Skills
 
 - **explore** — read codebase, grill intent, stress-test ideas. No artifacts except ADRs and glossary entries.
-- **plan** — decompose intent into verifiable work units. Writes `.loop/QUEUE.md`. Optionally writes `.loop/specs/` for big work.
+- **plan** — decompose intent into verifiable work units. Writes `.loop/<name>/QUEUE.md`. Optionally writes `.loop/<name>/specs/` for big work.
 - **build** — implement one work unit. Don't self-certify. The loop owns the verify gate.
 - **review** — two-axis adversarial review (standards + intent). Findings become new work units.
 - **fix** — address review findings. Generates new work units, feeds back into the loop.
@@ -49,7 +49,7 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 - A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge. The loop's backpressure is mechanical.
 - The runner enforces hard stops (max ticks, no-progress detection). The agent does one work unit per tick and reports what remains if it can't finish.
 - Review is opt-in. The loop does not run review automatically; the user invokes it when they want adversarial scrutiny.
-- When the queue is complete and verified, `.loop/` is disposable. The human deletes it; the loop does not.
+- When the queue is complete and verified, the cycle's `.loop/<name>/` subdirectory is disposable. The human deletes it; the loop does not.
 - A work unit must leave the repo better if the loop stops immediately after it.
 - Work units are whatever shape the work is — not forced into "vertical slices."
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic: pi, claude, codex, opencode, etc.).

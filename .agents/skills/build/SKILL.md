@@ -1,11 +1,11 @@
 ---
 name: build
-description: Use when implementing one work unit from a `.loop/QUEUE.md` queue. The worker-side skill — read the unit, do the work, don't self-certify, end with a handoff. Triggers on "build", "implement", "apply this unit", "do the work", "run the loop", or when a work unit needs to be executed. Also use when the loop invokes the worker for a tick.
+description: Use when implementing one work unit from a `.loop/<name>/QUEUE.md` queue. The worker-side skill — read the unit, do the work, don't self-certify, end with a handoff. Triggers on "build", "implement", "apply this unit", "do the work", "run the loop", or when a work unit needs to be executed. Also use when the loop invokes the worker for a tick.
 ---
 
 # Build
 
-Implement one work unit from `.loop/QUEUE.md`. Do the work. Don't self-certify. The loop runner owns the verify gate — your job is to make the repository state satisfy the unit's `Verify` command, not to claim success.
+Implement one work unit from `.loop/<name>/QUEUE.md`. Do the work. Don't self-certify. The loop runner owns the verify gate — your job is to make the repository state satisfy the unit's `Verify` command, not to claim success.
 
 ## Core rules
 

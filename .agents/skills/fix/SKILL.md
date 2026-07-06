@@ -1,11 +1,11 @@
 ---
 name: fix
-description: Use when addressing review findings and feeding them back into the loop. Converts review findings into new verifiable work units in `.loop/QUEUE.md` and runs another loop pass. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need to be resolved.
+description: Use when addressing review findings and feeding them back into the loop. Converts review findings into new verifiable work units in `.loop/<name>/QUEUE.md` and runs another loop pass. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need to be resolved.
 ---
 
 # Fix
 
-Address review findings by triaging them and generating new work units that feed back into the loop. The `fix` skill is the bridge between review and another build pass; it owns the triage and the queue format.
+Address review findings by triaging them and generating new work units that feed back into the loop. The `fix` skill is the bridge between review and another build pass; it owns the triage and the queue format. It appends to the same `.loop/<name>/QUEUE.md` file as the unit being fixed.
 
 ## Procedure
 
@@ -41,12 +41,12 @@ Done means:
 Status: pending
 ````
 
-4. **Append to QUEUE.md.** Read the existing `.loop/QUEUE.md` first, then append the new units. If the queue was completed (all units `done`), the new units extend it. If the queue still has pending units, the new units are added after them. Preserve the existing structure and status.
+4. **Append to QUEUE.md.** Read the existing `.loop/<name>/QUEUE.md` first, then append the new units. If the queue was completed (all units `done`), the new units extend it. If the queue still has pending units, the new units are added after them. Preserve the existing structure and status.
 
 5. **Run the loop.** After writing the units, run:
 
 ```bash
-./loop.sh run .loop/QUEUE.md
+./loop.sh run .loop/<name>/QUEUE.md
 ```
 
 The loop will pick up the first pending unit and proceed.
@@ -63,6 +63,6 @@ Fix units must not break what review already approved. Each fix unit's `Done mea
 
 ## Output
 
-- New work units appended to `.loop/QUEUE.md`
+- New work units appended to `.loop/<name>/QUEUE.md`
 - A summary of what was triaged (actionable / trivial / disputed / deferred)
 - Suggestion to run the loop

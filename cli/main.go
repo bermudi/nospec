@@ -223,8 +223,12 @@ func statusCmd(args []string) {
 		fmt.Fprintf(os.Stderr, "status: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("queue: %d pending, %d done, %d failed\n", r.Pending, r.Done, r.Failed)
-	fmt.Printf("evidence: %d\n", r.Evidence)
+	for _, c := range r.Cycles {
+		fmt.Printf("cycle %s: %d pending, %d done, %d failed, %d evidence\n",
+			c.Name, c.Pending, c.Done, c.Failed, c.Evidence)
+	}
+	fmt.Printf("total: %d pending, %d done, %d failed, %d evidence\n",
+		r.Total.Pending, r.Total.Done, r.Total.Failed, r.Total.Evidence)
 	fmt.Printf("adrs: %d\n", r.ADRs)
 }
 

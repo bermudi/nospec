@@ -22,7 +22,7 @@ Work:
 
 Verify:
 ```bash
-cd cli && go test ./... && ./tests/run.sh && ! grep -rn '\.loop/QUEUE\.md' .agents/skills/ AGENTS.md DESIGN.md
+(cd cli && go test ./...) && ./tests/run.sh && ! grep -rn '\.loop/QUEUE\.md' .agents/skills/ AGENTS.md DESIGN.md
 ```
 
 Done means:
@@ -31,7 +31,7 @@ Done means:
 - Embedded skills are in sync with `.agents/skills/`.
 - Existing tests still pass.
 
-Status: pending
+Status: done
 
 ## `knack status` aggregates across all work cycles in `.loop/`
 
@@ -55,4 +55,4 @@ Done means:
 - `knack status` on a repo with no `.loop/` prints zero counts.
 - Existing `decisions check`, `validate`, `skills` tests still pass.
 
-Status: pending
+Status: done
