@@ -16,14 +16,14 @@ Constraints:
 - Fix only one repeated broken-link pattern or one page-local cluster.
 - Do not rewrite page content beyond the link fix and required `updated` date changes.
 
+Done means:
+- The chosen broken-link failure no longer appears.
+- No new validator failure class is introduced by the edits.
+
 Verify:
 ```bash
 ./scripts/validate-page
 ```
-
-Done means:
-- The chosen broken-link failure no longer appears.
-- No new validator failure class is introduced by the edits.
 
 Status: pending
 
@@ -37,13 +37,13 @@ Constraints:
 - Fix only that page's required metadata.
 - Update the page's `updated` date if the page content or frontmatter changes.
 
+Done means:
+- The selected frontmatter failure no longer appears.
+- Remaining failures, if any, are not caused by this edit.
+
 Verify:
 ```bash
 ./scripts/validate-page
 ```
-
-Done means:
-- The selected frontmatter failure no longer appears.
-- Remaining failures, if any, are not caused by this edit.
 
 Status: pending

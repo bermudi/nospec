@@ -121,7 +121,7 @@ func TestValidateSmokeFixture(t *testing.T) {
 	cwd, _ := os.Getwd()
 	root := filepath.Join(cwd, "../../../")
 	fsys := os.DirFS(root)
-	results, err := ValidateFile(fsys, "examples/smoke/.loop/QUEUE.md")
+	results, err := ValidateFile(fsys, "examples/smoke/.loop/smoke/QUEUE.md")
 	if err != nil {
 		t.Fatalf("ValidateFile failed: %v", err)
 	}

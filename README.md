@@ -10,12 +10,12 @@ Compiles human intent into disposable work unit queues, then runs one unit at a 
 ./loop.sh run <queue> [--repo DIR] [--max-ticks N] [--dry-run]
 ```
 
-The queue is usually `.loop/QUEUE.md` in the target repo. Use `--repo` when the queue lives outside the repository it should operate on.
+The queue is usually `.loop/<name>/QUEUE.md` in the target repo — each work cycle gets its own named subdirectory under `.loop/`. Use `--repo` when the queue lives outside the repository it should operate on.
 
 Example:
 
 ```bash
-./loop.sh run examples/smoke/.loop/QUEUE.md --dry-run
+./loop.sh run examples/smoke/.loop/smoke/QUEUE.md --dry-run
 ```
 
 ## How it works
@@ -27,7 +27,7 @@ Example:
 5. On success: the unit is marked `done` and evidence is appended.
 6. On failure: the unit is marked `verify_failed` or `no_progress`, evidence is appended, and the loop stops or retries once.
 7. The loop halts on: max ticks reached with pending work, two no-progress strikes, or a failed verify after a real change.
-8. On any non-clean exit, the runner writes `.loop/HANDOFF.md` with completed/in-progress/remaining units and the next action.
+8. On any non-clean exit, the runner writes `.loop/<name>/HANDOFF.md` with completed/in-progress/remaining units and the next action.
 
 ## Queue format
 
@@ -83,9 +83,9 @@ See `.agents/skills/plan/SKILL.md`.
 Override the worker invocation with `LOOP_AGENT_CMD`:
 
 ```bash
-LOOP_AGENT_CMD="pi -p --no-session" ./loop.sh run .loop/QUEUE.md
-LOOP_AGENT_CMD="claude --print" ./loop.sh run .loop/QUEUE.md
-LOOP_AGENT_CMD="codex" ./loop.sh run .loop/QUEUE.md
+LOOP_AGENT_CMD="pi -p --no-session" ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD="claude --print" ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD="codex" ./loop.sh run .loop/<name>/QUEUE.md
 ```
 
 Per-unit override via the `Agent:` field in a work unit:

@@ -14,13 +14,13 @@ Read first:
 Constraints:
 - Do not modify the queue by hand.
 
+Done means:
+- `smoke.done` exists.
+- The verify command exits 0.
+
 Verify:
 ```bash
 test -f smoke.done
 ```
-
-Done means:
-- `smoke.done` exists.
-- The verify command exits 0.
 
 Status: pending

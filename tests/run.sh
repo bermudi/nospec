@@ -48,7 +48,7 @@ EOF
 }
 
 bash -n "$root/loop.sh"
-"$root/loop.sh" run "$root/examples/smoke/.loop/QUEUE.md" --dry-run >/tmp/loop-dry-run.txt
+"$root/loop.sh" run "$root/examples/smoke/.loop/smoke/QUEUE.md" --dry-run >/tmp/loop-dry-run.txt
 assert_contains /tmp/loop-dry-run.txt "Verify:"
 assert_contains /tmp/loop-dry-run.txt "test -f smoke.done"
 
