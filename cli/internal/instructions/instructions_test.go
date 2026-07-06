@@ -11,8 +11,20 @@ func TestInstructionsWorkUnit(t *testing.T) {
 		t.Fatalf("Print failed: %v", err)
 	}
 	out := b.String()
+	if !strings.Contains(out, "Read first:") {
+		t.Fatalf("expected Read first: in work-unit template, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Constraints:") {
+		t.Fatalf("expected Constraints: in work-unit template, got:\n%s", out)
+	}
+	if !strings.Contains(out, "Done means:") {
+		t.Fatalf("expected Done means: in work-unit template, got:\n%s", out)
+	}
 	if !strings.Contains(out, "Verify:") {
 		t.Fatalf("expected Verify: in work-unit template, got:\n%s", out)
+	}
+	if strings.Contains(out, "Work:") {
+		t.Fatalf("expected no Work: field in work-unit template, got:\n%s", out)
 	}
 	if !strings.Contains(out, "Status: pending") {
 		t.Fatalf("expected Status: pending in work-unit template, got:\n%s", out)
@@ -28,8 +40,8 @@ func TestInstructionsAdr(t *testing.T) {
 	if !strings.Contains(out, "# NNNN: <title>") {
 		t.Fatalf("expected ADR heading in adr template, got:\n%s", out)
 	}
-	if !strings.Contains(out, "Status: proposed") {
-		t.Fatalf("expected Status: proposed in adr template, got:\n%s", out)
+	if !strings.Contains(out, "Status: accepted") {
+		t.Fatalf("expected Status: accepted in adr template, got:\n%s", out)
 	}
 }
 

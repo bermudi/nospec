@@ -29,8 +29,11 @@ Stop condition:
 
 ## the test fixture reaches its verify condition
 
-Work:
-- Satisfy the verify command.
+Read first:
+- This queue file.
+
+Constraints:
+- Do not modify the queue by hand.
 
 Verify:
 \`\`\`bash
@@ -118,8 +121,11 @@ Stop condition:
 
 Agent: touch override.done
 
-Work:
-- Satisfy the verify command.
+Read first:
+- This queue file.
+
+Constraints:
+- Do not modify the queue by hand.
 
 Verify:
 \`\`\`bash

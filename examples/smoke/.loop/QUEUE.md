@@ -8,8 +8,10 @@ Stop condition:
 
 ## the smoke fixture creates a file that the verify gate can see
 
-Work:
-- Create `smoke.done` in this example directory.
+Read first:
+- This queue file.
+
+Constraints:
 - Do not modify the queue by hand.
 
 Verify:

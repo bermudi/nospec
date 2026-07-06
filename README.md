@@ -47,18 +47,22 @@ Agent: <optional — overrides LOOP_AGENT_CMD for this unit only>
 Why:
 <only if non-obvious — else omit>
 
-Work:
-- <narrow work instruction>
-- <guardrail>
+Read first:
+- <context the worker needs: ADR, area, or file>
+- <2–4 entries; context, not scope>
+
+Constraints:
+- <boundary or guardrail>
+- <what must stay true or what is out of bounds>
+
+Done means:
+- <observable condition>
+- <no regression condition>
 
 Verify:
 ```bash
 <command that exits 0 on success>
 ```
-
-Done means:
-- <observable condition>
-- <no regression condition>
 
 Status: pending
 

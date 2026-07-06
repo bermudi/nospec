@@ -54,8 +54,11 @@ A work unit is valid only if all are true:
 - It has one verification command.
 - That verification command is deterministic and executable by the runner (not an LLM-as-judge).
 - It has a narrow scope.
+- Its constraints state what must stay true or what is out of bounds — never what to edit. If a constraint names a file, it is "don't touch X" or "X's public API must not change," not "update X."
 - It can leave the repo better if the loop stops immediately afterward.
 - It does not depend on future units to have value.
+
+A unit whose outcome cannot be captured by a deterministic `Verify:` command plus a short `Done means:` list is not ready. Vague shape plus weak verify gives the worker nothing to aim at.
 
 ## Horizontal phase rejection
 
@@ -114,18 +117,23 @@ Agent: <optional — overrides LOOP_AGENT_CMD for this unit only>
 Why:
 <only if non-obvious — else omit>
 
-Work:
-- <narrow work instruction>
-- <guardrail>
+Read first:
+- <context the worker needs: ADR, area, or file>
+- <2–4 entries; context, not scope>
+
+Constraints:
+- <boundary or guardrail>
+- <what must stay true or what is out of bounds>
+- <if it names a file, it is "don't touch X" or "X's public API must not change", not "update X">
+
+Done means:
+- <observable condition>
+- <no regression condition>
 
 Verify:
 ```bash
 <command that exits 0 on success>
 ```
-
-Done means:
-- <observable condition>
-- <no regression condition>
 
 Status: pending
 
@@ -138,7 +146,10 @@ Status: pending
 - **Header** is `## <outcome>` — no numbered prefix, no "Slice" word. The outcome itself is the title.
 - **Agent:** is optional. Omit unless this unit needs a different model or command than the global `LOOP_AGENT_CMD`.
 - **Why:** is optional. Fill in only when there's non-obvious context worth preserving. No padding.
-- **Verify:** is the load-bearing field. A unit without a verify command is not loop-ready.
+- **Read first:** is context, not scope. Two to four entries: ADRs, code areas, or rulings. Prefer areas and rulings over file enumerations.
+- **Constraints:** are boundaries. A constraint states what must stay true or what is out of bounds — never what to edit. If it names a file, it is "don't touch X" or "X's public API must not change," not "update X."
+- **Done means:** is the acceptance criteria — what must be observably true after the unit.
+- **Verify:** is the mechanically enforceable subset of `Done means:`. A unit whose outcome can't be captured by a deterministic verify command plus a short `Done means:` list isn't ready.
 - **Status:** starts as `pending`. The loop updates it to `in_progress`, `done`, `verify_failed`, `no_progress`, or `blocked`.
 
 ## Disposability

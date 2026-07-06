@@ -8,10 +8,12 @@ Stop condition:
 
 ## the validator reports fewer broken-link failures after one narrow link-fix pass
 
-Work:
-- Run `./scripts/validate-page` in the AgenticWiki repo.
-- Pick one repeated broken-link pattern or one page-local cluster of broken links.
-- Fix only that pattern or cluster.
+Read first:
+- `./scripts/validate-page` output in the AgenticWiki repo
+- The page(s) containing the broken-link pattern
+
+Constraints:
+- Fix only one repeated broken-link pattern or one page-local cluster.
 - Do not rewrite page content beyond the link fix and required `updated` date changes.
 
 Verify:
@@ -27,9 +29,11 @@ Status: pending
 
 ## one reported frontmatter failure becomes valid under the real validator
 
-Work:
-- Run `./scripts/validate-page` in the AgenticWiki repo.
-- Pick one frontmatter failure reported by the validator.
+Read first:
+- `./scripts/validate-page` output in the AgenticWiki repo
+- The page with the frontmatter failure
+
+Constraints:
 - Fix only that page's required metadata.
 - Update the page's `updated` date if the page content or frontmatter changes.
 

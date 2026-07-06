@@ -43,13 +43,14 @@ The question is not "is this good code?" — that's subjective. The question is 
 
 Does the change do what the work unit said it would?
 
-- Read the work unit's `Work:` and `Done means:` fields.
+- Read the work unit's `Done means:` and `Constraints:` fields.
 - Read the actual diff.
 - Does the diff satisfy the stated outcome?
+- Does the diff stay within the stated constraints?
 - Did the change introduce anything the unit didn't ask for?
 - Did the change miss anything the unit said it would do?
 
-The verify command passing is necessary but not sufficient. Verify checks one thing. Intent review checks whether the unit's full promise was delivered.
+The `Verify:` command is the mechanically enforceable subset of `Done means:`. The gap between `Done means:` and `Verify:` is the review surface: intent review checks what the verify command cannot.
 
 > **Intent review is a judgment check, not a deterministic gate.** Be explicit about its scope and confidence. Any finding that becomes a new work unit must have a deterministic `Verify` command the runner can execute.
 

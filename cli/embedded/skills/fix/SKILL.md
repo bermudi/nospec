@@ -25,18 +25,22 @@ Address review findings by triaging them and generating new work units that feed
 Why:
 <reference to the review finding — which axis, what was found>
 
-Work:
-- <what to fix>
-- <guardrail: don't break what the review approved>
+Read first:
+- <context the worker needs: file, ADR, or area>
+- <2–4 entries; context, not scope>
+
+Constraints:
+- <boundary>
+- <what must stay true or out of bounds; if a file is named, it is "don't touch X" or "X's public API must not change", not "update X">
+
+Done means:
+- <the finding is resolved>
+- <no new issue introduced>
 
 Verify:
 ```bash
 <deterministic command that proves the fix>
 ```
-
-Done means:
-- <the finding is resolved>
-- <no new issue introduced>
 
 Status: pending
 ````

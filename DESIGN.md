@@ -89,7 +89,7 @@ Agent-agnostic. Every major coding agent (Codex, Claude Code, Devin, Pi, opencod
 
 **explore** — read the codebase and any existing loop state (`.loop/<name>/HANDOFF.md`, `.loop/<name>/QUEUE.md`), grill the intent, stress-test ideas. No artifacts produced except ADRs and glossary entries written inline when decisions crystallize. Pure conversation. Delegates to `domain-modeling` for vocabulary.
 
-**plan** — decompose intent into deterministic, verifiable work units. Writes `.loop/<name>/QUEUE.md`; reads and discards stale queues if present. Each work unit has a goal and a deterministic verify command. Rejects horizontal phases ("Phase 1: types / Phase 2: wiring") using the tracer-bullets heuristic — but this is a heuristic, not a gate. For big/greenfield work, *optionally* produces disposable specs (proposal, design) in `.loop/<name>/specs/` — consumed during build, then discarded, never canonized. Delegates to `domain-modeling` and `decide`.
+**plan** — decompose intent into deterministic, verifiable work units. Writes `.loop/<name>/QUEUE.md`; reads and discards stale queues if present. Each work unit has an outcome, constraints, done means, and a deterministic verify command. Rejects horizontal phases ("Phase 1: types / Phase 2: wiring") using the tracer-bullets heuristic — but this is a heuristic, not a gate. For big/greenfield work, *optionally* produces disposable specs (proposal, design) in `.loop/<name>/specs/` — consumed during build, then discarded, never canonized. Delegates to `domain-modeling` and `decide`.
 
 **build** — implement one work unit, planning around its deterministic `Verify` command and staying within the runner's hard stops. Don't self-certify. The loop owns the gate. If you discover decisions, write ADRs to `decisions/` via the `decide` skill. If you learn operational knowledge, write it to `AGENTS.md` or propose a skill update.
 
@@ -282,7 +282,7 @@ The key inversion from litespec: **specs are disposable, code is durable.** lite
 2. PLAN (agent, guided by plan skill)
    agent decomposes intent into verifiable work units
    writes .loop/<name>/QUEUE.md
-   each unit: goal + verify command + work instructions
+   each unit: outcome + constraints + done means + verify command
    for big work: optionally writes .loop/<name>/specs/ (disposable)
    CLI validates work units are well-formed
         │
@@ -351,18 +351,23 @@ Agent: <optional — overrides LOOP_AGENT_CMD for this unit only>
 Why:
 <only if non-obvious — else omit. Vertical/horizontal is context, not a requirement.>
 
-Work:
-- <narrow work instruction>
-- <guardrail>
+Read first:
+- <context the worker needs: ADR, code area, or file>
+- <2–4 entries; context, not scope>
+
+Constraints:
+- <boundary or guardrail>
+- <what must stay true or what is out of bounds>
+- <if it names a file, it is "don't touch X" or "X's public API must not change", not "update X">
+
+Done means:
+- <observable condition>
+- <no regression condition>
 
 Verify:
 ```bash
 <command that exits 0 on success>
 ```
-
-Done means:
-- <observable condition>
-- <no regression condition>
 
 Status: pending
 
@@ -373,6 +378,9 @@ Status: pending
 ### Design principles for work units
 
 - **The work unit is whatever shape the work is.** Slice, patch, dedup, move, investigation, bug fix. Not forced into one named shape. "Vertical slice" is a heuristic against horizontal phases, not a required format.
+- **Read first: is context, not scope.** Two to four entries: ADRs, code areas, or rulings. Prefer areas and rulings over file enumerations.
+- **Constraints close the solution space.** A constraint states what must stay true or what is out of bounds — never what to edit. If it names a file, it is "don't touch X" or "X's public API must not change," not "update X."
+- **Done means: is the acceptance criteria; Verify: is the enforceable subset.** The gap between them is the review surface.
 - **The verify gate is the load-bearing field.** A work unit without a verify command is not loop-ready. That's the actual gate, not verticality.
 - **The verify command must be deterministic and executable by the runner.** Tests, type checks, builds — not an LLM-as-judge. The loop provides mechanical backpressure.
 - **"Why" is optional.** Filled in only when there's non-obvious context worth preserving. No padding.

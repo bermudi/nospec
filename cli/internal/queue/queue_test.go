@@ -19,8 +19,11 @@ func TestValidateValidQueue(t *testing.T) {
 		"Why:",
 		"Because.",
 		"",
-		"Work:",
-		"Do it.",
+		"Read first:",
+		"- context",
+		"",
+		"Constraints:",
+		"- boundary",
 		"",
 		"Verify:",
 		"```bash",
@@ -60,8 +63,8 @@ func TestValidateMissingVerify(t *testing.T) {
 	q := lines(
 		"## missing verify unit",
 		"",
-		"Work:",
-		"Do something.",
+		"Read first:",
+		"- context",
 		"",
 		"Status: pending",
 	)
@@ -134,7 +137,7 @@ func TestValidateReportsMultipleFailures(t *testing.T) {
 	q := lines(
 		"## first bad",
 		"",
-		"Work: none.",
+		"Read first: none.",
 		"",
 		"## second bad",
 		"",

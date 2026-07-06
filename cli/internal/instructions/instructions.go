@@ -25,19 +25,28 @@ func Print(w io.Writer, artifact string) error {
 
 const workUnitTemplate = `## <outcome>
 
-Why:
-<why this unit matters>
+Agent: <optional — overrides LOOP_AGENT_CMD for this unit only>
 
-Work:
-- <what needs to be done>
+Why:
+<only if non-obvious — else omit>
+
+Read first:
+- <context the worker needs: ADR, area, or file>
+- <2–4 entries; context, not scope>
+
+Constraints:
+- <boundary or guardrail>
+- <what must stay true or what is out of bounds>
+- <if it names a file, it is "don't touch X" or "X's public API must not change", not "update X">
+
+Done means:
+- <observable condition>
+- <no regression condition>
 
 Verify:
 ` + "```bash" + `
-<command that proves the unit is done>
+<command that exits 0 on success>
 ` + "```" + `
-
-Done means:
-- <list of acceptance criteria>
 
 Status: pending
 `
@@ -45,7 +54,7 @@ Status: pending
 const adrTemplate = `# NNNN: <title>
 
 Date: <YYYY-MM-DD>
-Status: proposed
+Status: accepted
 
 ## Context
 

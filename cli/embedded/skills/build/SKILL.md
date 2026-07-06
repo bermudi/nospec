@@ -13,6 +13,10 @@ The runner injects `prompts/worker.md` at the start of every tick. If it is not 
 
 > **Scope note:** Updating `AGENTS.md` or writing an ADR during a tick is a durable trace, not part of the unit's `Verify` scope. Do it only when the tick teaches you something that would save the next session time.
 
+## Scope
+
+The unit's scope is its outcome plus its constraints. The worker determines which files to change and how. The `Verify:` command is the mechanically enforceable subset of `Done means:`.
+
 ## Capturing decisions during build
 
 If you discover an architectural ruling while implementing — "we need to handle X this way because Y" — capture it as an ADR using the `decide` skill. Do this inline, not after the unit. Decisions made during implementation are the most valuable kind because they come from the code pushing back.
