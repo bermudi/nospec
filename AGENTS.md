@@ -2,7 +2,7 @@
 
 ## Project
 
-**sliceloop** (placeholder name — will be renamed) is an agent-agnostic harness for agentic development. It replaces litespec.
+**knack** is an agent-agnostic harness for agentic development. It replaces litespec.
 
 It is three separate artifacts with three separate concerns:
 - **Skills** (`.agents/skills/`) — the workflow as procedural knowledge, agent-agnostic via agentskills.io

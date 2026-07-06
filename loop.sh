@@ -12,7 +12,7 @@ EOF
 }
 
 die() {
-  echo "sliceloop: $*" >&2
+  echo "knack: $*" >&2
   exit 1
 }
 
@@ -260,7 +260,7 @@ trap write_handoff_on_exit EXIT
 
 for ((tick = 1; tick <= max_ticks; tick++)); do
   unit=$(first_pending_unit "$queue_abs")
-  [[ -n "$unit" ]] || { echo "sliceloop: no pending work units"; exit 0; }
+  [[ -n "$unit" ]] || { echo "knack: no pending work units"; exit 0; }
 
   unit_file=$(mktemp)
   verify_file=$(mktemp)
@@ -282,7 +282,7 @@ for ((tick = 1; tick <= max_ticks; tick++)); do
     exit 0
   fi
 
-  echo "sliceloop: tick $tick/$max_ticks — $title"
+  echo "knack: tick $tick/$max_ticks — $title"
   set_status "$queue_abs" "$title" "in_progress"
   before=$(work_snapshot "$repo_dir")
 
@@ -328,7 +328,7 @@ EOF
   if [[ $verify_code -eq 0 ]]; then
     set_status "$queue_abs" "$title" "done"
     append_evidence "$evidence" "$title" "done" "$verify" "$verify_out" "$agent_out" "$repo_dir"
-    echo "sliceloop: verified — $title"
+    echo "knack: verified — $title"
     continue
   fi
 
@@ -341,7 +341,7 @@ EOF
     fi
     set_status "$queue_abs" "$title" "pending"
     append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir"
-    echo "sliceloop: verify failed with no progress; retrying once"
+    echo "knack: verify failed with no progress; retrying once"
     continue
   fi
 
@@ -355,4 +355,4 @@ if [[ -n "$(first_pending_unit "$queue_abs")" ]]; then
   die "reached max ticks ($max_ticks) with pending work"
 fi
 
-echo "sliceloop: reached max ticks ($max_ticks)"
+echo "knack: reached max ticks ($max_ticks)"

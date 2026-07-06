@@ -1,4 +1,4 @@
-# sliceloop
+# knack
 
 A tiny loop-packet runner for agentic development.
 

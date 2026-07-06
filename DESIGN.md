@@ -1,10 +1,10 @@
 # Design: litespec replacement
 
-**Status:** drafted 2026-07-05. Open questions remain (see bottom). Name TBD — "sliceloop" is the current placeholder; it will be renamed.
+**Status:** drafted 2026-07-05. Open questions remain (see bottom). Named **knack** (ADR-0003).
 
 ## One sentence
 
-litespec's flow + sliceloop's engine + code as source of truth + specs disposable + decisions and skills durable, agent-agnostic throughout.
+litespec's flow + knack's engine + code as source of truth + specs disposable + decisions and skills durable, agent-agnostic throughout.
 
 ## Thesis
 
@@ -107,7 +107,7 @@ Both axes run as parallel sub-agents so neither pollutes the other. Review again
 
 ## The loop (external script, agent-agnostic)
 
-A bash script, evolved from sliceloop's `loop.sh`. Agent-agnostic via environment variable:
+A bash script, evolved from knack's `loop.sh`. Agent-agnostic via environment variable:
 
 ```bash
 LOOP_AGENT_CMD="pi -p --no-session"        # Pi
@@ -395,7 +395,7 @@ Status: pending
 - Plan artifacts produce horizontal phases → [[tracer-bullets]] says don't (heuristic, not gate)
 - Specs required for every change → too much ceremony for small work ([[spec-driven-development]] explicitly says SDD is "not for" simple prototypes and brownfield at scale)
 
-## What we're keeping from sliceloop
+## What we're keeping from knack
 
 - Fresh context per tick ([[ralph-loop]], [[smart-zone-dumb-zone]])
 - Verify gate outside the worker ([[backpressure]], [[compounding-loops]])
@@ -403,7 +403,7 @@ Status: pending
 - Disposable artifacts ([[plan-disposability]])
 - Plain files ([[compounding-loops]])
 
-## What we're dropping from sliceloop
+## What we're dropping from knack
 
 - Only covers build phase → now covers the full flow via skills
 - Forces one shape of work (vertical slices) → work units are whatever shape the work is
@@ -458,7 +458,7 @@ Every design decision cites a wiki concept. The wiki's position, synthesized:
 
 ## Open questions
 
-1. **Name.** "sliceloop" is the placeholder. The tool is no longer just a slice loop — it's a full workflow harness. Needs a new name.
+1. **~~Name.~~** Resolved (ADR-0003): the tool is named **knack**.
 2. **Language for the CLI.** Go (like litespec) is the default assumption. Could be something else, but Go is proven here.
 3. **Skills shipped with the tool vs project-authored skills.** Does the tool ship a default set of skills (explore/plan/build/review/fix/decide/domain-modeling) that projects can override? Or does each project author its own? litespec generated skills from Go templates; mattpocock ships skills as plain markdown. Lean toward shipping defaults as plain markdown that projects can override.
 4. **~~How the loop invokes the agent with the right skill.~~** Resolved: the loop passes the skill *name* in the prompt; the agent discovers the skill via agentskills.io progressive disclosure. See "On skill triggering" above. Still open: does this work reliably across all target agents (Pi, Claude Code, Codex, opencode, Devin), or do some need an explicit `--skill` flag? Needs testing.

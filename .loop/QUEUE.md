@@ -1,7 +1,7 @@
 # Loop Queue: Go CLI
 
 Goal:
-Build the sliceloop CLI in Go — a read-only validator and context provider that also packages the default skill set. The CLI lives in `cli/` as its own Go module, produces a single static binary, and embeds the seven default skills via `go:embed`. It never invokes agents and never runs the loop.
+Build the knack CLI in Go — a read-only validator and context provider that also packages the default skill set. The CLI lives in `cli/` as its own Go module, produces a single static binary, and embeds the seven default skills via `go:embed`. It never invokes agents and never runs the loop.
 
 Stop condition:
 `cd cli && go test ./...` exits 0, covering all commands: `skills init`, `skills check`, `validate`, `decisions list|show|check`, `status`, `glossary check`, `instructions`.
@@ -14,7 +14,7 @@ This is the CLI's one write operation and the user's stated priority — the CLI
 Work:
 - Create `cli/` as a self-contained Go module (`go.mod`, `main.go`).
 - Copy `.agents/skills/` into `cli/embedded/skills/` so `go:embed` can reach it. Add a `cli/sync-skills.sh` (or Makefile target) that re-copies from `../.agents/skills/` so the embedded set stays in sync with the canonical source.
-- Implement `sliceloop skills init [--target DIR]` — writes `.agents/skills/` into the target directory (default: current dir). Does not overwrite existing skills; only scaffolds missing ones. Prints which skills it wrote and which it skipped.
+- Implement `knack skills init [--target DIR]` — writes `.agents/skills/` into the target directory (default: current dir). Does not overwrite existing skills; only scaffolds missing ones. Prints which skills it wrote and which it skipped.
 - Use stdlib `flag` for arg parsing (no external deps). Subcommand dispatch in `main.go`.
 - Write tests: init into a temp dir, assert all 7 skill dirs exist with `SKILL.md` inside, assert re-running init skips existing skills.
 
@@ -37,7 +37,7 @@ Why:
 The CLI's core read-only role is structural validation. `skills check` is the first validator — it checks the skills this very project ships, closing the loop on the existing `tests/run.sh` skill validation.
 
 Work:
-- Implement `sliceloop skills check [--dir DIR]` — validates every `SKILL.md` under `.agents/skills/` (or the given dir).
+- Implement `knack skills check [--dir DIR]` — validates every `SKILL.md` under `.agents/skills/` (or the given dir).
 - Checks: frontmatter present (YAML between `---` fences), `name` field non-empty, `description` field non-empty, no `[[...]]` or `[...](...)` references that point to nonexistent files.
 - Exit 0 if all skills valid, exit 1 if any invalid. Print one line per finding.
 - Write tests: valid skill fixture passes, invalid skill fixtures (missing frontmatter, empty description, broken ref) fail with clear messages.
@@ -60,7 +60,7 @@ Why:
 The loop (`loop.sh`) parses QUEUE.md but does not validate structure — that's the CLI's job per DESIGN.md. `validate` is the mechanical gate that catches malformed work units before the loop runs them.
 
 Work:
-- Implement `sliceloop validate <queue-file>` — parses the QUEUE.md and checks every `## <outcome>` unit has: a `Verify:` section with a fenced code block, and at least one line of outcome text in the header.
+- Implement `knack validate <queue-file>` — parses the QUEUE.md and checks every `## <outcome>` unit has: a `Verify:` section with a fenced code block, and at least one line of outcome text in the header.
 - Reports which units pass and which fail, with the specific missing field.
 - Exit 0 if all units valid, exit 1 if any invalid.
 - Write tests: valid QUEUE fixture passes, invalid fixtures (missing Verify, empty outcome, missing fence) fail.
@@ -83,10 +83,10 @@ Why:
 The decision coverage gate is the user's second stated priority and the one novel CLI feature from DESIGN.md. `status` gives the human a quick snapshot of loop state. This unit delivers both together since they share the ADR/queue parsing layer.
 
 Work:
-- `sliceloop decisions list` — lists ADRs in `decisions/` (number, title, status).
-- `sliceloop decisions show NNNN` — prints the full ADR file.
-- `sliceloop decisions check` — mechanical coverage gate: every ADR in `decisions/` is referenced by at least one work unit in any `QUEUE.md` found under `.loop/`; every ADR referenced by a work unit still exists in `decisions/`. Reports orphaned ADRs and dangling references.
-- `sliceloop status` — prints: queue state (pending/done/failed counts from `.loop/QUEUE.md`), evidence entry count (from `.loop/EVIDENCE.md`), ADR count (from `decisions/`).
+- `knack decisions list` — lists ADRs in `decisions/` (number, title, status).
+- `knack decisions show NNNN` — prints the full ADR file.
+- `knack decisions check` — mechanical coverage gate: every ADR in `decisions/` is referenced by at least one work unit in any `QUEUE.md` found under `.loop/`; every ADR referenced by a work unit still exists in `decisions/`. Reports orphaned ADRs and dangling references.
+- `knack status` — prints: queue state (pending/done/failed counts from `.loop/QUEUE.md`), evidence entry count (from `.loop/EVIDENCE.md`), ADR count (from `decisions/`).
 - Write tests: fixture with ADRs + QUEUE where coverage is clean passes; fixture with orphaned ADR and dangling ref fails with specific messages; `status` reports correct counts.
 
 Verify:
@@ -108,8 +108,8 @@ Why:
 `glossary check` enforces ubiquitous language consistency (terms defined but unused = stale; terms used but undefined = gaps). `instructions` prints templates so the agent doesn't have to memorize work unit / ADR / glossary formats. These are the last two commands in the DESIGN.md spec.
 
 Work:
-- `sliceloop glossary check` — parses `glossary.md` for defined terms, scans code + markdown for usage, reports stale definitions (defined but never referenced) and undefined terms (used but not in glossary). Exit 0 if clean, exit 1 if findings.
-- `sliceloop instructions <artifact>` — prints the template + guidance for creating a work unit, ADR, or glossary entry. Pure text output. Artifact must be one of: `work-unit`, `adr`, `glossary-entry`. Exit 1 on unknown artifact.
+- `knack glossary check` — parses `glossary.md` for defined terms, scans code + markdown for usage, reports stale definitions (defined but never referenced) and undefined terms (used but not in glossary). Exit 0 if clean, exit 1 if findings.
+- `knack instructions <artifact>` — prints the template + guidance for creating a work unit, ADR, or glossary entry. Pure text output. Artifact must be one of: `work-unit`, `adr`, `glossary-entry`. Exit 1 on unknown artifact.
 - Write tests: glossary fixture with a stale term and an undefined term produces the right findings; `instructions work-unit` output contains `Verify:` and `Status: pending`; unknown artifact exits 1.
 
 Verify:

@@ -143,4 +143,4 @@ if command -v skills-ref >/dev/null 2>&1; then
   done
 fi
 
-echo "sliceloop tests passed"
+echo "knack tests passed"
