@@ -20,10 +20,10 @@ abs_path() {
   python -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "$1"
 }
 
-first_pending_slice() {
+first_pending_unit() {
   awk '
     BEGIN { in_block = 0; block = ""; status = ""; found = 0 }
-    /^## Slice / {
+    /^## / {
       if (in_block && status == "pending") { printf "%s", block; found = 1; exit }
       in_block = 1; block = $0 "\n"; status = ""; next
     }
@@ -44,6 +44,10 @@ extract_verify() {
   ' "$1"
 }
 
+extract_agent() {
+  awk '/^Agent:[[:space:]]+/ { sub(/^Agent:[[:space:]]*/, ""); gsub(/[[:space:]]+$/, ""); print; exit }' "$1"
+}
+
 set_status() {
   python - "$1" "$2" "$3" <<'PY'
 import sys
@@ -58,7 +62,7 @@ changed = False
 out = []
 for line in lines:
     stripped = line.strip()
-    if stripped.startswith("## Slice "):
+    if stripped.startswith("## ") and not stripped.startswith("### "):
         if inside and not changed:
             out.append(f"Status: {status}\n")
             changed = True
@@ -74,8 +78,62 @@ if inside and not changed:
     out.append(f"Status: {status}\n")
     changed = True
 if not changed:
-    raise SystemExit(f"slice not found or status already changed: {title}")
+    raise SystemExit(f"unit not found or status already changed: {title}")
 path.write_text("".join(out))
+PY
+}
+
+write_handoff() {
+  python - "$1" "$2" "$3" <<'PY'
+import sys, re
+from pathlib import Path
+from datetime import datetime
+
+queue, evidence, handoff = sys.argv[1:]
+lines = Path(queue).read_text().splitlines()
+
+units = []
+current = None
+for line in lines:
+    if re.match(r'^## ', line) and not re.match(r'^###', line):
+        if current:
+            units.append(current)
+        current = {"title": line[3:].strip(), "status": "pending"}
+    elif current:
+        m = re.match(r'^Status:\s*(\S+)', line)
+        if m:
+            current["status"] = m.group(1)
+if current:
+    units.append(current)
+
+pending = [u for u in units if u["status"] != "done"]
+if not pending:
+    sys.exit(0)
+
+completed = [u for u in units if u["status"] == "done"]
+in_progress = [u for u in units if u["status"] in ("in_progress", "verify_failed", "no_progress", "blocked")]
+remaining = [u for u in units if u["status"] == "pending"]
+
+out = [
+    f"# Handoff: {Path(queue).stem}",
+    f"Generated: {datetime.now().isoformat()}",
+    "",
+    "## Completed",
+]
+out += [f"- {u['title']}" for u in completed] or ["- (none)"]
+out += ["", "## In progress"]
+out += [f"- {u['title']} (status: {u['status']})" for u in in_progress] or ["- (none)"]
+out += ["", "## Remaining"]
+out += [f"- {u['title']}" for u in remaining] or ["- (none)"]
+out += ["", "## Next action"]
+if in_progress:
+    out.append(f"Re-run loop after addressing the {in_progress[0]['status']} state of: {in_progress[0]['title']}.")
+elif remaining:
+    out.append(f"Re-run loop to continue with: {remaining[0]['title']}.")
+else:
+    out.append("Queue is complete.")
+
+Path(handoff).write_text("\n".join(out) + "\n")
 PY
 }
 
@@ -131,9 +189,9 @@ append_evidence() {
     echo
     echo "What this proves:"
     if [[ "$status" == "done" ]]; then
-      echo "- The verify command passed for this slice in the current repo state."
+      echo "- The verify command passed for this work unit in the current repo state."
     else
-      echo "- The slice is not externally verified."
+      echo "- The work unit is not externally verified."
     fi
     echo
     echo "What remains unverified:"
@@ -188,26 +246,36 @@ else
   repo_dir=$(pwd)
 fi
 evidence="$queue_dir/EVIDENCE.md"
+handoff="$queue_dir/HANDOFF.md"
 no_progress_strikes=0
 
-for ((tick = 1; tick <= max_ticks; tick++)); do
-  slice=$(first_pending_slice "$queue_abs")
-  [[ -n "$slice" ]] || { echo "sliceloop: no pending slices"; exit 0; }
+write_handoff_on_exit() {
+  local rc=$?
+  [[ "${dry_run:-0}" == 0 ]] || return $rc
+  [[ -f "${queue_abs:-}" ]] || return $rc
+  write_handoff "$queue_abs" "$evidence" "$handoff" 2>/dev/null || true
+  return $rc
+}
+trap write_handoff_on_exit EXIT
 
-  slice_file=$(mktemp)
+for ((tick = 1; tick <= max_ticks; tick++)); do
+  unit=$(first_pending_unit "$queue_abs")
+  [[ -n "$unit" ]] || { echo "sliceloop: no pending work units"; exit 0; }
+
+  unit_file=$(mktemp)
   verify_file=$(mktemp)
   agent_out=$(mktemp)
   verify_out=$(mktemp)
-  printf '%s' "$slice" > "$slice_file"
+  printf '%s' "$unit" > "$unit_file"
 
-  first_line=$(awk 'NR == 1 { print; exit }' "$slice_file")
+  first_line=$(awk 'NR == 1 { print; exit }' "$unit_file")
   title=${first_line#\#\# }
-  verify=$(extract_verify "$slice_file")
-  [[ -n "$verify" ]] || die "slice has no Verify fenced block: $title"
+  verify=$(extract_verify "$unit_file")
+  [[ -n "$verify" ]] || die "work unit has no Verify fenced block: $title"
   printf '%s\n' "$verify" > "$verify_file"
 
   if [[ "$dry_run" == 1 ]]; then
-    echo "Slice: $title"
+    echo "Unit: $title"
     echo "Repo: $repo_dir"
     echo "Verify:"
     cat "$verify_file"
@@ -222,14 +290,20 @@ for ((tick = 1; tick <= max_ticks; tick++)); do
   cat > "$run_prompt" <<EOF
 $(cat "$prompt_file")
 
-Current slice from $queue_abs:
+Current work unit from $queue_abs:
 
-$(cat "$slice_file")
+$(cat "$unit_file")
 EOF
 
+  agent_cmd="${LOOP_AGENT_CMD:-}"
+  unit_agent=$(extract_agent "$unit_file")
+  if [[ -n "$unit_agent" ]]; then
+    agent_cmd="$unit_agent"
+  fi
+
   set +e
-  if [[ -n "${SLICELOOP_AGENT_CMD:-}" ]]; then
-    (cd "$repo_dir" && SLICELOOP_PROMPT_FILE="$run_prompt" bash -lc "$SLICELOOP_AGENT_CMD") > "$agent_out" 2>&1
+  if [[ -n "$agent_cmd" ]]; then
+    (cd "$repo_dir" && LOOP_PROMPT_FILE="$run_prompt" bash -lc "$agent_cmd") > "$agent_out" 2>&1
   else
     (cd "$repo_dir" && pi -p --no-session "$(cat "$run_prompt")") > "$agent_out" 2>&1
   fi
@@ -277,7 +351,7 @@ EOF
   die "verify failed for $title"
 done
 
-if [[ -n "$(first_pending_slice "$queue_abs")" ]]; then
+if [[ -n "$(first_pending_unit "$queue_abs")" ]]; then
   die "reached max ticks ($max_ticks) with pending work"
 fi
 
