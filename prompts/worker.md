@@ -2,6 +2,8 @@
 
 You are one worker tick in a bounded loop. Complete exactly one work unit, then stop.
 
+Load and follow the **build** skill in `.agents/skills/build/` before doing any work.
+
 ## Rules
 
 1. Read `AGENTS.md` first if it exists — it contains operational context.
