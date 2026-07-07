@@ -209,7 +209,7 @@ A Go binary. **Read-only context provider + structural validator.** It does NOT 
 
 The one novel CLI feature. It is a **mechanical** check, not a semantic one:
 
-- **Plan-time check:** every ADR in `decisions/` is referenced by at least one work unit in any `QUEUE.md`. The check is: does the ADR's filename or path appear in any work unit's body? If not, the ADR is orphaned — either it's irrelevant to the current work, or the planner forgot to thread it through.
+- **Plan-time check:** every ADR in `decisions/` is referenced by at least one work unit in any `QUEUE.md` (current work) or any `EVIDENCE.md` ledger (completed work). The check is: does the ADR's filename or path appear in any work unit's body or evidence ledger? If not, the ADR is orphaned — either it's irrelevant to the current or past work, or the planner forgot to thread it through. EVIDENCE.md is the durable record that survives QUEUE.md deletion, so an ADR that drove a completed cycle is not orphaned as long as its ledger exists.
 - **Build-time check:** every ADR referenced by a completed work unit still exists in `decisions/`. If a work unit claims to implement ADR-0007 but there's no `decisions/0007-*`, that's a dangling reference.
 
 We do **not** attempt to verify that code changes are "consistent with" ADR content — that would require semantic understanding the CLI doesn't have. The gate catches reference errors and orphans, not logical contradictions.
@@ -260,10 +260,10 @@ project/
 - `glossary.md` — ubiquitous language. Terms don't rot; they evolve deliberately.
 - `AGENTS.md` — operational context. Build commands, conventions. Updated when things change.
 - `.agents/skills/` — procedural knowledge. The workflow itself. Evolves ([[evolving-context]]).
+- `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved. Durable so `decisions check` can trace which ADRs a completed cycle referenced after its QUEUE.md is deleted.
 
 **Disposable (consumed then discarded):**
 - `.loop/<name>/QUEUE.md` — the work queue. When the work is done, it's done. Delete it.
-- `.loop/<name>/EVIDENCE.md` — the log of what each tick proved. Useful for audit during the work, disposable after.
 - `.loop/<name>/HANDOFF.md` — cross-session handoff. Snapshot of coordination state.
 - `.loop/<name>/specs/` — planning artifacts for big work. Proposal, design. Consumed during build, then discarded ([[doc-rot]], [[plan-disposability]]).
 

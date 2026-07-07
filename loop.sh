@@ -159,13 +159,18 @@ changed_files() {
 }
 
 append_evidence() {
-  local evidence=$1 title=$2 status=$3 verify=$4 verify_out=$5 agent_out=$6 repo_dir=$7
+  local evidence=$1 title=$2 status=$3 verify=$4 verify_out=$5 agent_out=$6 repo_dir=$7 unit_file=$8
   mkdir -p "$(dirname "$evidence")"
   {
     echo
     echo "## $(date -Iseconds) — $title"
     echo
     echo "Status: $status"
+    echo
+    echo "Unit:"
+    echo '````markdown'
+    cat "$unit_file"
+    echo '````'
     echo
     echo "Files changed:"
     echo '```text'
@@ -313,7 +318,7 @@ EOF
   if [[ $agent_code -ne 0 ]]; then
     set_status "$queue_abs" "$title" "blocked"
     : > "$verify_out"
-    append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir"
+    append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
     cat "$agent_out"
     die "worker exited nonzero for $title"
   fi
@@ -327,7 +332,7 @@ EOF
 
   if [[ $verify_code -eq 0 ]]; then
     set_status "$queue_abs" "$title" "done"
-    append_evidence "$evidence" "$title" "done" "$verify" "$verify_out" "$agent_out" "$repo_dir"
+    append_evidence "$evidence" "$title" "done" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
     echo "knack: verified — $title"
     continue
   fi
@@ -336,17 +341,17 @@ EOF
     no_progress_strikes=$((no_progress_strikes + 1))
     if [[ $no_progress_strikes -ge 2 ]]; then
       set_status "$queue_abs" "$title" "no_progress"
-      append_evidence "$evidence" "$title" "no_progress" "$verify" "$verify_out" "$agent_out" "$repo_dir"
+      append_evidence "$evidence" "$title" "no_progress" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
       die "no progress after $no_progress_strikes attempts on $title"
     fi
     set_status "$queue_abs" "$title" "pending"
-    append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir"
+    append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
     echo "knack: verify failed with no progress; retrying once"
     continue
   fi
 
   set_status "$queue_abs" "$title" "verify_failed"
-  append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir"
+  append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
   cat "$verify_out"
   die "verify failed for $title"
 done

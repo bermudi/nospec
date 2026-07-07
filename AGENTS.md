@@ -24,7 +24,7 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 ## Core artifacts
 
 - `.loop/<name>/QUEUE.md` — disposable queue of verifiable work units.
-- `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved.
+- `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved. Durable: keep it after deleting QUEUE.md so `decisions check` can still see which ADRs the completed cycle referenced.
 - `.loop/<name>/HANDOFF.md` — cross-session handoff (written on pause/stop).
 - `decisions/` — durable ADRs (architectural rulings, not current behavior).
 - `glossary.md` — durable ubiquitous language.
@@ -49,7 +49,7 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 - A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge. The loop's backpressure is mechanical.
 - The runner enforces hard stops (max ticks, no-progress detection). The agent does one work unit per tick and reports what remains if it can't finish.
 - Review is opt-in. The loop does not run review automatically; the user invokes it when they want adversarial scrutiny.
-- When the queue is complete and verified, the cycle's `.loop/<name>/` subdirectory is disposable. The human deletes it; the loop does not.
+- When the queue is complete and verified, the cycle's `.loop/<name>/QUEUE.md` is disposable. The human deletes it; the loop does not. `EVIDENCE.md` is the durable ledger — keep it so `decisions check` can still trace which ADRs the cycle referenced.
 - A work unit must leave the repo better if the loop stops immediately after it.
 - Work units are whatever shape the work is — not forced into "vertical slices."
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic: pi, claude, codex, opencode, etc.).
@@ -84,5 +84,5 @@ cd cli && go test ./...
 - **`go vet` doesn't catch unused test helpers.** `fileExists` in `queue_test.go` was dead code that `go vet` missed. Review caught it.
 - **Verify commands must be path-correct.** Unit 1 of the named-cycles queue had `cd cli && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `cli/` after the `cd`, not from the repo root. The worker did the work correctly; the verify command was wrong. The loop correctly caught the failure (mechanical gate working), but it was a false negative. Always test verify commands manually before writing them into a queue.
 - **Workers scope to the outcome plus constraints, not to a file list.** ADR-0005 replaced `Work:` with `Read first:` and `Constraints:`. The unit's scope is its outcome plus its constraints — the worker determines which files to change. The old lesson ("name every file in the work unit") is wrong under the new shape: naming files in constraints smuggles scope the same way `Work:` did. The first plan-shape cycle proved this — the constraint said "no `Work:` refs in skills, prompts, DESIGN.md, or AGENTS.md" and the worker touched exactly those files, leaving 9 other files (test fixtures, examples, README) with stale `Work:` fields. Prefer outcome-level constraints ("no artifact that teaches the format may reference `Work:`") over file-enumerated constraints.
-- **`decisions check` reports orphaned ADRs from completed cycles.** When a work cycle is complete and its `.loop/<name>/` directory is deleted, the ADRs it referenced become "orphaned" — no active queue references them. This is technically correct (no current queue references them) but may be noisy. The semantics might need refinement: "orphaned = never referenced by any queue" vs "orphaned = not referenced by any current queue." Deferred.
+- **`decisions check` orphaned-ADR semantics resolved.** An ADR is orphaned if it is not referenced by any QUEUE.md (current work) or any EVIDENCE.md (completed work). The loop now writes the full unit body into EVIDENCE.md so ADR references survive QUEUE.md deletion. EVIDENCE.md is the durable ledger; QUEUE.md is disposable. An ADR that drove a completed cycle is not orphaned as long as its EVIDENCE.md ledger exists.
 - **Named work cycles enable concurrent work.** ADR-0004 gave each work cycle its own subdirectory under `.loop/`. The loop already supported this via the queue path argument — only convention (skills, docs) and `knack status` needed to change. Running `./loop.sh run .loop/<name>/QUEUE.md` is fully independent of other cycles.

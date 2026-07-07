@@ -111,8 +111,14 @@ func canonicalADRNumber(s string) (string, error) {
 }
 
 // Check performs the mechanical decision coverage gate.
-// It reports ADRs in decisionsDir that are not referenced by any work unit, and
-// ADR references in work units that do not resolve to an existing ADR.
+// It reports ADRs in decisionsDir that are not referenced by any work unit or
+// evidence ledger, and ADR references in work units that do not resolve to an
+// existing ADR.
+//
+// An ADR is "orphaned" if it is not referenced by any QUEUE.md (current work)
+// or any EVIDENCE.md (completed work). This avoids false positives when a
+// completed cycle's QUEUE.md has been deleted but its EVIDENCE.md ledger
+// remains as the durable record.
 func Check(fsys fs.FS, decisionsDir string, loopFS fs.FS, loopDir string) ([]string, error) {
 	adrs, err := List(fsys, decisionsDir)
 	if err != nil {
@@ -122,7 +128,7 @@ func Check(fsys fs.FS, decisionsDir string, loopFS fs.FS, loopDir string) ([]str
 		return nil, nil
 	}
 
-	bodies, err := collectQueueBodies(loopFS, loopDir)
+	bodies, err := collectLoopBodies(loopFS, loopDir)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +137,7 @@ func Check(fsys fs.FS, decisionsDir string, loopFS fs.FS, loopDir string) ([]str
 	var findings []string
 	for _, adr := range adrs {
 		if !adrReferenced(adr, allBody) {
-			findings = append(findings, fmt.Sprintf("orphaned ADR %s (%s): not referenced by any work unit", adr.Number, adr.Filename))
+			findings = append(findings, fmt.Sprintf("orphaned ADR %s (%s): not referenced by any work unit or evidence ledger", adr.Number, adr.Filename))
 		}
 	}
 
@@ -148,21 +154,34 @@ func Check(fsys fs.FS, decisionsDir string, loopFS fs.FS, loopDir string) ([]str
 	return findings, nil
 }
 
-func collectQueueBodies(loopFS fs.FS, loopDir string) ([]string, error) {
+// collectLoopBodies gathers text from QUEUE.md and EVIDENCE.md files under
+// loopDir. QUEUE.md bodies are parsed into work units so that only unit content
+// (not queue-level metadata) is checked. EVIDENCE.md files are included whole —
+// the ledger is the durable record of completed work and may contain ADR
+// references from unit bodies that the loop wrote into it.
+func collectLoopBodies(loopFS fs.FS, loopDir string) ([]string, error) {
 	var bodies []string
 	err := fs.WalkDir(loopFS, loopDir, func(p string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || path.Base(p) != "QUEUE.md" {
+		if d.IsDir() {
+			return nil
+		}
+		base := path.Base(p)
+		if base != "QUEUE.md" && base != "EVIDENCE.md" {
 			return nil
 		}
 		data, err := fs.ReadFile(loopFS, p)
 		if err != nil {
 			return err
 		}
-		for _, u := range queue.ParseUnits(string(data)) {
-			bodies = append(bodies, u.Body)
+		if base == "QUEUE.md" {
+			for _, u := range queue.ParseUnits(string(data)) {
+				bodies = append(bodies, u.Body)
+			}
+		} else {
+			bodies = append(bodies, string(data))
 		}
 		return nil
 	})

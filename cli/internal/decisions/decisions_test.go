@@ -144,6 +144,42 @@ func TestCheckOrphanedAndDangling(t *testing.T) {
 	}
 }
 
+func TestCheckEvidenceCoversCompletedCycle(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-first.md": "# 0001: First\nStatus: accepted\n",
+		".loop/done-cycle/EVIDENCE.md": lines(
+			"## 2026-07-06T12:00:00 — Some unit",
+			"",
+			"Status: done",
+			"",
+			"Unit:",
+			"````markdown",
+			"## Some unit",
+			"",
+			"Read first:",
+			"- decisions/0001-first.md",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"````",
+			"",
+			"Verify output:",
+			"```text",
+			"ok",
+			"```",
+		),
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("expected no findings (ADR covered by evidence), got: %v", findings)
+	}
+}
+
 func TestCheckByFilename(t *testing.T) {
 	fsys := makeADRFS(map[string]string{
 		"decisions/0001-build-the-cli-in-go.md": "# 0001: Build the CLI in Go\nStatus: accepted\n",
