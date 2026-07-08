@@ -469,7 +469,7 @@ Every design decision cites a wiki concept. The wiki's position, synthesized:
 
 1. **~~Name.~~** Resolved (ADR-0003): the tool is named **knack**.
 2. **Language for the CLI.** Go (like litespec) is the default assumption. Could be something else, but Go is proven here.
-3. **Skills shipped with the tool vs project-authored skills.** Does the tool ship a default set of skills (explore/plan/build/review/fix/decide/domain-modeling) that projects can override? Or does each project author its own? litespec generated skills from Go templates; mattpocock ships skills as plain markdown. Lean toward shipping defaults as plain markdown that projects can override.
+3. **~~Skills shipped with the tool vs project-authored skills.~~** Resolved (ADR-0002): the CLI embeds the seven default skills via `go:embed` and scaffolds them with `knack skills init`. Projects override after scaffolding; the CLI does not manage them post-init.
 4. **~~How the loop invokes the agent with the right skill.~~** Resolved: the loop passes the skill *name* in the prompt; the agent discovers the skill via agentskills.io progressive disclosure. See "On skill triggering" above. Still open: does this work reliably across all target agents (Pi, Claude Code, Codex, opencode, Devin), or do some need an explicit `--skill` flag? Needs testing.
 5. **~~Decision coverage check implementation.~~** Resolved: mechanical only — reference existence and orphan detection. See "Decision coverage gate" above. Still open: is this useful enough to justify the implementation cost, or should it be deferred to v2?
 

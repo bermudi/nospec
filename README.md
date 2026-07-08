@@ -2,9 +2,11 @@
 
 A tiny loop-packet runner for agentic development.
 
-Compiles human intent into disposable work unit queues, then runs one unit at a time behind deterministic verification gates.
+Compiles human intent into disposable work unit queues, then runs one unit at a time behind deterministic verification gates. Ships with a read-only CLI that validates structure, tracks decisions, and scaffolds the default skill set into any project.
 
 ## Quickstart
+
+Run the loop:
 
 ```bash
 ./loop.sh run <queue> [--repo DIR] [--max-ticks N] [--dry-run]
@@ -16,6 +18,18 @@ Example:
 
 ```bash
 ./loop.sh run examples/smoke/.loop/smoke/QUEUE.md --dry-run
+```
+
+Build the CLI:
+
+```bash
+cd cli && go build -o knack .
+```
+
+Scaffold the default skills into a new project:
+
+```bash
+./knack skills init --target /path/to/project
 ```
 
 ## How it works
@@ -96,11 +110,47 @@ Per-unit override via the `Agent:` field in a work unit:
 Agent: pi -p --no-session --model glm-5.2
 ```
 
+## CLI
+
+The `knack` binary is a read-only validator and context provider. Build it from `cli/`:
+
+```bash
+cd cli && go build -o knack .
+```
+
+### Commands
+
+```
+knack skills init [--target DIR]    Scaffold the seven default skills into DIR/.agents/skills/
+knack skills check [--dir DIR]      Validate skills in DIR (default: .agents/skills)
+knack validate <queue-file>         Validate work-unit structure in a queue file
+knack decisions list                List all ADRs in decisions/
+knack decisions show NNNN           Print the full text of ADR NNNN
+knack decisions check               Flag orphaned ADRs and dangling references
+knack status                        Aggregate work-unit counts across all .loop/<name>/ cycles
+knack glossary check                Validate glossary.md term references
+knack instructions <artifact>       Print a template: work-unit | adr | glossary-entry
+```
+
+All commands read from the current directory (run from the repo root). `skills init` is the only write operation — it scaffolds missing skills and leaves existing ones alone, so upgrading the CLI won't overwrite project customizations.
+
+### Scaffolding a new project
+
+```bash
+cd /path/to/new-project
+/path/to/knack skills init
+```
+
+This writes the seven default skills (explore, plan, build, review, fix, decide, domain-modeling) into `.agents/skills/`. The project then owns them — modify, override, or delete as needed.
+
 ## Files
 
 - `loop.sh` — the runner.
+- `cli/` — the Go CLI (validator, status, decisions, skills, instructions).
 - `prompts/worker.md` — one-tick worker instructions.
-- `.agents/skills/plan/SKILL.md` — planner skill.
+- `.agents/skills/` — the seven default skills (canonical source; the CLI embeds copies).
+- `decisions/` — durable ADRs.
+- `glossary.md` — ubiquitous language.
 - `examples/` — sample queues.
 - `tests/run.sh` — test harness.
 

@@ -2,6 +2,7 @@
 
 Date: 2026-07-06
 Status: accepted
+Grandfathered: enacted before the evidence-ledger convention (ADR-0006); skills are embedded and scaffolded by the CLI.
 
 ## Context
 

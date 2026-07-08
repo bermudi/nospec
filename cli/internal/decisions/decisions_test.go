@@ -205,6 +205,48 @@ func TestCheckByFilename(t *testing.T) {
 	}
 }
 
+func TestCheckGrandfatheredADRNotOrphaned(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-first.md": "# 0001: First\nStatus: accepted\nGrandfathered: predates the ledger (ADR-0006).\n",
+		"decisions/0002-second.md": "# 0002: Second\nStatus: accepted\n",
+		".loop/QUEUE.md": lines(
+			"## Unit",
+			"",
+			"Implements ADR-0002.",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"",
+			"Status: pending",
+		),
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("expected no findings (0001 grandfathered, 0002 referenced), got: %v", findings)
+	}
+}
+
+func TestCheckGrandfatheredADRStillParsedByList(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-first.md": "# 0001: First\nStatus: accepted\nGrandfathered: predates the ledger.\n",
+	})
+	adrs, err := List(fsys, "decisions")
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	if len(adrs) != 1 {
+		t.Fatalf("expected 1 ADR, got %d", len(adrs))
+	}
+	if !adrs[0].Grandfather {
+		t.Fatalf("expected Grandfather=true, got false")
+	}
+}
+
 func makeADRFS(files map[string]string) fs.FS {
 	fsys := fstest.MapFS{}
 	for name, data := range files {

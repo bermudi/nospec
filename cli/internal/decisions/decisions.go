@@ -15,10 +15,11 @@ import (
 
 // ADR represents a single architectural decision record in decisions/.
 type ADR struct {
-	Number   string
-	Title    string
-	Status   string
-	Filename string
+	Number      string
+	Title       string
+	Status      string
+	Filename    string
+	Grandfather bool // true if the ADR carries a Grandfathered: line (ADR-0006)
 }
 
 var (
@@ -48,10 +49,11 @@ func List(fsys fs.FS, dir string) ([]ADR, error) {
 		}
 		number, title := parseADRTitle(string(data), m[1])
 		adrs = append(adrs, ADR{
-			Number:   number,
-			Title:    title,
-			Status:   parseADRStatus(string(data)),
-			Filename: e.Name(),
+			Number:      number,
+			Title:       title,
+			Status:      parseADRStatus(string(data)),
+			Filename:    e.Name(),
+			Grandfather: hasGrandfatherLine(string(data)),
 		})
 	}
 	sort.Slice(adrs, func(i, j int) bool { return adrs[i].Number < adrs[j].Number })
@@ -76,6 +78,18 @@ func parseADRStatus(contents string) string {
 		}
 	}
 	return ""
+}
+
+// hasGrandfatherLine reports whether the ADR carries a Grandfathered: line.
+// Per ADR-0006, such ADRs are exempt from the orphan check — they predate the
+// evidence-ledger convention and their work is verified in code, not in a ledger.
+func hasGrandfatherLine(contents string) bool {
+	for _, line := range strings.Split(contents, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "Grandfathered:") {
+			return true
+		}
+	}
+	return false
 }
 
 // Show returns the full contents of the ADR identified by number.
@@ -136,6 +150,9 @@ func Check(fsys fs.FS, decisionsDir string, loopFS fs.FS, loopDir string) ([]str
 
 	var findings []string
 	for _, adr := range adrs {
+		if adr.Grandfather {
+			continue
+		}
 		if !adrReferenced(adr, allBody) {
 			findings = append(findings, fmt.Sprintf("orphaned ADR %s (%s): not referenced by any work unit or evidence ledger", adr.Number, adr.Filename))
 		}
