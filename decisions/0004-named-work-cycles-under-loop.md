@@ -2,6 +2,7 @@
 
 Date: 2026-07-06
 Status: accepted
+Grandfathered: enacted before the ADR-citation convention (ADR-0005); the named-cycles cycle that implemented it predates `Read first:` ADR citations, so its EVIDENCE.md ledger never references this ADR by number. The work is verified in code and the surviving skills/docs.
 
 ## Context
 

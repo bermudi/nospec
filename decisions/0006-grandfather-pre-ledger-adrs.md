@@ -10,6 +10,8 @@ Grandfathered: meta-ruling about the check mechanism itself; implemented and ver
 
 But ADRs 0001, 0002, and 0003 were written and enacted before the evidence-ledger convention existed (ADR-0004 introduced named cycles; the durable-ledger semantics landed later). The work they drove — building the CLI, packaging skills, naming the tool — is done and verified in the code itself. There is no EVIDENCE.md that traces back to them, and backfilling one would be fiction: the ledger records what a tick proved, and no tick ran against these ADRs.
 
+ADR-0004 is a related case: it introduced named cycles and drove the `named-cycles` cycle, but that cycle predates the `Read first:` ADR-citation convention (ADR-0005). Its EVIDENCE.md ledger survives but never cites ADR-0004 by number — the unit bodies simply didn't reference ADRs that way yet. The work is verified in the surviving skills and docs.
+
 Alternatives considered:
 - **Backfill a retroactive EVIDENCE.md.** Fabricates evidence for work that was never run through the loop. The ledger would no longer mean "a tick proved this."
 - **Date-based heuristic (ADR predates earliest EVIDENCE.md).** Fragile: ADRs 0001–0003 and the first evidence are all dated 2026-07-06. Same-day granularity makes the comparison ambiguous, and ADR dates are day-level, not timestamp-level.
@@ -23,7 +25,7 @@ This is a one-time acknowledgment for ADRs that predate the ledger convention. N
 
 ## Consequences
 
-- ADRs 0001, 0002, 0003 get a `Grandfathered:` line and stop appearing as orphaned.
+- ADRs 0001, 0002, 0003, and 0004 get a `Grandfathered:` line and stop appearing as orphaned.
 - `decisions check` remains useful: it still catches ADRs written *after* the ledger convention that no work references.
 - The exemption is explicit and per-ADR — no global flag, no date heuristic to maintain.
 - Future ADRs that genuinely have no work trail must justify themselves with the field, making the exemption a visible choice rather than silent drift.
