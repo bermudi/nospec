@@ -28,7 +28,7 @@ Verify:
 cd /home/daniel/build/knack && test -f decisions/0008-loop-orchestrates-review-fix.md && grep -q '^Status: accepted' decisions/0008-loop-orchestrates-review-fix.md && /tmp/knack decisions check
 ```
 
-Status: pending
+Status: done
 
 ## review skill writes a structured REVIEW.md
 
