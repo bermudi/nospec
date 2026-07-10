@@ -209,6 +209,33 @@ func TestGlossaryCheckCatchesWikiRefsInMarkdown(t *testing.T) {
 	}
 }
 
+func TestGlossaryCheckIgnoresLoopDir(t *testing.T) {
+	fsys := makeGlossaryFS(map[string]string{
+		"glossary.md": lines(
+			"# Glossary",
+			"",
+			"## ActiveTerm",
+			"A term that is used in the project.",
+		),
+		".loop/glossary/EVIDENCE.md": lines(
+			"Worker pasted test code with [[ActiveTerm]] and [[MissingTerm]].",
+		),
+		".loop/glossary/QUEUE.md": lines(
+			"[[...]] placeholder reference.",
+		),
+	})
+
+	findings, err := Check(fsys, "glossary.md")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	for _, f := range findings {
+		if f.Kind == "undefined" {
+			t.Fatalf("expected .loop references to be ignored, got: %v", findings)
+		}
+	}
+}
+
 func TestGlossaryParse(t *testing.T) {
 	g := Parse(lines(
 		"# Glossary",

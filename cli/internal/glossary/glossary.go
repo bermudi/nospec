@@ -95,7 +95,13 @@ func findStale(fsys fs.FS, glossaryPath string, g *Glossary) ([]string, error) {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || p == glossaryPath {
+		if d.IsDir() {
+			if p == ".loop" {
+				return fs.SkipDir
+			}
+			return nil
+		}
+		if p == glossaryPath {
 			return nil
 		}
 		data, err := fs.ReadFile(fsys, p)
@@ -181,7 +187,13 @@ func findUndefined(fsys fs.FS, glossaryPath string, g *Glossary) ([]string, erro
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || p == glossaryPath {
+		if d.IsDir() {
+			if p == ".loop" {
+				return fs.SkipDir
+			}
+			return nil
+		}
+		if p == glossaryPath {
 			return nil
 		}
 		if !isMarkdown(p) {

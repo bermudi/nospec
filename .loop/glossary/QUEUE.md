@@ -56,4 +56,4 @@ Verify:
 cd /home/daniel/build/knack/cli && go test ./... && go build -o /tmp/knack . && cd /home/daniel/build/knack && /tmp/knack glossary check
 ```
 
-Status: pending
+Status: done
