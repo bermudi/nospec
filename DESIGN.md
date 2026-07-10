@@ -470,7 +470,7 @@ Every design decision cites a wiki concept. The wiki's position, synthesized:
 1. **~~Name.~~** Resolved (ADR-0003): the tool is named **knack**.
 2. **Language for the CLI.** Go (like litespec) is the default assumption. Could be something else, but Go is proven here.
 3. **~~Skills shipped with the tool vs project-authored skills.~~** Resolved (ADR-0002): the CLI embeds the seven default skills via `go:embed` and scaffolds them with `knack skills init`. Projects override after scaffolding; the CLI does not manage them post-init.
-4. **~~How the loop invokes the agent with the right skill.~~** Resolved: the loop passes the skill *name* in the prompt; the agent discovers the skill via agentskills.io progressive disclosure. See "On skill triggering" above. Still open: does this work reliably across all target agents (Pi, Claude Code, Codex, opencode, Devin), or do some need an explicit `--skill` flag? Needs testing.
+4. **~~How the loop invokes the agent with the right skill.~~** Resolved (ADR-0007): the loop names the skill explicitly — name *and path* — in the worker prompt (`prompts/worker.md`), which it passes to the agent via `LOOP_PROMPT_FILE`. Testing across the target agents (Devin, default `pi`) showed trigger-based agentskills.io discovery is not reliable enough, and the loop cannot confirm a skill was loaded; naming the path lets the worker read the skill file directly. No per-agent `--skill` flag is needed. See "On skill triggering" above.
 5. **~~Decision coverage check implementation.~~** Resolved: mechanical only — reference existence and orphan detection. See "Decision coverage gate" above. Still open: is this useful enough to justify the implementation cost, or should it be deferred to v2?
 
 ## Migration from current state

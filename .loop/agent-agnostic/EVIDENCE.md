@@ -160,3 +160,76 @@ What this proves:
 
 What remains unverified:
 - Anything outside the verify command's proof scope.
+
+## 2026-07-09T23:46:37-06:00 — DESIGN.md open question #4 is closed
+
+Status: done
+
+Unit:
+````markdown
+## DESIGN.md open question #4 is closed
+
+Read first:
+- `DESIGN.md` (open questions and agent-triggering section)
+- `AGENTS.md` (lessons learned)
+
+Constraints:
+- Only update the status of question #4; do not rewrite the design thesis.
+- If the agent-invocation convention becomes a lasting decision, capture it as an ADR using the `decide` skill.
+
+Done means:
+- `DESIGN.md` no longer lists question #4 as "Still open".
+- `AGENTS.md` reflects the tested invocation convention if it needs updating.
+- The loop and tests still pass.
+
+Verify:
+```bash
+! grep -q '^4\. .*Still open' /home/daniel/build/knack/DESIGN.md && bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
+```
+
+Status: pending````
+
+Files changed:
+```text
+ M .loop/agent-agnostic/EVIDENCE.md
+ M .loop/agent-agnostic/QUEUE.md
+ M AGENTS.md
+ M DESIGN.md
+?? .loop/glossary/QUEUE.md
+?? decisions/0007-name-the-skill-explicitly-in-the-worker-prompt.md
+```
+
+Verify command:
+```bash
+! grep -q '^4\. .*Still open' /home/daniel/build/knack/DESIGN.md && bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
+```
+
+Verify output:
+```text
+Valid skill: /home/daniel/build/knack/.agents/skills/build
+Valid skill: /home/daniel/build/knack/.agents/skills/decide
+Valid skill: /home/daniel/build/knack/.agents/skills/domain-modeling
+Valid skill: /home/daniel/build/knack/.agents/skills/explore
+Valid skill: /home/daniel/build/knack/.agents/skills/fix
+Valid skill: /home/daniel/build/knack/.agents/skills/plan
+Valid skill: /home/daniel/build/knack/.agents/skills/review
+knack tests passed
+```
+
+Worker output:
+````text
+All checks pass. Question #4 is closed (references ADR-0007), question #5's legitimate "Still open" is untouched (the `^4\. ` verify anchor correctly scopes to q4), and `decisions check` stays green via the unit-body citation.
+
+```text
+Unit: DESIGN.md open question #4 is closed
+Changed: decisions/0007-name-the-skill-explicitly-in-the-worker-prompt.md (new ADR), DESIGN.md (q4 resolution), AGENTS.md (lessons bullet → links ADR-0007), .loop/agent-agnostic/QUEUE.md (Read first: cites ADR-0007)
+Verify expected: ! grep -q '^4\. .*Still open' DESIGN.md && bash -n loop.sh && tests/run.sh  (passed, exit 0)
+Notes: Created ADR-0007 per the unit's constraint (the "name the skill explicitly" convention is a lasting ruling). `decisions check` still green because ADR-0007 is cited in this unit's body. Caveat: the loop snapshots the unit body into the tick's temp file *before* invoking the worker, so the EVIDENCE.md ledger for this tick will hold the pre-edit body (no ADR-0007 ref). ADR-0007 is currently referenced only via QUEUE.md — if the human later deletes this cycle's QUEUE.md per the disposable convention, ADR-0007 would orphan and want either re-citation in a future unit or a `Grandfathered:` line. Not a verify concern (decisions check isn't in the gate); flagged for durability.
+```
+````
+
+What this proves:
+- The verify command passed for this work unit in the current repo state.
+
+What remains unverified:
+- Anything outside the verify command's proof scope.

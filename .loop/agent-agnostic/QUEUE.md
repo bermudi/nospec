@@ -62,6 +62,7 @@ Status: done
 Read first:
 - `DESIGN.md` (open questions and agent-triggering section)
 - `AGENTS.md` (lessons learned)
+- ADR-0007 (the invocation convention this unit records)
 
 Constraints:
 - Only update the status of question #4; do not rewrite the design thesis.
@@ -77,4 +78,4 @@ Verify:
 ! grep -q '^4\. .*Still open' /home/daniel/build/knack/DESIGN.md && bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
 ```
 
-Status: pending
+Status: done
