@@ -145,6 +145,70 @@ func TestGlossaryCheckWholeWord(t *testing.T) {
 	}
 }
 
+func TestGlossaryCheckAbsentGlossary(t *testing.T) {
+	fsys := makeGlossaryFS(map[string]string{
+		"docs.md": "Some content with [[SomeTerm]].\n",
+	})
+
+	findings, err := Check(fsys, "glossary.md")
+	if err != nil {
+		t.Fatalf("expected no error for absent glossary, got: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("expected no findings for absent glossary, got: %v", findings)
+	}
+}
+
+func TestGlossaryCheckIgnoresWikiRefsOutsideMarkdown(t *testing.T) {
+	fsys := makeGlossaryFS(map[string]string{
+		"glossary.md": lines(
+			"# Glossary",
+			"",
+			"## ActiveTerm",
+			"A term that is used.",
+		),
+		"docs.md":   "See [[ActiveTerm]] for details.\n",
+		"script.sh": "if [[ -f foo ]]; then echo hi; fi\n",
+		"code.go":   "package main\n// arr[[0]] style [[NotATerm]]\n",
+	})
+
+	findings, err := Check(fsys, "glossary.md")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	for _, f := range findings {
+		if f.Kind == "undefined" {
+			t.Fatalf("expected no undefined findings from shell/go files, got: %v", findings)
+		}
+	}
+}
+
+func TestGlossaryCheckCatchesWikiRefsInMarkdown(t *testing.T) {
+	fsys := makeGlossaryFS(map[string]string{
+		"glossary.md": lines(
+			"# Glossary",
+			"",
+			"## ActiveTerm",
+			"A term that is used.",
+		),
+		"docs.md": "See [[ActiveTerm]] and [[MissingTerm]].\n",
+	})
+
+	findings, err := Check(fsys, "glossary.md")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	var hasUndefined bool
+	for _, f := range findings {
+		if f.Kind == "undefined" && f.Term == "MissingTerm" {
+			hasUndefined = true
+		}
+	}
+	if !hasUndefined {
+		t.Fatalf("expected undefined MissingTerm from markdown, got: %v", findings)
+	}
+}
+
 func TestGlossaryParse(t *testing.T) {
 	g := Parse(lines(
 		"# Glossary",

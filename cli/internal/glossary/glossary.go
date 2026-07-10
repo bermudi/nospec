@@ -1,8 +1,10 @@
 package glossary
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -54,9 +56,14 @@ func (f Finding) String() string {
 // Check reads glossary.md at glossaryPath from fsys and walks all other files
 // in fsys to report stale (defined but never used) and undefined (referenced
 // via [[...]] but not defined) terms.
+// If the glossary file is absent, Check reports no findings and no error: a
+// project without a glossary has nothing to check.
 func Check(fsys fs.FS, glossaryPath string) ([]Finding, error) {
 	data, err := fs.ReadFile(fsys, glossaryPath)
 	if err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return nil, nil
+		}
 		return nil, fmt.Errorf("read glossary: %w", err)
 	}
 	g := Parse(string(data))
@@ -145,6 +152,17 @@ func isWordChar(r rune) bool {
 	return unicode.IsLetter(r) || unicode.IsDigit(r) || r == '-' || r == '_' || r == '/'
 }
 
+// isMarkdown reports whether p is a markdown file. The [[...]] wiki-ref
+// convention is markdown-only, so undefined-term detection scans markdown and
+// ignores the [[...]] that appears in shell test syntax and Go source.
+func isMarkdown(p string) bool {
+	switch strings.ToLower(path.Ext(p)) {
+	case ".md", ".markdown":
+		return true
+	}
+	return false
+}
+
 func isBinary(data []byte) bool {
 	for _, b := range data {
 		if b == 0 {
@@ -164,6 +182,9 @@ func findUndefined(fsys fs.FS, glossaryPath string, g *Glossary) ([]string, erro
 			return err
 		}
 		if d.IsDir() || p == glossaryPath {
+			return nil
+		}
+		if !isMarkdown(p) {
 			return nil
 		}
 		data, err := fs.ReadFile(fsys, p)
