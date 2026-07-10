@@ -58,13 +58,15 @@ Create a file named `.loop/<name>/QUEUE.md` using the format in [queue-format.md
 ## Run the loop
 
 ```bash
-LOOP_AGENT_CMD='pi -p --no-session "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
 ```
 
 Other common patterns:
 
 ```bash
 LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
+LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
+LOOP_AGENT_CMD='opencode run --auto "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
 LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' ./loop.sh run .loop/my-cycle/QUEUE.md
 ```
 

@@ -55,9 +55,10 @@ See [docs/queue-format.md](docs/queue-format.md) for the full protocol and an ex
 Override the worker invocation with `LOOP_AGENT_CMD`:
 
 ```bash
-LOOP_AGENT_CMD='pi -p --no-session "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
 LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
 LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='opencode run --auto "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
 LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' ./loop.sh run .loop/<name>/QUEUE.md
 ```
 
@@ -66,7 +67,7 @@ Per-unit override via the `Agent:` field in a work unit:
 ```markdown
 ## hard refactor of persistence layer
 
-Agent: pi -p --no-session --model glm-5.2 "$(cat "$LOOP_PROMPT_FILE")"
+Agent: pi -p --no-session --approve --model glm-5.2 "$(cat "$LOOP_PROMPT_FILE")"
 ```
 
 ## CLI
