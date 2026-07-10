@@ -7,7 +7,7 @@ trap 'rm -rf "$tmp"' EXIT
 
 assert_contains() {
   local file=$1 pattern=$2
-  if ! grep -Fq "$pattern" "$file"; then
+  if ! grep -Fq -- "$pattern" "$file"; then
     echo "expected $file to contain: $pattern" >&2
     echo "--- $file ---" >&2
     cat "$file" >&2
@@ -140,6 +140,34 @@ EOF
 LOOP_AGENT_CMD='echo should-not-run' "$root/loop.sh" run "$repo4/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-override.txt
 assert_contains "$repo4/.loop/QUEUE.md" "Status: done"
 test -f "$repo4/override.done"
+
+# Default fallback: a fake `pi` on PATH receives the prompt body with --approve
+repo_pi="$tmp/repo-pi-default"
+mkdir -p "$repo_pi"
+fake_bin="$tmp/fake-bin"
+mkdir -p "$fake_bin"
+cat > "$fake_bin/pi" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' "$@" > pi-args.txt
+touch smoke.done
+EOF
+chmod +x "$fake_bin/pi"
+make_queue "$repo_pi" "test -f smoke.done"
+env -u LOOP_AGENT_CMD PATH="$fake_bin:$PATH" "$root/loop.sh" run "$repo_pi/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-pi-default.txt
+assert_contains "$repo_pi/.loop/QUEUE.md" "Status: done"
+assert_contains "$repo_pi/pi-args.txt" "--no-session"
+assert_contains "$repo_pi/pi-args.txt" "--approve"
+assert_contains "$repo_pi/pi-args.txt" "the test fixture reaches its verify condition"
+
+# LOOP_AGENT_CMD invocations receive LOOP_PROMPT_FILE pointing at the prompt
+repo_lpf="$tmp/repo-loop-prompt-file"
+mkdir -p "$repo_lpf"
+make_queue "$repo_lpf" "test -f lpf.done"
+LOOP_AGENT_CMD='test -n "$LOOP_PROMPT_FILE" && test -f "$LOOP_PROMPT_FILE" && cp "$LOOP_PROMPT_FILE" captured-prompt.txt; touch lpf.done' \
+  "$root/loop.sh" run "$repo_lpf/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-lpf.txt
+assert_contains "$repo_lpf/.loop/QUEUE.md" "Status: done"
+test -f "$repo_lpf/captured-prompt.txt"
+assert_contains "$repo_lpf/captured-prompt.txt" "the test fixture reaches its verify condition"
 
 if command -v skills-ref >/dev/null 2>&1; then
   for skill_dir in "$root/.agents/skills"/*; do

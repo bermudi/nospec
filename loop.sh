@@ -310,7 +310,7 @@ EOF
   if [[ -n "$agent_cmd" ]]; then
     (cd "$repo_dir" && LOOP_PROMPT_FILE="$run_prompt" bash -lc "$agent_cmd") > "$agent_out" 2>&1
   else
-    (cd "$repo_dir" && pi -p --no-session "$(cat "$run_prompt")") > "$agent_out" 2>&1
+    (cd "$repo_dir" && pi -p --no-session --approve "$(cat "$run_prompt")") > "$agent_out" 2>&1
   fi
   agent_code=$?
   set -e

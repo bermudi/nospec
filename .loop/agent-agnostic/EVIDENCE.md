@@ -79,3 +79,84 @@ What this proves:
 
 What remains unverified:
 - Anything outside the verify command's proof scope.
+
+## 2026-07-09T23:37:24-06:00 — loop.sh default pi and tests/run.sh cover agent invocation
+
+Status: done
+
+Unit:
+````markdown
+## loop.sh default pi and tests/run.sh cover agent invocation
+
+Read first:
+- `loop.sh`
+- `tests/run.sh`
+- `prompts/worker.md`
+
+Constraints:
+- The default `pi` path must still work when `LOOP_AGENT_CMD` is unset.
+- The new tests must not require a real model or API key.
+- The `tests/run.sh` harness must continue to use `mktemp` and not modify repo files.
+- Do not change the `Agent:` override parsing.
+
+Done means:
+- `loop.sh` uses `pi -p --no-session --approve "$(cat "$run_prompt")"` (or equivalent) as its default fallback.
+- `tests/run.sh` has a test that runs the loop with a fake `pi` in `PATH` and verifies the prompt is passed.
+- `tests/run.sh` has a test that verifies `LOOP_PROMPT_FILE` is set for `LOOP_AGENT_CMD` invocations.
+- `./tests/run.sh` passes.
+
+Verify:
+```bash
+bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
+```
+
+Status: pending````
+
+Files changed:
+```text
+ M .loop/agent-agnostic/EVIDENCE.md
+ M .loop/agent-agnostic/QUEUE.md
+ M loop.sh
+ M tests/run.sh
+?? .loop/glossary/QUEUE.md
+```
+
+Verify command:
+```bash
+bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
+```
+
+Verify output:
+```text
+Valid skill: /home/daniel/build/knack/.agents/skills/build
+Valid skill: /home/daniel/build/knack/.agents/skills/decide
+Valid skill: /home/daniel/build/knack/.agents/skills/domain-modeling
+Valid skill: /home/daniel/build/knack/.agents/skills/explore
+Valid skill: /home/daniel/build/knack/.agents/skills/fix
+Valid skill: /home/daniel/build/knack/.agents/skills/plan
+Valid skill: /home/daniel/build/knack/.agents/skills/review
+knack tests passed
+```
+
+Worker output:
+````text
+All four `Done means:` criteria are met and the verify command passes. The diff is narrow and respects all constraints:
+
+- **`loop.sh`**: default fallback now `pi -p --no-session --approve "..."` (`--approve` confirmed valid via `pi --help`).
+- **`tests/run.sh`**: two new tests (fake `pi` on `PATH` via `env -u LOOP_AGENT_CMD PATH=...:...`; `LOOP_PROMPT_FILE` capture via `LOOP_AGENT_CMD`). Both derive from the existing `mktemp` `$tmp` and touch no repo files.
+- Also fixed a latent bug in `assert_contains` (`grep -Fq` → `grep -Fq --`) — any pattern starting with `-` (like `--approve`) was being parsed as a grep option. Required for the new assertions; behavior unchanged for existing callers.
+- `Agent:` override parsing untouched; `LOOP_AGENT_CMD`-unset path is exactly what test 1 exercises.
+
+```text
+Unit: loop.sh default pi and tests/run.sh cover agent invocation
+Changed: loop.sh (default pi fallback +--approve); tests/run.sh (assert_contains grep -- hardening; two new tests: fake-pi-on-PATH, LOOP_PROMPT_FILE capture)
+Verify expected: bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
+Notes: assert_contains needed `grep -Fq --` to accept `--approve`/`--no-session` patterns (was a latent bug, now fixed; no behavior change for existing callers).
+```
+````
+
+What this proves:
+- The verify command passed for this work unit in the current repo state.
+
+What remains unverified:
+- Anything outside the verify command's proof scope.

@@ -55,7 +55,7 @@ Verify:
 bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
 ```
 
-Status: pending
+Status: done
 
 ## DESIGN.md open question #4 is closed
 
