@@ -1,6 +1,6 @@
 # Skills guide
 
-Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/SKILL.md`. Any agent that supports agentskills.io can discover them automatically. The loop passes the skill name in the worker prompt; the agent loads the skill itself.
+Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/SKILL.md`. Any agent that supports agentskills.io can discover them automatically. The loop names the skill explicitly — name and path — in the worker prompt (`prompts/worker.md`); the agent reads the skill file directly. See ADR-0007.
 
 ## Default skills
 
@@ -37,7 +37,7 @@ The `name` must match the directory name. The `description` is the trigger text 
 
 ## How the loop uses skills
 
-`loop.sh` does not read skills. It prepends `prompts/worker.md` to the current work unit and runs the worker. `prompts/worker.md` tells the worker to load the `build` skill. For other phases (explore, plan, review, fix), the human or the agent invokes the skill directly.
+`loop.sh` does not read skills. It prepends `prompts/worker.md` to the current work unit and runs the worker. `prompts/worker.md` tells the worker to load the `build` skill by name and path (e.g. "Load and follow the **build** skill in `.agents/skills/build/`"). For other phases (explore, plan, review, fix), the human or the agent invokes the skill directly.
 
 ## Customizing skills
 

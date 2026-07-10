@@ -62,7 +62,7 @@ Yes. "Vertical slice" is the preferred default, but work units can be patches, b
 
 ### What are `.agents/skills/`?
 
-Markdown files that encode procedural knowledge. Each file is a skill. Agents that support agentskills.io discover them automatically. The loop passes the skill name to the worker; the agent loads the skill itself.
+Markdown files that encode procedural knowledge. Each file is a skill. The worker prompt names the skill by name and path; the agent reads the skill file directly. agentskills.io discovery is not relied upon (ADR-0007).
 
 ### Can I change the default skills after scaffolding?
 

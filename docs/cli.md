@@ -60,7 +60,7 @@ Output:
 ```text
 cycle go-cli: 1 pending, 2 done, 0 failed, 3 evidence
 total: 1 pending, 2 done, 0 failed, 3 evidence
-adrs: 6
+adrs: 7
 ```
 
 ### Get a template
