@@ -1,0 +1,59 @@
+# Skills guide
+
+Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/SKILL.md`. Any agent that supports agentskills.io can discover them automatically. The loop passes the skill name in the worker prompt; the agent loads the skill itself.
+
+## Default skills
+
+| Skill | Purpose |
+|---|---|
+| `explore` | Investigate a codebase, grill intent, and stress-test ideas before planning. |
+| `plan` | Convert intent into a disposable `QUEUE.md` of verifiable work units. |
+| `build` | Implement one work unit from `QUEUE.md`; do not self-certify. |
+| `review` | Run two-axis adversarial review (standards + intent) and generate findings. |
+| `fix` | Convert review findings into new work units. |
+| `decide` | Capture architectural rulings as ADRs in `decisions/`. |
+| `domain-modeling` | Define and update `glossary.md` terms. |
+
+## Skill format
+
+A skill is a Markdown file named `SKILL.md` inside a directory named after the skill:
+
+```text
+.agents/skills/
+└── build/
+    └── SKILL.md
+```
+
+Required frontmatter:
+
+```yaml
+---
+name: build
+description: Use when implementing one work unit...
+---
+```
+
+The `name` must match the directory name. The `description` is the trigger text used by agents to decide when to invoke the skill.
+
+## How the loop uses skills
+
+`loop.sh` does not read skills. It prepends `prompts/worker.md` to the current work unit and runs the worker. `prompts/worker.md` tells the worker to load the `build` skill. For other phases (explore, plan, review, fix), the human or the agent invokes the skill directly.
+
+## Customizing skills
+
+- After `knack skills init`, the project owns the `.agents/skills/` directory.
+- Edit, override, or delete skills as needed.
+- The CLI embeds the default skills. If you edit the defaults in the `knack` repo, run `cli/sync-skills.sh` to copy them into `cli/embedded/skills` and `diff -r .agents/skills cli/embedded/skills` to verify sync.
+- Use `knack skills check` to validate your local skills.
+
+## Composable flows
+
+Skills are not a rigid gate. The default flow is `explore → plan → build → review → fix`, but any valid subset is fine:
+
+```text
+small fix → plan → build → done
+bug report → explore → plan → build → done
+big feature → explore → plan → build → review → fix → done
+```
+
+Decisions are captured inline throughout the flow using the `decide` skill, and terms are updated using `domain-modeling`.

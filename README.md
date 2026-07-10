@@ -6,100 +6,59 @@ Compiles human intent into disposable work unit queues, then runs one unit at a 
 
 ## Quickstart
 
-Run the loop:
+Build the CLI:
 
 ```bash
-./loop.sh run <queue> [--repo DIR] [--max-ticks N] [--dry-run]
+cd cli && go build -o ../knack .
 ```
 
-The queue is usually `.loop/<name>/QUEUE.md` in the target repo — each work cycle gets its own named subdirectory under `.loop/`. Use `--repo` when the queue lives outside the repository it should operate on.
-
-Example:
+Dry-run the smoke test:
 
 ```bash
 ./loop.sh run examples/smoke/.loop/smoke/QUEUE.md --dry-run
 ```
 
-Build the CLI:
+Run a real tick with a fake worker:
 
 ```bash
-cd cli && go build -o knack .
+mkdir -p /tmp/smoke/.loop
+cp examples/smoke/.loop/smoke/QUEUE.md /tmp/smoke/.loop/QUEUE.md
+LOOP_AGENT_CMD='touch smoke.done' ./loop.sh run /tmp/smoke/.loop/QUEUE.md --repo /tmp/smoke --max-ticks 1
 ```
 
 Scaffold the default skills into a new project:
 
 ```bash
-./knack skills init --target /path/to/project
+cd /path/to/new-project
+/path/to/knack skills init
 ```
 
 ## How it works
 
 1. The runner reads the first `Status: pending` work unit from `QUEUE.md`.
-2. It marks the unit `in_progress` and invokes a fresh agent context (`pi -p --no-session` by default, or `LOOP_AGENT_CMD`, or the unit's `Agent:` override) with the worker prompt and the unit.
-3. The worker does the work and exits. It does **not** self-certify.
+2. It marks the unit `in_progress` and invokes a fresh agent context with the worker prompt and the unit.
+3. The worker implements the unit and exits. It does **not** self-certify.
 4. The runner executes the unit's `Verify` command outside the worker.
 5. On success: the unit is marked `done` and evidence is appended.
 6. On failure: the unit is marked `verify_failed` or `no_progress`, evidence is appended, and the loop stops or retries once.
 7. The loop halts on: max ticks reached with pending work, two no-progress strikes, or a failed verify after a real change.
-8. On any non-clean exit, the runner writes `.loop/<name>/HANDOFF.md` with completed/in-progress/remaining units and the next action.
+8. On any non-clean exit, the runner writes `HANDOFF.md` with completed/in-progress/remaining units and the next action.
 
 ## Queue format
 
-````markdown
-# Loop Queue: <short name>
+Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, and `Verify:` fields. The `Verify:` command is the mechanically enforceable subset of `Done means:`; the gap between them is the review surface.
 
-Goal:
-<one paragraph describing the desired end state>
-
-Stop condition:
-`<command that proves the whole packet is done, if one exists>`
-
-## <outcome — what changes, observable>
-
-Agent: <optional — overrides LOOP_AGENT_CMD for this unit only>
-
-Why:
-<only if non-obvious — else omit>
-
-Read first:
-- <context the worker needs: ADR, area, or file>
-- <2–4 entries; context, not scope>
-
-Constraints:
-- <boundary or guardrail>
-- <what must stay true or what is out of bounds>
-
-Done means:
-- <observable condition>
-- <no regression condition>
-
-Verify:
-```bash
-<command that exits 0 on success>
-```
-
-Status: pending
-
-## <next outcome>
-...
-````
-
-Four things are mechanically parsed: the `## ` heading, the `Agent:` line (optional), the `Verify:` fenced block, and the `Status:` line. Everything else is for the agent and the human.
-
-## Planning
-
-Use the `plan` skill to convert messy intent into a queue. The skill prefers vertical slices and rejects horizontal phase plans ("Phase 1: types / Phase 2: wiring") but supports other work unit types: patch, investigation, bug fix, refactor.
-
-See `.agents/skills/plan/SKILL.md`.
+See [docs/queue-format.md](docs/queue-format.md) for the full protocol and an example.
 
 ## Agent-agnostic
 
 Override the worker invocation with `LOOP_AGENT_CMD`:
 
 ```bash
-LOOP_AGENT_CMD="pi -p --no-session" ./loop.sh run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD="claude --print" ./loop.sh run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD="codex" ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' ./loop.sh run .loop/<name>/QUEUE.md
 ```
 
 Per-unit override via the `Agent:` field in a work unit:
@@ -107,7 +66,7 @@ Per-unit override via the `Agent:` field in a work unit:
 ```markdown
 ## hard refactor of persistence layer
 
-Agent: pi -p --no-session --model glm-5.2
+Agent: pi -p --no-session --model glm-5.2 "$(cat "$LOOP_PROMPT_FILE")"
 ```
 
 ## CLI
@@ -115,7 +74,7 @@ Agent: pi -p --no-session --model glm-5.2
 The `knack` binary is a read-only validator and context provider. Build it from `cli/`:
 
 ```bash
-cd cli && go build -o knack .
+cd cli && go build -o ../knack .
 ```
 
 ### Commands
@@ -132,16 +91,18 @@ knack glossary check                Validate glossary.md term references
 knack instructions <artifact>       Print a template: work-unit | adr | glossary-entry
 ```
 
-All commands read from the current directory (run from the repo root). `skills init` is the only write operation — it scaffolds missing skills and leaves existing ones alone, so upgrading the CLI won't overwrite project customizations.
+All commands read from the current directory (run from the repo root). `skills init` is the only write operation — it scaffolds missing skills and leaves existing ones alone.
 
-### Scaffolding a new project
+## Documentation
 
-```bash
-cd /path/to/new-project
-/path/to/knack skills init
-```
+Full docs live in `docs/`:
 
-This writes the seven default skills (explore, plan, build, review, fix, decide, domain-modeling) into `.agents/skills/`. The project then owns them — modify, override, or delete as needed.
+- [Getting started](docs/getting-started.md)
+- [Loop reference](docs/loop.md)
+- [CLI reference](docs/cli.md)
+- [Skills guide](docs/skills.md)
+- [Queue format reference](docs/queue-format.md)
+- [FAQ](docs/faq.md)
 
 ## Files
 
@@ -152,12 +113,19 @@ This writes the seven default skills (explore, plan, build, review, fix, decide,
 - `decisions/` — durable ADRs.
 - `glossary.md` — ubiquitous language.
 - `examples/` — sample queues.
+- `docs/` — user documentation.
 - `tests/run.sh` — test harness.
 
 ## Testing
 
 ```bash
 ./tests/run.sh
+```
+
+For CLI-only work:
+
+```bash
+cd cli && go test ./...
 ```
 
 Uses `LOOP_AGENT_CMD` to substitute a fake worker, so no real `pi` calls are burned.
