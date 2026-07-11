@@ -35,7 +35,7 @@ Work cycles live in named subdirectories under `.loop/`. The directory name is t
 
 The `plan` skill writes to `.loop/<name>/QUEUE.md` instead of `.loop/QUEUE.md`. The loop is invoked as `./loop.sh run .loop/<name>/QUEUE.md`. Evidence and handoff are scoped to the cycle's directory automatically (the loop already derives them from the queue path).
 
-`knack status` aggregates across all work cycles in `.loop/` — it reports per-cycle counts and a total. `knack decisions check` already walks all of `.loop/` for `QUEUE.md` files, so it works unchanged.
+`knack status` aggregates across all work cycles in `.loop/` — it reports per-cycle counts and a total. `knack decisions check` already walks all of `.loop/` for `QUEUE.md` files, so it works unchanged. *(These commands were removed in [ADR-0011](0011-ship-as-skills-via-skills-sh-delete-cli.md); the status/coverage behavior they described is now loop behavior and self-check concepts in the skills. The named-cycles decision itself is unchanged.)*
 
 When a work cycle is complete and verified, its subdirectory is deleted. The human deletes it; the loop does not.
 
