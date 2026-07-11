@@ -37,6 +37,12 @@ cd /path/to/new-project
 /path/to/knack skills init
 ```
 
+Refresh the skills after a CLI upgrade (or `--force` to overwrite local changes):
+
+```bash
+/path/to/knack skills update
+```
+
 ## How it works
 
 1. The runner reads the first `Status: pending` work unit from `QUEUE.md`.
@@ -100,7 +106,8 @@ cd cli && go build -o ../knack .
 
 ```
 knack skills init [--target DIR]    Scaffold the seven default skills into DIR/.agents/skills/
-knack skills check [--dir DIR]      Validate skills in DIR (default: .agents/skills)
+knack skills check [--dir DIR]      Validate skills and report stale/modified via the manifest
+knack skills update [--target DIR] [--force]   Refresh scaffolded skills from the embedded source
 knack validate <queue-file>         Validate work-unit structure in a queue file
 knack decisions list                List all ADRs in decisions/
 knack decisions show NNNN           Print the full text of ADR NNNN
@@ -110,7 +117,7 @@ knack glossary check                Validate glossary.md term references
 knack instructions <artifact>       Print a template: work-unit | adr | glossary-entry
 ```
 
-All commands read from the current directory (run from the repo root). `skills init` is the only write operation — it scaffolds missing skills and leaves existing ones alone.
+All commands read from the current directory (run from the repo root). `skills init` and `skills update` are the write operations — `init` scaffolds missing skills and `update` refreshes unmodified ones when a newer embedded version ships (use `--force` to overwrite local changes).
 
 ## Documentation
 

@@ -1,6 +1,8 @@
 ---
 name: decide
 description: Use when an architectural ruling crystallizes during any phase — explore, plan, build, or review. Captures decisions as ADRs in `decisions/` so they persist after specs are deleted and code moves on. Triggers on "we decided to", "let's go with", "the ruling is", "why did we choose", "record this decision", or when a design choice with lasting consequences is made.
+metadata:
+  version: "1.0.0"
 ---
 
 # Decide

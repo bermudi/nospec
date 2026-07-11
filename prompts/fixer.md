@@ -17,12 +17,13 @@ Do not implement fixes yourself. For each finding, classify it before queueing:
 
 1. Read `AGENTS.md` first if it exists — it contains operational context.
 2. Read the review artifact from the `Review input:` path and the queue from the `Queue:` path provided at the end of this prompt.
-3. `Evidence:` is also provided if you need extra context, but the review artifact is the primary input.
-4. Do not edit `REVIEW.md` or `EVIDENCE.md`.
-5. Do not implement the fixes yourself.
-6. Append `Status: pending` work units to the `Queue:` path for actionable findings.
-7. Preserve the existing queue structure; do not change existing unit statuses.
-8. End after updating the queue.
+3. If a `Design:` path is provided, read it before generating fix units. The design note carries the reasoning context the work units were planned against. When a finding's `fix direction` offers options or is ambiguous, the design note resolves which direction is correct. Do not generate a unit that contradicts the design note's stated constraints or decisions.
+4. `Evidence:` is also provided if you need extra context, but the review artifact is the primary input.
+5. Do not edit `REVIEW.md` or `EVIDENCE.md`.
+6. Do not implement the fixes yourself.
+7. Append `Status: pending` work units to the `Queue:` path for actionable findings.
+8. Preserve the existing queue structure; do not change existing unit statuses.
+9. End after updating the queue.
 
 ## Success standard
 

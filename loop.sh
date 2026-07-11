@@ -236,6 +236,9 @@ Queue: $queue_abs
 Evidence: $evidence
 Review output: $review_file
 EOF
+  if [[ -f "$design_file" ]]; then
+    echo "Design: $design_file" >> "$out"
+  fi
 }
 
 write_fix_prompt() {
@@ -257,6 +260,9 @@ Queue: $queue_abs
 Evidence: $evidence
 Review input: $review_file
 EOF
+  if [[ -f "$design_file" ]]; then
+    echo "Design: $design_file" >> "$out"
+  fi
 }
 
 run_phase_agent() {
@@ -344,6 +350,7 @@ fi
 evidence="$queue_dir/EVIDENCE.md"
 handoff="$queue_dir/HANDOFF.md"
 review_file="$queue_dir/REVIEW.md"
+design_file="$queue_dir/DESIGN.md"
 no_progress_strikes=0
 
 write_handoff_on_exit() {

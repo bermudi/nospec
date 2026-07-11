@@ -48,6 +48,7 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "commands:")
 	fmt.Fprintln(os.Stderr, "  skills init [--target DIR]")
 	fmt.Fprintln(os.Stderr, "  skills check [--dir DIR]")
+	fmt.Fprintln(os.Stderr, "  skills update [--target DIR] [--force]")
 	fmt.Fprintln(os.Stderr, "  validate <queue-file>")
 	fmt.Fprintln(os.Stderr, "  decisions list|show NNNN|check")
 	fmt.Fprintln(os.Stderr, "  status")
@@ -65,6 +66,8 @@ func skillsCmd(args []string) {
 		skillsInitCmd(args[1:])
 	case "check":
 		skillsCheckCmd(args[1:])
+	case "update":
+		skillsUpdateCmd(args[1:])
 	default:
 		fmt.Fprintf(os.Stderr, "unknown skills command: %s\n", args[0])
 		skillsUsage()
@@ -77,6 +80,11 @@ func skillsUsage() {
 	fmt.Fprintln(os.Stderr, "subcommands:")
 	fmt.Fprintln(os.Stderr, "  init [--target DIR]")
 	fmt.Fprintln(os.Stderr, "  check [--dir DIR]")
+	fmt.Fprintln(os.Stderr, "  update [--target DIR] [--force]")
+}
+
+func embeddedSkillsFS() (iofs.FS, error) {
+	return iofs.Sub(embeddedSkills, "embedded/skills")
 }
 
 func skillsInitCmd(args []string) {
@@ -87,7 +95,7 @@ func skillsInitCmd(args []string) {
 		os.Exit(1)
 	}
 
-	skillFS, err := iofs.Sub(embeddedSkills, "embedded/skills")
+	skillFS, err := embeddedSkillsFS()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "init: embedded skills: %v\n", err)
 		os.Exit(1)
@@ -106,6 +114,40 @@ func skillsInitCmd(args []string) {
 	}
 }
 
+func skillsUpdateCmd(args []string) {
+	flags := flag.NewFlagSet("update", flag.ExitOnError)
+	target := flags.String("target", ".", "target directory for skill updates")
+	force := flags.Bool("force", false, "overwrite all skills regardless of local modifications")
+	if err := flags.Parse(args); err != nil {
+		fmt.Fprintf(os.Stderr, "update: %v\n", err)
+		os.Exit(1)
+	}
+
+	skillFS, err := embeddedSkillsFS()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "update: embedded skills: %v\n", err)
+		os.Exit(1)
+	}
+
+	report, err := skills.Update(skillFS, *target, *force)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "update: %v\n", err)
+		os.Exit(1)
+	}
+	for _, name := range report.Updated {
+		fmt.Printf("updated skill %s\n", name)
+	}
+	for _, name := range report.Scaffolded {
+		fmt.Printf("scaffolded new skill %s\n", name)
+	}
+	for _, name := range report.SkippedMod {
+		fmt.Printf("skipped modified skill %s (local changes preserved)\n", name)
+	}
+	for _, name := range report.Skipped {
+		fmt.Printf("skipped up-to-date skill %s\n", name)
+	}
+}
+
 func skillsCheckCmd(args []string) {
 	flags := flag.NewFlagSet("check", flag.ExitOnError)
 	dir := flags.String("dir", ".agents/skills", "directory containing skills")
@@ -119,6 +161,19 @@ func skillsCheckCmd(args []string) {
 		fmt.Fprintf(os.Stderr, "check: %v\n", err)
 		os.Exit(1)
 	}
+
+	embedded, err := embeddedSkillsFS()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "check: embedded skills: %v\n", err)
+		os.Exit(1)
+	}
+	versionFindings, err := skills.CheckVersioning(os.DirFS(*dir), embedded)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "check: %v\n", err)
+		os.Exit(1)
+	}
+	findings = append(findings, versionFindings...)
+
 	for _, f := range findings {
 		fmt.Println(f)
 	}

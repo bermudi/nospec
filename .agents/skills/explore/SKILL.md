@@ -1,6 +1,8 @@
 ---
 name: explore
 description: Use when investigating a codebase, grilling intent, or stress-testing ideas before planning work. The upstream phase of the loop — read code, challenge assumptions, surface constraints, and capture decisions as they crystallize. Triggers on "explore", "investigate", "let me understand", "what's going on with", "grill this", "stress-test", "help me decide", "what should I do next", or when the real problem isn't clear yet.
+metadata:
+  version: "1.0.0"
 ---
 
 # Explore

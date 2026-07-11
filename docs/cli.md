@@ -11,8 +11,9 @@ go build -o ../knack .
 
 | Command | Arguments | Description |
 |---|---|---|
-| `skills init` | `[--target DIR]` | Scaffold the seven default skills into `<DIR>/.agents/skills/` (default `.`). Skips existing skills. |
-| `skills check` | `[--dir DIR]` | Validate skills in `DIR` (default `.agents/skills`). |
+| `skills init` | `[--target DIR]` | Scaffold the seven default skills into `<DIR>/.agents/skills/` (default `.`). Skips existing skills. Writes the manifest and `.gitignore` patterns. |
+| `skills check` | `[--dir DIR]` | Validate skills in `DIR` (default `.agents/skills`). Also reports modified and stale skills via the manifest. |
+| `skills update` | `[--target DIR] [--force]` | Refresh scaffolded skills from the embedded source when a newer version ships. With `--force`, overwrite locally modified skills too. |
 | `validate` | `<queue-file>` | Validate work-unit structure in a queue. |
 | `decisions list` | | List all ADRs in `decisions/`. Superseded ADRs show the number that replaced them. |
 | `decisions show` | `NNNN` | Print the full ADR with that number. |
@@ -40,6 +41,26 @@ go build -o ../knack .
 cd /path/to/project
 /path/to/knack skills init
 ```
+
+`skills init` writes a manifest to `.agents/skills/MANIFEST.json` recording each
+scaffolded skill's `name`, `version` (read from its frontmatter), and a SHA-256
+content `hash` of the whole skill directory. It also appends `.gitignore`
+patterns for disposable loop state (`.loop/**/QUEUE.md`, `.loop/**/HANDOFF.md`,
+`.loop/**/REVIEW.md`, `.loop/**/specs/`) into the target directory, idempotently.
+
+### Refresh skills after a CLI upgrade
+
+```bash
+/path/to/knack skills update            # refresh only unmodified, stale skills
+/path/to/knack skills update --force    # overwrite every skill, modified or not
+```
+
+`skills update` compares each on-disk skill against the manifest and the embedded
+source. A skill is overwritten if it exists, is unmodified (its current hash matches
+the manifest), and the embedded version is newer than the manifest version. If a
+skill has local changes (hash differs), it is skipped unless `--force` is given.
+Absent skills are scaffolded. After updating, the manifest is rewritten with the
+new versions and hashes.
 
 ### Decision coverage
 
@@ -74,5 +95,6 @@ adrs: 7 active (7 total)
 ## Notes
 
 - All commands read from the current directory (run from the repo root unless a path is given).
-- `skills init` is the only write operation. It scaffolds missing skills and leaves existing ones alone, so upgrading the CLI will not overwrite project customizations.
+- `skills init`, `skills update` are the write operations. `init` scaffolds missing skills and writes the manifest plus `.gitignore` patterns; `update` refreshes unmodified skills when a newer embedded version ships, so upgrading the CLI does not overwrite project customizations. `--force` overrides that protection.
+- Each skill carries a `version` field in its frontmatter. `skills check` reports `modified:` for locally changed skills and `stale:` for skills whose embedded version is newer than the manifest version; run `skills update` to reconcile.
 - The CLI packages the default skills via `go:embed`. After editing `.agents/skills/` in the `knack` repo itself, run `cli/sync-skills.sh` and `diff -r .agents/skills cli/embedded/skills` to verify sync.

@@ -1,6 +1,8 @@
 ---
 name: fix
 description: Use when addressing review findings and feeding them back into the loop. Converts review findings into new verifiable work units in `.loop/<name>/QUEUE.md` and runs another loop pass. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need to be resolved.
+metadata:
+  version: "1.0.0"
 ---
 
 # Fix
@@ -13,6 +15,7 @@ The loop owns orchestration. When `fix` is invoked by the loop, stop after appen
 
 - `.loop/<name>/REVIEW.md` — structured findings from the `review` skill. Read it, but do not edit it.
 - `.loop/<name>/QUEUE.md` — the existing work queue. Read it before appending so new units preserve the queue's current structure and statuses.
+- `.loop/<name>/DESIGN.md` — if the prompt includes a `Design:` path, read it. It carries the reasoning context the work units were planned against. Use it to resolve ambiguity in a finding's `fix direction`: if the design note states a constraint or decision, the fix direction must align with it, not contradict it.
 
 `REVIEW.md` is expected to include `## Standards`, `## Intent`, `## Speculative`, and `## Summary` sections. The summary's actionable count is the loop's signal; the finding entries are the fix skill's input. Use the finding classification, confidence, and evidence when deciding whether to generate a work unit.
 

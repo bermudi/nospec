@@ -1,6 +1,8 @@
 ---
 name: review
 description: Use when reviewing completed work units or a finished queue. Two-axis adversarial review — standards (does the change follow codebase conventions?) and intent (does the change do what the work unit said?). Reviews against the actual codebase, not specs. Triggers on "review", "check this", "is this right", "what did we miss", "stress-test the implementation", or when work needs adversarial scrutiny before being accepted.
+metadata:
+  version: "1.0.0"
 ---
 
 # Review
@@ -24,6 +26,8 @@ Review is not a gate the loop enforces — it's a skill the user or agent invoke
 ## Before you review
 
 Read the work unit from `.loop/<name>/QUEUE.md` and the evidence from `.loop/<name>/EVIDENCE.md` for the unit you're reviewing. The evidence tells you what the verify command actually proved; the work unit tells you what was promised. Review against the actual codebase, not the specs.
+
+If the prompt includes a `Design:` path, read `.loop/<name>/DESIGN.md` before reviewing. It carries the reasoning context — external constraints, decisions, trade-offs — that the work units were planned against. Use it to ground your findings: a deviation from the design note's stated constraints is a stronger finding than one based on inference alone.
 
 ## Two-axis review
 
@@ -106,7 +110,7 @@ Each finding must include:
 - Confidence: `high`, `medium`, or `low`
 - Evidence: a `path/to/file:line` reference and a short quoted code excerpt
 - Finding: the issue in one or two sentences
-- Fix direction: the smallest useful direction for the `fix` skill, or `None` for non-actionable findings
+- Fix direction: a single, unambiguous direction for the `fix` skill, or `None` for non-actionable findings. Do not offer options or conditional branches — the fixer should not have to make a judgment call. If you see two valid approaches, pick one and state it. The design note (if provided) should help you decide which is correct.
 
 Use this finding shape:
 

@@ -1,6 +1,8 @@
 ---
 name: build
 description: Use when implementing one work unit from a `.loop/<name>/QUEUE.md` queue. The worker-side skill — read the unit, do the work, don't self-certify, end with a handoff. Triggers on "build", "implement", "apply this unit", "do the work", "run the loop", or when a work unit needs to be executed. Also use when the loop invokes the worker for a tick.
+metadata:
+  version: "1.0.0"
 ---
 
 # Build
