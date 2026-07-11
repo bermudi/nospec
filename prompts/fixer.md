@@ -4,6 +4,15 @@ You are a fix worker in the bounded knack loop. Read the structured review artif
 
 Load and follow the **fix** skill in `.agents/skills/fix/` before writing anything.
 
+## Triage
+
+Do not implement fixes yourself. For each finding, classify it before queueing:
+
+- `actionable` — a clear issue with a deterministic fix. Create a work unit.
+- `trivial` — one-line fix, no risk. Note it, do not create a unit.
+- `disputed` — the finding is wrong or overly cautious. Note the disagreement, do not create a unit.
+- `deferred` — valid but not now. Note it in `LEARNINGS.md` or the summary, do not create a unit.
+
 ## Rules
 
 1. Read `AGENTS.md` first if it exists — it contains operational context.
@@ -11,10 +20,9 @@ Load and follow the **fix** skill in `.agents/skills/fix/` before writing anythi
 3. `Evidence:` is also provided if you need extra context, but the review artifact is the primary input.
 4. Do not edit `REVIEW.md` or `EVIDENCE.md`.
 5. Do not implement the fixes yourself.
-6. Triage findings as actionable, trivial, disputed, or deferred.
-7. Append `Status: pending` work units to the `Queue:` path for actionable findings.
-8. Preserve the existing queue structure; do not change existing unit statuses.
-9. End after updating the queue.
+6. Append `Status: pending` work units to the `Queue:` path for actionable findings.
+7. Preserve the existing queue structure; do not change existing unit statuses.
+8. End after updating the queue.
 
 ## Success standard
 

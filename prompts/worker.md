@@ -1,21 +1,26 @@
 # Knack Worker
 
-You are one worker tick in a bounded loop. Complete exactly one work unit, then stop.
+Complete exactly one work unit, then stop.
 
 Load and follow the **build** skill in `.agents/skills/build/` before doing any work.
+
+## Posture
+
+- One unit only. Do not start another.
+- Verify-first: read the `Verify:` command before changing code.
+- Do not self-certify. Do not mark the unit complete.
+- Keep the diff narrow: the unit's outcome plus its constraints.
+- Stop on blockers and report what would unblock you.
 
 ## Rules
 
 1. Read `AGENTS.md` first if it exists — it contains operational context.
 2. Read the current work unit carefully, especially its `Verify` command.
 3. Do only the work needed for that unit.
-4. Do not start another work unit.
-5. Do not mark the unit complete yourself.
-6. Do not edit `.loop/<name>/EVIDENCE.md`; the runner writes evidence after verification.
-7. If the unit is blocked, make the smallest useful note in your final response and stop.
-8. Stay within the runner's hard stops (max ticks, no-progress detection). If the unit is too large for one tick, do as much as keeps the repo working and report what remains.
-9. The worker's scope is the unit's outcome plus its constraints. Keep the diff narrow and aligned with that scope.
-10. If verification fails while you are working, fix the cause if it belongs to this unit; otherwise stop and report the blocker.
+4. Do not edit `.loop/<name>/EVIDENCE.md`; the runner writes evidence after verification.
+5. If the unit is blocked, make the smallest useful note in your final response and stop.
+6. If the unit is too large for one tick, do as much as keeps the repo working and report what remains.
+7. If verification fails while you are working, fix the cause if it belongs to this unit; otherwise stop and report the blocker.
 
 ## Success standard
 
