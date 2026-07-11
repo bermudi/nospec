@@ -2,96 +2,74 @@
 
 ## Project
 
-**knack** is an agent-agnostic harness for agentic development. It replaces litespec.
+**knack** (name pending) is a composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. It ships as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional bash loop (`loop.sh`) provides unattended batch ("AFK") execution; everything else is interactive.
 
-It is three separate artifacts with three separate concerns:
-- **Skills** (`.agents/skills/`) — the workflow as procedural knowledge, agent-agnostic via agentskills.io
-- **Loop** (`loop.sh`) — external bash script, agent-agnostic, owns the verify gate
-- **CLI** (Go binary, `cli/`) — read-only validator + context provider. Packages the default skills via `go:embed`.
+It replaces litespec. Specs are disposable; code is the source of truth; decisions and skills are durable.
 
-Code is the source of truth. Specs are disposable. Decisions and skills are durable.
+`DESIGN.md` carries the full design; `decisions/` carries the rulings. The spine:
+
+- **ADR-0009** — skills are the product; the loop is an optional batch companion.
+- **ADR-0010** — skills transmit concepts and reasoning, not rules.
+- **ADR-0011** — ship via skills.sh; the Go CLI is deleted.
 
 ## Thesis
 
-Code is the source of truth. Specs rot. Plans are ephemeral coordination state. The reusable asset is procedural knowledge encoded as skills. The loop owns verification; the worker never self-certifies.
+Work with agents happens across a spectrum of **human attention**, not a pipeline:
 
-See `DESIGN.md` for the full design.
+- **Interactive** — human present, edits land directly.
+- **Plan-then-leave** — human present for the hard thinking, then the agent builds.
+- **Batch (AFK)** — human absent; the loop runs units behind a verify gate.
+
+Skills serve all three; the loop serves only batch. Skills are the product; the loop is an optional companion.
+
+Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (decomposition, process, depth) is concept-guided — the agent decides. Mechanical contracts (the verify gate runs outside the agent and must exit 0; hard stops) stay hard rules. The wiki is the cited source of the "why"; skills link to it rather than redefine its concepts.
 
 ## Current state
 
-The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop supports per-unit `Agent:` overrides, `LOOP_AGENT_CMD` for agent-agnosticism, opt-in review/fix orchestration via `--review`, and `.loop/<name>/HANDOFF.md` on non-clean exits. The skills cover the full explore → plan → build → review → fix flow plus two shared skills (decide, domain-modeling). The CLI (`cli/`) provides `skills init|check`, `validate`, `decisions list|show|check`, `status`, `glossary check`, and `instructions`. It embeds the default skills via `go:embed` and scaffolds them into target projects.
+- `skills/` — seven skills (explore, plan, build, review, fix, decide, domain-modeling). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. Content rework under ADR-0010 is in progress.
+- `loop.sh` — optional AFK batch runner. Agent-agnostic via `LOOP_AGENT_CMD`. Owns the verify gate. Supports per-unit `Agent:` overrides and opt-in review/fix via `--review`.
+- `prompts/` — worker / reviewer / fixer prompts the loop sends.
+- `decisions/` — durable ADRs. `glossary.md` — ubiquitous language: knack-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
+- No CLI, no compile step. Distribution is skills.sh's job.
 
 ## Core artifacts
 
-- `.loop/<name>/QUEUE.md` — disposable queue of verifiable work units.
-- `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved. Durable: keep it after deleting QUEUE.md so `decisions check` can still see which ADRs the completed cycle referenced.
-- `.loop/<name>/HANDOFF.md` — cross-session handoff (written on pause/stop).
-- `.loop/<name>/REVIEW.md` — structured review artifact written when `--review` is enabled. The loop reads only the actionable count.
-- `decisions/` — durable ADRs (architectural rulings, not current behavior).
-- `glossary.md` — durable ubiquitous language.
-- `LEARNINGS.md` — durable domain and problem insights (not operational, not rulings).
-- `.agents/skills/` — procedural knowledge (explore, plan, build, review, fix, decide, domain-modeling).
-- `AGENTS.md` — operational context (this file).
+**Durable** (persist, don't rot): `skills/`, `decisions/`, `glossary.md`, `LEARNINGS.md`, this file, and `.loop/<name>/EVIDENCE.md` (the append-only ledger kept after a cycle's `QUEUE.md` is deleted).
 
-## Skills
+**Disposable** (consumed then discarded): `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`.
 
-- **explore** — read codebase, grill intent, stress-test ideas. No artifacts except ADRs and glossary entries.
-- **plan** — decompose intent into verifiable work units. Writes `.loop/<name>/QUEUE.md`. Optionally writes `.loop/<name>/specs/` for big work.
-- **build** — implement one work unit. Don't self-certify. The loop owns the verify gate.
-- **review** — two-axis adversarial review (standards + intent). Findings become new work units.
-- **fix** — address review findings. Generates new work units, feeds back into the loop.
-- **decide** (shared) — capture architectural rulings as ADRs in `decisions/`. Used by explore, plan, build, review.
-- **domain-modeling** (shared) — manage `glossary.md`. Used by explore, plan, review.
+The load-bearing distinction: specs are disposable; code, decisions, and skills are durable. Treating disposable coordination state as durable is the spec-rot failure mode.
 
 ## Working conventions
 
-- Shell first for the loop. Go for the CLI. Markdown for skills.
-- Plain Markdown files over stores or schemas.
-- The worker never self-certifies. The runner owns verification.
-- A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge. The loop's backpressure is mechanical.
-- The runner enforces hard stops (max ticks, no-progress detection). The agent does one work unit per tick and reports what remains if it can't finish.
-- Review is opt-in. The loop runs review/fix only when invoked with `--review`; otherwise it runs build ticks only.
-- With `--review`, the loop invokes review after pending build units drain, reads only `REVIEW.md`'s actionable count, invokes fix when actionable findings exist, then runs another build pass for appended units. Judgment stays in the `review` and `fix` skills.
-- When the queue is complete and verified, the cycle's `.loop/<name>/QUEUE.md` is disposable. The human deletes it; the loop does not. `EVIDENCE.md` is the durable ledger — keep it so `decisions check` can still trace which ADRs the cycle referenced.
-- A work unit must leave the repo better if the loop stops immediately after it.
-- Work units are whatever shape the work is — not forced into "vertical slices."
-- `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic: pi, claude, codex, opencode, etc.).
-- `LOOP_REVIEW_CMD` and `LOOP_FIX_CMD` override review/fix phase invocations when `--review` is enabled. They default to `LOOP_AGENT_CMD`.
-- Per-unit `Agent:` field in QUEUE.md overrides `LOOP_AGENT_CMD` for one unit (model routing).
-- Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, and `Verify:` fields. `Done means:` is the acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap between them is the review surface.
-- `Read first:` is context, not scope — 2–4 entries of ADRs, code areas, or rulings.
-- `Constraints:` state boundaries. A constraint says what must stay true or what is out of bounds, never what to edit. If it names a file, it is "don't touch X" or "X's public API must not change," not "update X."
-- Work units are `## <outcome>` headers — no "Slice" prefix, no numbering. Vertical slice is one type of work unit, not the required format.
+- Ship as skills. `npx skills` is the package manager; skills.sh is the directory. Don't build distribution machinery.
+- Skills transmit concepts + reasoning (ADR-0010). Don't prescribe *when* to deploy a concept as a rule. Hard rules are only for mechanical contracts.
+- The worker never self-certifies. In batch mode the loop owns the verify gate.
+- A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge.
+- `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic). `LOOP_REVIEW_CMD` / `LOOP_FIX_CMD` override review/fix. Per-unit `Agent:` overrides for one unit.
+- Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
-- Operational gotchas go in `AGENTS.md`; domain/problem insights go in `LEARNINGS.md`.
+- Durable-artifact hygiene (orphan ADRs, stale glossary terms) is judgment — transmitted as concepts in the `decide` / `domain-modeling` skills, not enforced by gate commands.
+- Operational gotchas go here; domain/problem insights go in `LEARNINGS.md`.
 
 ## Verification
-
-After meaningful changes, run:
 
 ```bash
 ./tests/run.sh
 ```
 
-For CLI-only work, also run the Go tests directly:
-
-```bash
-cd cli && go test ./...
-```
+Exercises `loop.sh` (parsing, verify gate, handoff, review-fix) and validates skill frontmatter via `skills-ref` when available. There is no Go CLI; `go test` is gone.
 
 ## Lessons learned
 
-- **The loop works end-to-end with Devin as the worker.** `LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --model kimi-k2.7 --permission-mode dangerous'` drove all 5 CLI units to verified completion in one run. The `--permission-mode dangerous` flag is required for the worker to actually write code and run `go test` without hanging on approval prompts.
-- **The worker prompt names the skill explicitly (ADR-0007).** `prompts/worker.md` tells the worker to load the `build` skill by name and path; the loop passes the prompt via `LOOP_PROMPT_FILE`. Trigger-based discovery is not reliable enough across agents, so the loop does not rely on it.
-- **`go test ./...` as a verify command compounds.** Each unit's verify runs all prior units' tests too, so regressions across units are caught at the next unit's gate. This makes the verify gate stronger as the queue progresses.
-- **Review catches what verify can't.** The queue parser regex `^##\s*(.*)$` matched `###` subheadings as work units — a real bug that diverged from `loop.sh`'s behavior. `go test` passed because no fixture used `###`. Adversarial review against the actual codebase (comparing to `loop.sh`'s parser) found it. The fix: exclude `###` lines explicitly in `isUnitHeader`.
-- **Embedded skills must stay in sync with `.agents/skills/`.** `cli/sync-skills.sh` re-copies from `../.agents/skills/`. Run it after editing skills. `diff -r .agents/skills cli/embedded/skills` verifies sync.
-- **`go vet` doesn't catch unused test helpers.** `fileExists` in `queue_test.go` was dead code that `go vet` missed. Review caught it.
-- **Verify commands must be path-correct.** Unit 1 of the named-cycles queue had `cd cli && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `cli/` after the `cd`, not from the repo root. The worker did the work correctly; the verify command was wrong. The loop correctly caught the failure (mechanical gate working), but it was a false negative. Always test verify commands manually before writing them into a queue.
-- **Workers scope to the outcome plus constraints, not to a file list.** ADR-0005 replaced `Work:` with `Read first:` and `Constraints:`. The unit's scope is its outcome plus its constraints — the worker determines which files to change. The old lesson ("name every file in the work unit") is wrong under the new shape: naming files in constraints smuggles scope the same way `Work:` did. The first plan-shape cycle proved this — the constraint said "no `Work:` refs in skills, prompts, DESIGN.md, or AGENTS.md" and the worker touched exactly those files, leaving 9 other files (test fixtures, examples, README) with stale `Work:` fields. Prefer outcome-level constraints ("no artifact that teaches the format may reference `Work:`") over file-enumerated constraints.
-- **`decisions check` orphaned-ADR semantics resolved.** An ADR is orphaned if it is not referenced by any QUEUE.md (current work) or any EVIDENCE.md (completed work). The loop now writes the full unit body into EVIDENCE.md so ADR references survive QUEUE.md deletion. EVIDENCE.md is the durable ledger; QUEUE.md is disposable. An ADR that drove a completed cycle is not orphaned as long as its EVIDENCE.md ledger exists.
-- **Named work cycles enable concurrent work.** ADR-0004 gave each work cycle its own subdirectory under `.loop/`. The loop already supported this via the queue path argument — only convention (skills, docs) and `knack status` needed to change. Running `./loop.sh run .loop/<name>/QUEUE.md` is fully independent of other cycles.
-- **Skills carry a `version` field and a manifest for safe upgrades.** Each SKILL.md has `metadata.version` in frontmatter (per the agentskills.io spec — `version` is not a valid top-level field). `skills init` writes `.agents/skills/MANIFEST.json` (name, version, SHA-256 content hash per skill) and appends `.gitignore` patterns for disposable loop state idempotently. `skills check` reports `modified:` (hash differs from manifest) and `stale:` (embedded version newer than manifest). `skills update` refreshes only unmodified stale skills; `--force` overwrites everything. The manifest is the contract that lets `update` tell "locally customized" from "behind the shipped version" — never hand-edit it.
-- **Bump `metadata.version` when you change an embedded skill.** `sync-skills.sh` keeps `cli/embedded/skills` in sync with `.agents/skills/`, but version drift only reaches users via the manifest after a `skills update`. If you edit a skill's content without bumping `metadata.version`, existing scaffolds stay silent-stale (current hash matches manifest, so `check` won't flag it, yet it's behind). Bump on every content change.
-- **Negative-grep verifies must anchor on field syntax, not bare mentions.** The plan-shape cycle's verify used `! grep -rn 'Work:' ...` to prove the old field was gone. The same commit that landed the work also added this lessons-learned entry, which says "ADR-0005 replaced `Work:`..." — so the verify rotted the moment history got documented. Anchor negative greps to the field shape (`^Work:`) or to a syntax-specific pattern, not to any mention of the word. Otherwise the verify forbids the project from ever recording why the change was made.
-- **Design notes prevent fix-direction oscillation.** The skill-versioning cycle's review found `skills-ref` rejecting top-level `version` frontmatter. The fix direction offered two branches ("move under `metadata:`" or "add `version` to `skills-ref` allowed fields"). The fixer picked the wrong branch and generated a unit that moved `version` *back* to top-level — reverting a manual fix and re-breaking `skills-ref validate`. The loop oscillated: review round 2 found the same S1 finding. Root cause: the work unit format carries *what* to do but not *why*, so the fixer had no context to resolve the ambiguity. Fix: `.loop/<name>/DESIGN.md` carries cycle-level reasoning context (external constraints, decisions, trade-offs). The loop passes `Design:` to reviewer and fixer prompts. The review skill's `fix direction` must be a single unambiguous instruction, not a conditional — the fixer should never have to make a judgment call.
+- **The loop works end-to-end with Devin as the worker.** `LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --model kimi-k2.7 --permission-mode dangerous'` drove units to verified completion. `--permission-mode dangerous` is required for the worker to write code and run verify without hanging on approvals.
+- **The worker prompt names the skill explicitly (ADR-0007).** `prompts/worker.md` tells the worker to load the `build` skill by name and path; the loop passes it via `LOOP_PROMPT_FILE`. Trigger-based discovery isn't reliable enough across agents.
+- **A verify command run across units compounds.** Each unit's verify runs prior units' tests too, so regressions surface at the next gate.
+- **Review catches what verify can't.** The queue-parser regex `^##\s*(.*)$` once matched `###` subheadings as work units — a real bug tests missed because no fixture used `###`. Adversarial review against the actual codebase found it. Fix: exclude `###` in the unit-header check.
+- **The verify gate proves the mechanical contract, not the coherence contract.** Tests-green + no-dead-refs-in-code can coexist with a durable doc that contradicts the ADRs: AGENTS.md once claimed `glossary.md` held "knack-domain terms only" while the file was 21 wiki-concept redefinitions, and the README linked the AgenticWiki as a public backbone while it was a private repo. After changing rulings, separately check that durable docs (AGENTS.md, glossary.md, README, DESIGN.md) still cohere with them — the grep that proves "no dead CLI refs in code" deliberately excludes docs and will not catch this. Coherence is a separate gate from compilation.
+- **Verify commands must be path-correct.** A unit once had `cd subproj && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `subproj/` after the `cd`, not the repo root. The loop correctly caught the failure; the verify command was wrong. Always test verify commands manually before writing them into a queue.
+- **Workers scope to the outcome plus constraints, not a file list (ADR-0005).** A constraint states what must stay true or what is out of bounds — never what to edit. Naming files in constraints smuggles scope the same way the old `Work:` field did.
+- **Orphan-ADR semantics.** An ADR is orphaned if referenced by no `QUEUE.md` (current work) and no `EVIDENCE.md` (completed work). `EVIDENCE.md` is the durable ledger; `QUEUE.md` is disposable. (This is now a concept transmitted by the `decide` skill, not a CLI command — ADR-0011.)
+- **Named work cycles enable concurrent work (ADR-0004).** Each cycle gets `.loop/<name>/`; `./loop.sh run .loop/<name>/QUEUE.md` is independent of others.
+- **Negative-grep verifies must anchor on field syntax, not bare mentions.** A verify `! grep -rn 'Work:' ...` rotted the moment history documented "ADR-0005 replaced `Work:`". Anchor to the field shape (`^Work:`), not any mention of the word.
+- **Design notes prevent fix-direction oscillation.** The work-unit format carries *what* but not *why*, so a fixer once picked the wrong branch of an ambiguous fix direction and reverted a manual fix. `.loop/<name>/DESIGN.md` carries cycle-level reasoning; the review skill's `fix direction` must be a single unambiguous instruction, never a conditional.

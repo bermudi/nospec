@@ -1,85 +1,55 @@
 # Glossary
 
-## agent-loop
+Knack's domain-specific terms. For the underlying concepts — doc-rot, backpressure, tracer bullets, and the rest — see the [AgenticWiki](https://github.com/bermudi/AgenticWiki); this file defines only what's specific to this project. Wiki concepts are linked, not redefined (ADR-0010).
 
-A loop architecture described as "cron plus a decision-maker in the body" — for-each, not while, with non-negotiable hard stops.
+## work unit
 
-## agent-skills
+One chunk of work in a `QUEUE.md`, written as a `## <outcome>` header with `Read first:`, `Constraints:`, `Done means:`, and `Verify:`. The atom the loop processes.
 
-Reusable procedural knowledge packaged as skills; "a loop with no reusable skills inside it is just a while-true around a stranger."
+## verify gate
 
-## aiming-problem
+A work unit's deterministic `Verify:` command, executed by the loop *outside* the agent. Exits 0 or the unit fails. The mechanical backpressure — the worker never self-certifies.
 
-The risk that a verification signal measures a proxy the loop learns to game rather than the actual desired property.
+## tick
 
-## backpressure
+One loop iteration: read a pending unit, mark it in-progress, invoke the worker, run the verify gate, record evidence.
 
-Engineering the environment so wrong outputs are mechanically rejected, starting with hard gates.
+## cycle
 
-## code-as-agent-harness
+A named body of work under `.loop/<name>/` with its own queue, evidence, and handoff. Cycles are independent and can run concurrently.
 
-Code as the operational substrate — executable, inspectable, stateful.
+## queue
 
-## code-clarifies-spec
+`QUEUE.md` — the disposable, ordered list of work units for a cycle. Deleted when the work is done.
 
-The principle that implementing a spec surfaces decisions the spec did not anticipate.
+## evidence
 
-## compounding-loops
+`EVIDENCE.md` — the durable, append-only ledger of what each tick proved. Survives `QUEUE.md` deletion so a completed cycle still anchors its ADR references.
 
-Lateral coordination through shared durable files (artifacts, contracts, logs) used as shared memory.
+## handoff
 
-## context-files
+`HANDOFF.md` — a disposable cross-session snapshot (completed / in-progress / remaining) the loop writes on pause or non-clean exit.
 
-Empirically mixed evidence that LLM-generated overview dumps degrade performance while minimal developer-written operational files work.
+## ADR
 
-## decision-extraction
+A durable architectural ruling in `decisions/`. Records *why* the code is the way it is; survives spec deletion. Active unless marked superseded.
 
-The idea that the decisions a spec process produces are worth keeping, not the spec itself.
+## loop
 
-## doc-rot
+The optional AFK runner (`loop.sh`): runs a cycle's queue one tick at a time behind the verify gate, agent-agnostic via `LOOP_AGENT_CMD`. Skills serve interactive and plan-then-leave modes; the loop serves batch.
 
-Documentation worse than no documentation when it is stale; specs are ephemeral destination hints, not living documents.
+## Concepts (external)
 
-## evolving-context
+The theory behind these terms lives in the [AgenticWiki](https://github.com/bermudi/AgenticWiki). Load-bearing concepts:
 
-Agents progressively refine their own context — prompts, skills, memories, preferences.
-
-## harness-engineering
-
-The central challenge of semantic verification beyond executable feedback — the green test is not the full specification.
-
-## plan-disposability
-
-Treating plans as ephemeral coordination state, not contracts; a drifting plan is cheaper to regenerate than to salvage.
-
-## procedural-knowledge
-
-Knowledge encoded as reusable skills rather than one-off instructions.
-
-## ralph-loop
-
-A loop pattern with fresh context per tick, a plan file as shared state, and one task per iteration.
-
-## smart-zone-dumb-zone
-
-A loop design separating a thin "dumb" execution zone from a "smart" decision zone.
-
-## spec-code-triangle
-
-The bidirectional feedback loop between spec, tests, and code.
-
-## spec-driven-development
-
-A methodology explicitly "not for" simple prototypes and brownfield projects at scale.
-
-## steering-docs
-
-AGENTS.md as accumulated learnings rather than static configuration.
-
-## tracer-bullets
-
-A heuristic against horizontal implementation phases; build end-to-end thin slices instead.
-
-## verification-loop
-
-Executable enforcement (e.g., ContextCov at 88.3%) beating passive instructions (67%) and LLM reflection (50.3%).
+- [tracer bullets](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/tracer-bullets.md) — thin end-to-end slices for early feedback
+- [backpressure](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/backpressure.md) — engineer the environment to mechanically reject wrong outputs
+- [agent-loop](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/agent-loop.md) — cron plus a decision-maker; non-negotiable hard stops
+- [ralph-loop](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/ralph-loop.md) — fresh context per tick, plan file as shared state
+- [compounding-loops](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/compounding-loops.md) — coordination through shared durable files
+- [doc-rot](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/doc-rot.md) — stale docs are worse than none
+- [plan-disposability](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/plan-disposability.md) — plans are ephemeral coordination state, not contracts
+- [code-clarifies-spec](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/code-clarifies-spec.md) — implementing surfaces decisions the spec missed
+- [decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md) — keep the decisions, not the spec
+- [evolving-context](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/evolving-context.md) — agents refine their own context over time
+- [aiming-problem](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/aiming-problem.md) — verify the real property, not a gameable proxy

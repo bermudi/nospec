@@ -1,10 +1,17 @@
-# Design: litespec replacement
+# Design
 
-**Status:** drafted 2026-07-05. Open questions remain (see bottom). Named **knack** (ADR-0003).
+> **Reframe in progress (2026-07-11).** This doc predates ADR-0009 / 0010 / 0011. The authoritative current design lives in `decisions/`:
+> - **ADR-0009** — skills are the product; the loop is an optional batch companion.
+> - **ADR-0010** — skills transmit concepts and reasoning, not rules.
+> - **ADR-0011** — ship via [skills.sh](https://skills.sh); the Go CLI is deleted.
+>
+> Sections below that describe the CLI or the "three artifacts" (Skills/Loop/CLI) framing reflect the pre-reframe architecture and are being rewritten. The work-unit format, durable-vs-disposable, and flow sections remain substantially valid. Bare `[[wikilinks]]` throughout are pending conversion to real URLs.
+
+Named **knack** (ADR-0003; rename pending).
 
 ## One sentence
 
-litespec's flow + knack's engine + code as source of truth + specs disposable + decisions and skills durable, agent-agnostic throughout.
+A composable **skills collection** — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory — shipped as plain [agentskills.io](https://agentskills.io) skills via [skills.sh](https://skills.sh), with an optional bash loop for unattended batch work. Code is the source of truth; specs are disposable; decisions and skills are durable.
 
 ## Thesis
 
@@ -482,18 +489,4 @@ Every design decision cites a wiki concept. The wiki's position, synthesized:
 4. **~~How the loop invokes the agent with the right skill.~~** Resolved (ADR-0007): the loop names the skill explicitly — name *and path* — in the worker prompt (`prompts/worker.md`), which it passes to the agent via `LOOP_PROMPT_FILE`. Testing across the target agents (Devin, default `pi`) showed trigger-based agentskills.io discovery is not reliable enough, and the loop cannot confirm a skill was loaded; naming the path lets the worker read the skill file directly. No per-agent `--skill` flag is needed. See "On skill triggering" above.
 5. **~~Decision coverage check implementation.~~** Resolved: mechanical only — reference existence and orphan detection. See "Decision coverage gate" above. Still open: is this useful enough to justify the implementation cost, or should it be deferred to v2?
 
-## Migration from current state
 
-The repo currently contains:
-- `loop.sh` — the first-iteration loop, uses "slice" terminology
-- `.agents/skills/vertical-slice-planner/SKILL.md` — a planner skill, also slice-oriented
-- `tests/run.sh` — validates the skill
-
-Migration path (not yet executed):
-1. **Rename "slice" → "work unit"** in `loop.sh` and the planner skill. The QUEUE.md parser in `loop.sh` reads `## Slice N:` headers — change to `## <outcome>` headers (no numbered prefix, no "Slice" word).
-2. **Split the planner skill.** The current `vertical-slice-planner` becomes `plan`. The `explore`, `build`, `review`, `fix`, `decide`, and `domain-modeling` skills are new and need to be authored.
-3. **Rename `SLICELOOP_AGENT_CMD` → `LOOP_AGENT_CMD`** in `loop.sh` (already supported, just needs rename for agent-agnosticism).
-4. **Add per-work-unit `Agent:` override** parsing to `loop.sh`.
-5. **Add handoff file generation** to `loop.sh` (`.loop/<name>/HANDOFF.md` on pause/stop).
-6. **Build the CLI** from scratch in Go — no existing CLI code to migrate.
-7. **Update `tests/run.sh`** to validate the new skill set, not just the planner.

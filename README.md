@@ -1,147 +1,74 @@
 # knack
 
-A tiny loop-packet runner for agentic development.
+A composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. Shipped as plain [agentskills.io](https://agentskills.io) skills you install into any agent, with an optional bash loop for unattended batch work.
 
-Compiles human intent into disposable work unit queues, then runs one unit at a time behind deterministic verification gates. Ships with a read-only CLI that validates structure, tracks decisions, and scaffolds the default skill set into any project.
+It exists to replace `/plan` commands, spec-kit / openspec, and ad-hoc "ralph loops" with one pick-and-choose workflow you own and edit.
 
-## Why knack
+## Why
 
-AI agents eagerly build the wrong thing because they skip the hard part: understanding the problem. The verify gate in the loop catches the symptoms, but the bigger lever is the **explore** stance — grill the intent before writing any code. The `explore` skill is the entry point, not just another phase. The loop is for when you already know what to build.
+Most agent tooling prescribes process. These skills do the opposite: they transmit **concepts and the reasoning behind them** ([ADR-0010](decisions/0010-skills-transmit-concepts-not-rules.md)) and let the agent apply judgment. The theory is cited, not redefined — every concept links back to the [AgenticWiki](https://github.com/bermudi/AgenticWiki), which is what distinguishes this from a theory-light skills dump.
 
-## Quickstart
+Work happens across three levels of human attention, and the same skills serve all three:
 
-Build the CLI:
+- **Interactive** — you're present, edits land directly.
+- **Plan-then-leave** — you do the hard thinking, then walk away.
+- **Batch (AFK)** — the optional `loop.sh` runs a queue of units behind a verify gate while you're gone.
 
-```bash
-cd cli && go build -o ../knack .
-```
+([ADR-0009](decisions/0009-skills-are-the-product-loop-is-optional.md): skills are the product; the loop is optional.)
 
-Dry-run the smoke test:
-
-```bash
-./loop.sh run examples/smoke/.loop/smoke/QUEUE.md --dry-run
-```
-
-Run a real tick with a fake worker:
+## Install
 
 ```bash
-mkdir -p /tmp/smoke/.loop
-cp examples/smoke/.loop/smoke/QUEUE.md /tmp/smoke/.loop/QUEUE.md
-LOOP_AGENT_CMD='touch smoke.done' ./loop.sh run /tmp/smoke/.loop/QUEUE.md --repo /tmp/smoke --max-ticks 1
+npx skills add <owner>/<repo>
 ```
 
-Scaffold the default skills into a new project:
+[`npx skills`](https://github.com/vercel-labs/skills) auto-detects your agent(s) — Claude Code, Codex, Cursor, Pi, Gemini, Copilot, opencode, and [70+ more](https://skills.sh) — and installs into each one's native skills path. Update with `npx skills update`; remove with `npx skills remove`.
+
+> **Not on skills.sh yet.** This repo has no GitHub remote and no license, so the command above is a placeholder. Once both are set, it resolves to the real location.
+
+## The skills
+
+| skill | what it transmits |
+|---|---|
+| **explore** | read the codebase, grill intent, stress-test ideas *before* planning |
+| **plan** | decompose intent into a disposable `QUEUE.md` of verifiable work units |
+| **build** | implement one work unit; never self-certify (the loop owns the verify gate) |
+| **review** | two-axis adversarial review — standards + intent — against the actual codebase |
+| **fix** | turn review findings into new work units, feed them back |
+| **decide** *(shared)* | capture architectural rulings as ADRs in `decisions/`, inline as they crystallize |
+| **domain-modeling** *(shared)* | manage `glossary.md`, the project's ubiquitous language |
+
+`explore → plan → build → review → fix` is a default path, not a gate. `bug → plan → build → done` is equally valid. Skills compose.
+
+## Optional: unattended batch mode
+
+`loop.sh` is for AFK work — run a queue of units behind a deterministic verify gate while you walk away. Agent-agnostic:
 
 ```bash
-cd /path/to/new-project
-/path/to/knack skills init
+LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' \
+  ./loop.sh run .loop/<name>/QUEUE.md
 ```
 
-Refresh the skills after a CLI upgrade (or `--force` to overwrite local changes):
+Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix (`--review`) are covered in [docs/loop.md](docs/loop.md). Most work is interactive; reach for the loop when you actually want to leave.
 
-```bash
-/path/to/knack skills update
-```
+## The thinking
 
-## How it works
+- [AgenticWiki](https://github.com/bermudi/AgenticWiki) — the cited theory behind every concept.
+- [decisions/](decisions/) — durable ADRs. The spine: [0009](decisions/0009-skills-are-the-product-loop-is-optional.md) (skills are the product), [0010](decisions/0010-skills-transmit-concepts-not-rules.md) (concepts not rules), [0011](decisions/0011-ship-as-skills-via-skills-sh-delete-cli.md) (ship via skills.sh).
+- [DESIGN.md](DESIGN.md) — design doc, **partially stale**: ADRs 0009–0011 are authoritative; the body (three-artifacts framing, CLI section) is mid-reframe.
 
-1. The runner reads the first `Status: pending` work unit from `QUEUE.md`.
-2. It marks the unit `in_progress` and invokes a fresh agent context with the worker prompt and the unit.
-3. The worker implements the unit and exits. It does **not** self-certify.
-4. The runner executes the unit's `Verify` command outside the worker.
-5. On success: the unit is marked `done` and evidence is appended.
-6. On failure: the unit is marked `verify_failed` or `no_progress`, evidence is appended, and the loop stops or retries once.
-7. The loop halts on: max ticks reached with pending work, two no-progress strikes, or a failed verify after a real change.
-8. On any non-clean exit, the runner writes `HANDOFF.md` with completed/in-progress/remaining units and the next action.
-9. If `--review` is set, the runner invokes review after the queue drains, reads the actionable count from `REVIEW.md`, invokes fix when actionable findings exist, and runs another build pass for appended units.
-
-Review is opt-in. Without `--review`, the loop runs build ticks only; with it, review/fix are loop-orchestrated but still skill-owned.
-
-Before the loop: run `explore` to grill intent. The loop is for when you already know what to build.
-
-## Queue format
-
-Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, and `Verify:` fields. The `Verify:` command is the mechanically enforceable subset of `Done means:`; the gap between them is the review surface.
-
-See [docs/queue-format.md](docs/queue-format.md) for the full protocol and an example.
-
-## Agent-agnostic
-
-Override the worker invocation with `LOOP_AGENT_CMD`:
-
-```bash
-LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='opencode run --auto "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' ./loop.sh run .loop/<name>/QUEUE.md
-```
-
-Per-unit override via the `Agent:` field in a work unit:
-
-```markdown
-## hard refactor of persistence layer
-
-Agent: pi -p --no-session --approve --model glm-5.2 "$(cat "$LOOP_PROMPT_FILE")"
-```
-
-Opt into review/fix orchestration with `--review`:
-
-```bash
-LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' \
-LOOP_REVIEW_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' \
-LOOP_FIX_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' \
-./loop.sh run .loop/<name>/QUEUE.md --review --max-review-rounds 2
-```
-
-## CLI
-
-The `knack` binary is a read-only validator and context provider. Build it from `cli/`:
-
-```bash
-cd cli && go build -o ../knack .
-```
-
-### Commands
+## Repo layout
 
 ```
-knack skills init [--target DIR]    Scaffold the seven default skills into DIR/.agents/skills/
-knack skills check [--dir DIR]      Validate skills and report stale/modified via the manifest
-knack skills update [--target DIR] [--force]   Refresh scaffolded skills from the embedded source
-knack validate <queue-file>         Validate work-unit structure in a queue file
-knack decisions list                List all ADRs in decisions/
-knack decisions show NNNN           Print the full text of ADR NNNN
-knack decisions check               Flag orphaned ADRs and dangling references
-knack status                        Aggregate work-unit counts across all .loop/<name>/ cycles
-knack glossary check                Validate glossary.md term references
-knack instructions <artifact>       Print a template: work-unit | adr | glossary-entry
+skills/        the seven skills — the product
+loop.sh        optional AFK batch runner
+prompts/       worker / reviewer / fixer prompts the loop sends
+decisions/     durable ADRs
+glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
+LEARNINGS.md   durable domain/problem insights
+docs/          user docs (being updated post-reframe)
+tests/run.sh   test harness for loop.sh
 ```
-
-All commands read from the current directory (run from the repo root). `skills init` and `skills update` are the write operations — `init` scaffolds missing skills and `update` refreshes unmodified ones when a newer embedded version ships (use `--force` to overwrite local changes).
-
-## Documentation
-
-Full docs live in `docs/`:
-
-- [Getting started](docs/getting-started.md)
-- [Loop reference](docs/loop.md)
-- [CLI reference](docs/cli.md)
-- [Skills guide](docs/skills.md)
-- [Queue format reference](docs/queue-format.md)
-- [FAQ](docs/faq.md)
-
-## Files
-
-- `loop.sh` — the runner.
-- `cli/` — the Go CLI (validator, status, decisions, skills, instructions).
-- `prompts/worker.md` — one-tick worker instructions.
-- `.agents/skills/` — the seven default skills (canonical source; the CLI embeds copies).
-- `decisions/` — durable ADRs.
-- `glossary.md` — ubiquitous language.
-- `LEARNINGS.md` — durable insights (domain/problem learnings).
-- `examples/` — sample queues.
-- `docs/` — user documentation.
-- `tests/run.sh` — test harness.
 
 ## Testing
 
@@ -149,10 +76,6 @@ Full docs live in `docs/`:
 ./tests/run.sh
 ```
 
-For CLI-only work:
+## License
 
-```bash
-cd cli && go test ./...
-```
-
-Uses `LOOP_AGENT_CMD` to substitute a fake worker, so no real `pi` calls are burned.
+None yet. A license is required before publishing to skills.sh.
