@@ -51,7 +51,9 @@ Superseded by: ADR-NNNN   # only if a later ADR replaces this one
 
 NNNN is a zero-padded sequence number. Look at `decisions/` for the next available number. If the directory doesn't exist, create it and start at `0001`.
 
-An ADR is *active* unless its `Status` is `superseded` (or it carries a `Superseded by:` line). `knack decisions check` treats superseded ADRs as exempt from the orphan gate — their replacement carries coverage.
+An ADR is *active* unless its `Status` is `superseded` (or it carries a `Superseded by:` line). A superseded ADR needs no work-unit coverage of its own — its replacement carries the coverage.
+
+An ADR is *orphaned* if no `QUEUE.md` (current work) or `EVIDENCE.md` (completed work) references it. When you write an ADR, thread a reference to it through a work unit so it stays covered; when you supersede one, carry that reference into the replacement. This is judgment, not a mechanical gate — read `decisions/` against the loop state and notice orphans yourself.
 
 ## Procedure
 
@@ -59,7 +61,7 @@ An ADR is *active* unless its `Status` is `superseded` (or it carries a `Superse
 2. Check `decisions/` for existing ADRs on the same topic. If one exists and the ruling changed, supersede it. This is a two-step link:
    - Mark the old ADR `Status: superseded` and add `Superseded by: ADR-NNNN`.
    - Write the new ADR with `Supersedes: ADR-NNNN` pointing back to the old one.
-   - The link must be mutual — both sides reference each other, or `knack decisions check` flags a broken chain.
+   - The link must be mutual — both sides reference each other. A one-sided link is a broken chain; fix it before moving on.
 3. Pick the next sequence number.
 4. Write the ADR using the format above. The title is the ruling itself ("Use SQLite for local state" not "Database choice").
 5. Keep it short. One page. The value is in the *why*, not the *what* — the code already shows the what.

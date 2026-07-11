@@ -287,7 +287,7 @@ assert_contains "$repo_review/review-count.txt" "2"
 assert_contains "$repo_review/app.txt" "fixed"
 
 if command -v skills-ref >/dev/null 2>&1; then
-  for skill_dir in "$root/.agents/skills"/*; do
+  for skill_dir in "$root/skills"/*; do
     if [[ -d "$skill_dir" ]]; then
       skills-ref validate "$skill_dir"
     fi

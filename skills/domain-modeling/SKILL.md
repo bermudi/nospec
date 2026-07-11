@@ -39,6 +39,7 @@ Alphabetical order. No categories, no nesting. Flat and scannable.
 - **A term is introduced** — a new domain concept surfaces that will recur in future work.
 - **A term is challenged** — someone asks "what does X mean here?" and the answer isn't obvious.
 - **A term is overloaded** — one word is doing too much work and should be split.
+- **A term has gone stale** — a defined term no longer appears in code, docs, or conversation. Remove the entry, or relink it to the wiki if it's a general concept rather than a project-specific one.
 
 Do **not** add:
 - Terms with no project-specific meaning (don't define "database" or "API")

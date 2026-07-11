@@ -226,7 +226,7 @@ write_review_prompt() {
     cat > "$out" <<'EOF'
 # Knack Reviewer
 
-Load and follow the **review** skill in `.agents/skills/review/`.
+Load and follow the **review** skill in `skills/review/`.
 Review the completed queue against the current repository state. Write the structured review artifact at the path provided below.
 EOF
   fi
@@ -250,7 +250,7 @@ write_fix_prompt() {
     cat > "$out" <<'EOF'
 # Knack Fixer
 
-Load and follow the **fix** skill in `.agents/skills/fix/`.
+Load and follow the **fix** skill in `skills/fix/`.
 Read the structured review artifact and append any actionable fix work units to the existing queue. Stop after updating the queue.
 EOF
   fi

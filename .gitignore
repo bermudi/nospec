@@ -1,6 +1,3 @@
-# built binary
-/knack
-
 # disposable loop state — EVIDENCE.md is durable and tracked
 /.loop/**/QUEUE.md
 /.loop/**/HANDOFF.md

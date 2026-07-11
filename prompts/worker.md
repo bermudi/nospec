@@ -2,7 +2,7 @@
 
 Complete exactly one work unit, then stop.
 
-Load and follow the **build** skill in `.agents/skills/build/` before doing any work.
+Load and follow the **build** skill in `skills/build/` before doing any work.
 
 ## Posture
 

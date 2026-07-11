@@ -2,7 +2,7 @@
 
 You are a review worker in the bounded knack loop. Review the completed queue against the current repository state, then stop.
 
-Load and follow the **review** skill in `.agents/skills/review/` before writing anything.
+Load and follow the **review** skill in `skills/review/` before writing anything.
 
 ## Success standard
 

@@ -2,7 +2,7 @@
 
 You are a fix worker in the bounded knack loop. Read the structured review artifact, triage the findings, and append any actionable fix work units to the existing queue, then stop.
 
-Load and follow the **fix** skill in `.agents/skills/fix/` before writing anything.
+Load and follow the **fix** skill in `skills/fix/` before writing anything.
 
 ## Triage
 
