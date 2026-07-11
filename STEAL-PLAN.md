@@ -14,7 +14,7 @@ This is the current map of `knack` — what exists and what is missing. Use it t
 - [x] Agent-agnostic invocation: `LOOP_AGENT_CMD`, `Agent:` override, `LOOP_PROMPT_FILE`
 - [x] Default `pi` fallback with `--approve`
 - [x] `HANDOFF.md` and `EVIDENCE.md` generation
-- [ ] Review-fix subloop: after build queue drains, run review, generate fix units, re-build, re-review, bounded by `--max-review-rounds` and `--max-ticks`
+- [x] Review-fix subloop: after build queue drains, run review, generate fix units, re-build, re-review, bounded by `--max-review-rounds` and `--max-ticks`
 
 ### CLI (`knack`)
 
@@ -35,7 +35,7 @@ This is the current map of `knack` — what exists and what is missing. Use it t
 - [x] `fix`
 - [x] `decide`
 - [x] `domain-modeling`
-- [ ] `review` and `fix` need loop-orchestrated integration: review writes `REVIEW.md`, fix consumes it
+- [x] `review` and `fix` loop-orchestrated integration: review writes `REVIEW.md`, fix consumes it
 
 ### Durable artifacts
 
@@ -60,7 +60,7 @@ This is the current map of `knack` — what exists and what is missing. Use it t
 - [ ] Unit 3 — Confidence calibration + pre-emit verification gate (review skill)
 - [ ] Unit 4 — `LEARNINGS.md` as a durable artifact
 - [ ] Unit 5 — "Explore first" as positioning
-- [ ] Unit 6 — Review-fix subloop orchestration
+- [x] Unit 6 — Review-fix subloop orchestration
 
 ---
 
