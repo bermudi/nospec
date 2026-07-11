@@ -296,14 +296,16 @@ cli/sync-skills.sh && diff -r .agents/skills cli/embedded/skills && cd cli && go
    - If actionable findings: run a fix worker with the `fix` skill and `REVIEW.md`. The fix worker appends new work units to `QUEUE.md`.
    - Re-run the build pass on the new units.
    - Re-run review.
-   - Stop when no actionable findings, `--max-review-rounds` is reached, `--max-ticks` is reached, or two consecutive rounds produce the same actionable findings.
+   - Stop when no actionable findings, `--max-review-rounds` is reached, `--max-ticks` is reached, or a review-round/tick limit is reached (the repeated-identical-actionable-findings stop is deferred; the round cap is the backstop).
 
 **Hard stops:**
-- `--max-ticks` total (build + review + fix rounds)
-- `--max-review-rounds` (default 1 or 2)
+- `--max-ticks` total build-tick budget across all review-fix rounds (build ticks only)
+- `--max-review-rounds` (default 2)
 - No actionable findings in a review pass
-- Repeated identical actionable findings (no progress)
 - Worker exits non-zero
+
+The following hard stop is deferred in this implementation (the round cap is the backstop):
+- Repeated identical actionable findings (no progress)
 
 **Agent routing:**
 - `LOOP_AGENT_CMD` (default) for build ticks
