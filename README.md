@@ -43,6 +43,9 @@ cd /path/to/new-project
 6. On failure: the unit is marked `verify_failed` or `no_progress`, evidence is appended, and the loop stops or retries once.
 7. The loop halts on: max ticks reached with pending work, two no-progress strikes, or a failed verify after a real change.
 8. On any non-clean exit, the runner writes `HANDOFF.md` with completed/in-progress/remaining units and the next action.
+9. If `--review` is set, the runner invokes review after the queue drains, reads the actionable count from `REVIEW.md`, invokes fix when actionable findings exist, and runs another build pass for appended units.
+
+Review is opt-in. Without `--review`, the loop runs build ticks only; with it, review/fix are loop-orchestrated but still skill-owned.
 
 ## Queue format
 
@@ -68,6 +71,15 @@ Per-unit override via the `Agent:` field in a work unit:
 ## hard refactor of persistence layer
 
 Agent: pi -p --no-session --approve --model glm-5.2 "$(cat "$LOOP_PROMPT_FILE")"
+```
+
+Opt into review/fix orchestration with `--review`:
+
+```bash
+LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' \
+LOOP_REVIEW_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' \
+LOOP_FIX_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' \
+./loop.sh run .loop/<name>/QUEUE.md --review --max-review-rounds 2
 ```
 
 ## CLI

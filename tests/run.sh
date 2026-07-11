@@ -169,6 +169,123 @@ assert_contains "$repo_lpf/.loop/QUEUE.md" "Status: done"
 test -f "$repo_lpf/captured-prompt.txt"
 assert_contains "$repo_lpf/captured-prompt.txt" "the test fixture reaches its verify condition"
 
+# Review-fix loop with fake build, review, and fix workers.
+repo_review="$tmp/repo-review"
+mkdir -p "$repo_review/.loop"
+cat > "$repo_review/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: review cycle
+
+Goal:
+Exercise build, review, fix, and review again.
+
+Stop condition:
+The generated app is fixed and review reports no actionable issues.
+
+## the initial build creates a reviewable app file
+
+Read first:
+- This queue file.
+
+Constraints:
+- Leave the bug for review to find.
+
+Verify:
+```bash
+test -f app.txt
+```
+
+Done means:
+- app.txt exists.
+
+Status: pending
+EOF
+
+cat > "$repo_review/build-worker.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if grep -q "the fix unit repairs the bug" "$LOOP_PROMPT_FILE"; then
+  printf 'fixed\n' > app.txt
+  echo "build fixed app"
+else
+  printf 'bug\n' > app.txt
+  echo "build created app with bug"
+fi
+EOF
+chmod +x "$repo_review/build-worker.sh"
+
+cat > "$repo_review/review-worker.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+count=0
+if [[ -f review-count.txt ]]; then
+  count=$(cat review-count.txt)
+fi
+count=$((count + 1))
+printf '%s\n' "$count" > review-count.txt
+
+actionable=1
+if [[ -f app.txt ]] && grep -qx 'fixed' app.txt; then
+  actionable=0
+fi
+
+cat > "$LOOP_REVIEW_FILE" <<EOF_REVIEW
+# Review: fake
+
+## Standards
+
+## Intent
+- actionable | high — app.txt must say fixed
+  evidence: app.txt:1
+
+## Speculative
+
+## Summary
+- actionable: $actionable
+- trivial: 0
+- disputed: 0
+- deferred: 0
+EOF_REVIEW
+echo "review actionable: $actionable"
+EOF
+chmod +x "$repo_review/review-worker.sh"
+
+cat > "$repo_review/fix-worker.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat >> "$LOOP_QUEUE_FILE" <<'EOF_QUEUE'
+
+## the fix unit repairs the bug
+
+Read first:
+- .loop/REVIEW.md
+
+Constraints:
+- Preserve the app file created by the first unit.
+
+Verify:
+```bash
+grep -qx fixed app.txt
+```
+
+Done means:
+- app.txt contains fixed.
+
+Status: pending
+EOF_QUEUE
+echo "fix appended unit"
+EOF
+chmod +x "$repo_review/fix-worker.sh"
+
+LOOP_AGENT_CMD="$repo_review/build-worker.sh" \
+  LOOP_REVIEW_CMD="$repo_review/review-worker.sh" \
+  LOOP_FIX_CMD="$repo_review/fix-worker.sh" \
+  "$root/loop.sh" run "$repo_review/.loop/QUEUE.md" --review --max-ticks 2 >/tmp/loop-review.txt
+assert_contains "$repo_review/.loop/QUEUE.md" "## the fix unit repairs the bug"
+assert_contains "$repo_review/.loop/QUEUE.md" "Status: done"
+assert_contains "$repo_review/.loop/REVIEW.md" "- actionable: 0"
+assert_contains "$repo_review/review-count.txt" "2"
+assert_contains "$repo_review/app.txt" "fixed"
+
 if command -v skills-ref >/dev/null 2>&1; then
   for skill_dir in "$root/.agents/skills"/*; do
     if [[ -d "$skill_dir" ]]; then

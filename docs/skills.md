@@ -37,7 +37,11 @@ The `name` must match the directory name. The `description` is the trigger text 
 
 ## How the loop uses skills
 
-`loop.sh` does not read skills. It prepends `prompts/worker.md` to the current work unit and runs the worker. `prompts/worker.md` tells the worker to load the `build` skill by name and path (e.g. "Load and follow the **build** skill in `.agents/skills/build/`"). For other phases (explore, plan, review, fix), the human or the agent invokes the skill directly.
+`loop.sh` does not read skills. It prepends `prompts/worker.md` to the current work unit and runs the worker. `prompts/worker.md` tells the worker to load the `build` skill by name and path (e.g. "Load and follow the **build** skill in `.agents/skills/build/`").
+
+When `--review` is set, the loop also invokes review and fix workers after the build queue drains. Those prompts tell the worker to load the `review` or `fix` skill directly. The loop orchestrates the bounded review/fix subloop, reads the actionable count from `REVIEW.md`, and runs another build pass when fix appends pending units. The skills still own judgment: review decides what the findings are, and fix decides which findings become work units.
+
+Without `--review`, review and fix remain manual skill invocations.
 
 ## Customizing skills
 
@@ -53,7 +57,7 @@ Skills are not a rigid gate. The default flow is `explore → plan → build →
 ```text
 small fix → plan → build → done
 bug report → explore → plan → build → done
-big feature → explore → plan → build → review → fix → done
+big feature → explore → plan → build --review → review → fix → build → done
 ```
 
 Decisions are captured inline throughout the flow using the `decide` skill, and terms are updated using `domain-modeling`.

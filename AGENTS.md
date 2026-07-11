@@ -19,13 +19,14 @@ See `DESIGN.md` for the full design.
 
 ## Current state
 
-The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop supports per-unit `Agent:` overrides, `LOOP_AGENT_CMD` for agent-agnosticism, and writes `.loop/<name>/HANDOFF.md` on non-clean exits. The skills cover the full explore → plan → build → review → fix flow plus two shared skills (decide, domain-modeling). The CLI (`cli/`) provides `skills init|check`, `validate`, `decisions list|show|check`, `status`, `glossary check`, and `instructions`. It embeds the default skills via `go:embed` and scaffolds them into target projects.
+The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop supports per-unit `Agent:` overrides, `LOOP_AGENT_CMD` for agent-agnosticism, opt-in review/fix orchestration via `--review`, and `.loop/<name>/HANDOFF.md` on non-clean exits. The skills cover the full explore → plan → build → review → fix flow plus two shared skills (decide, domain-modeling). The CLI (`cli/`) provides `skills init|check`, `validate`, `decisions list|show|check`, `status`, `glossary check`, and `instructions`. It embeds the default skills via `go:embed` and scaffolds them into target projects.
 
 ## Core artifacts
 
 - `.loop/<name>/QUEUE.md` — disposable queue of verifiable work units.
 - `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved. Durable: keep it after deleting QUEUE.md so `decisions check` can still see which ADRs the completed cycle referenced.
 - `.loop/<name>/HANDOFF.md` — cross-session handoff (written on pause/stop).
+- `.loop/<name>/REVIEW.md` — structured review artifact written when `--review` is enabled. The loop reads only the actionable count.
 - `decisions/` — durable ADRs (architectural rulings, not current behavior).
 - `glossary.md` — durable ubiquitous language.
 - `.agents/skills/` — procedural knowledge (explore, plan, build, review, fix, decide, domain-modeling).
@@ -48,11 +49,13 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 - The worker never self-certifies. The runner owns verification.
 - A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge. The loop's backpressure is mechanical.
 - The runner enforces hard stops (max ticks, no-progress detection). The agent does one work unit per tick and reports what remains if it can't finish.
-- Review is opt-in. The loop does not run review automatically; the user invokes it when they want adversarial scrutiny.
+- Review is opt-in. The loop runs review/fix only when invoked with `--review`; otherwise it runs build ticks only.
+- With `--review`, the loop invokes review after pending build units drain, reads only `REVIEW.md`'s actionable count, invokes fix when actionable findings exist, then runs another build pass for appended units. Judgment stays in the `review` and `fix` skills.
 - When the queue is complete and verified, the cycle's `.loop/<name>/QUEUE.md` is disposable. The human deletes it; the loop does not. `EVIDENCE.md` is the durable ledger — keep it so `decisions check` can still trace which ADRs the cycle referenced.
 - A work unit must leave the repo better if the loop stops immediately after it.
 - Work units are whatever shape the work is — not forced into "vertical slices."
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic: pi, claude, codex, opencode, etc.).
+- `LOOP_REVIEW_CMD` and `LOOP_FIX_CMD` override review/fix phase invocations when `--review` is enabled. They default to `LOOP_AGENT_CMD`.
 - Per-unit `Agent:` field in QUEUE.md overrides `LOOP_AGENT_CMD` for one unit (model routing).
 - Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, and `Verify:` fields. `Done means:` is the acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap between them is the review surface.
 - `Read first:` is context, not scope — 2–4 entries of ADRs, code areas, or rulings.

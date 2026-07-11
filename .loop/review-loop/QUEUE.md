@@ -54,7 +54,7 @@ Verify:
 cd /home/daniel/build/knack && diff -r .agents/skills/review cli/embedded/skills/review && ./tests/run.sh
 ```
 
-Status: pending
+Status: done
 
 ## fix skill consumes REVIEW.md and appends fix units to QUEUE.md
 
@@ -79,7 +79,7 @@ Verify:
 cd /home/daniel/build/knack && diff -r .agents/skills/fix cli/embedded/skills/fix && ./tests/run.sh
 ```
 
-Status: pending
+Status: done
 
 ## loop.sh orchestrates bounded build-review-fix rounds
 
@@ -109,7 +109,7 @@ Verify:
 bash -n /home/daniel/build/knack/loop.sh && /home/daniel/build/knack/tests/run.sh
 ```
 
-Status: pending
+Status: done
 
 ## docs and AGENTS.md reflect the new loop behavior
 
@@ -137,4 +137,4 @@ Verify:
 cd /home/daniel/build/knack && ./tests/run.sh && cd cli && go test ./...
 ```
 
-Status: pending
+Status: done

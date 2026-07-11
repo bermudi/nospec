@@ -60,13 +60,13 @@ Run both axes. They can be parallel (two passes over the same diff) or sequentia
 
 ## Findings become input to the fix skill
 
-Review findings are not just notes — they are the input to the `fix` skill, which triages them and appends actionable ones as new work units in `.loop/<name>/QUEUE.md`.
+Review findings are not just notes — they are written to `.loop/<name>/REVIEW.md` as the input to the `fix` skill, which triages them and appends actionable ones as new work units in `.loop/<name>/QUEUE.md`.
 
 - **Trivial** findings (a typo, a missing newline) can be fixed inline during review.
 - **Actionable** findings are handed to the `fix` skill. Do not write the work units yourself; `fix` owns the triage and formatting.
 - **Disputed** or **deferred** findings are recorded in the review summary but not turned into units.
 
-The output of review is a findings summary, not a queue edit.
+The output of review is a structured review artifact, not a queue edit.
 
 ## What review is not
 
@@ -76,13 +76,46 @@ The output of review is a findings summary, not a queue edit.
 
 ## Output
 
-Summarize findings per axis:
+Write the structured review artifact to the requested review output path. In the loop this is `.loop/<name>/REVIEW.md`; if the prompt provides a different `Review output:` path, write there.
 
-- **Standards**: N findings (list them, or "no issues found")
-- **Intent**: N findings (list them, or "the change matches the unit's stated outcome")
+`REVIEW.md` must have exactly these top-level sections:
 
-Classify each finding as trivial / actionable / disputed / deferred.
+1. `## Standards`
+2. `## Intent`
+3. `## Speculative`
+4. `## Summary`
 
-Then either:
-- Hand actionable findings to the `fix` skill, which will triage and append work units to `.loop/<name>/QUEUE.md`, or
-- Report "no action needed" if the work is clean.
+Put standards-axis findings under `## Standards` and intent-axis findings under `## Intent`. Use `## Speculative` only for concerns that are plausible but not grounded enough to become a standards or intent finding. If a section is clean, write `No issues found.` under that section.
+
+Each finding must include:
+
+- A stable id, such as `S1`, `I1`, or `X1`
+- Classification: `trivial`, `actionable`, `disputed`, or `deferred`
+- Confidence: `high`, `medium`, or `low`
+- Evidence: a `path/to/file:line` reference or a short quoted code excerpt
+- Finding: the issue in one or two sentences
+- Fix direction: the smallest useful direction for the `fix` skill, or `None` for non-actionable findings
+
+Use this finding shape:
+
+```markdown
+- S1 | actionable | high
+  Evidence: `path/to/file:42`
+  Finding: The change violates the repo's existing queue parser behavior.
+  Fix direction: Align the parser with the shell loop's unit-header rules.
+```
+
+The `## Summary` section must include counts using this machine-readable shape:
+
+```markdown
+## Summary
+- standards: 1
+- intent: 0
+- speculative: 0
+- actionable: 1
+- trivial: 0
+- disputed: 0
+- deferred: 0
+```
+
+The `- actionable: N` line is the loop's continue/stop signal. Count only findings classified as `actionable`, including actionable speculative findings if you intentionally create one. If there are no actionable findings, write `- actionable: 0`.
