@@ -15,11 +15,13 @@ import (
 
 // ADR represents a single architectural decision record in decisions/.
 type ADR struct {
-	Number      string
-	Title       string
-	Status      string
-	Filename    string
-	Grandfather bool // true if the ADR carries a Grandfathered: line (ADR-0006)
+	Number       string
+	Title        string
+	Status       string
+	Filename     string
+	Grandfather  bool   // true if the ADR carries a Grandfathered: line (ADR-0006)
+	SupersededBy string // parsed from "Superseded by: ADR-NNNN" (empty if none)
+	Supersedes   string // parsed from "Supersedes: ADR-NNNN" (empty if none)
 }
 
 var (
@@ -49,11 +51,13 @@ func List(fsys fs.FS, dir string) ([]ADR, error) {
 		}
 		number, title := parseADRTitle(string(data), m[1])
 		adrs = append(adrs, ADR{
-			Number:      number,
-			Title:       title,
-			Status:      parseADRStatus(string(data)),
-			Filename:    e.Name(),
-			Grandfather: hasGrandfatherLine(string(data)),
+			Number:       number,
+			Title:        title,
+			Status:       parseADRStatus(string(data)),
+			Filename:     e.Name(),
+			Grandfather:  hasGrandfatherLine(string(data)),
+			SupersededBy: parseSupersededBy(string(data)),
+			Supersedes:   parseSupersedes(string(data)),
 		})
 	}
 	sort.Slice(adrs, func(i, j int) bool { return adrs[i].Number < adrs[j].Number })
@@ -74,10 +78,21 @@ func parseADRTitle(contents, fallbackNumber string) (string, string) {
 func parseADRStatus(contents string) string {
 	for _, line := range strings.Split(contents, "\n") {
 		if strings.HasPrefix(strings.TrimSpace(line), "Status:") {
-			return strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "Status:"))
+			val := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(line), "Status:"))
+			return stripComment(val)
 		}
 	}
 	return ""
+}
+
+// stripComment removes a trailing inline comment introduced by '#'.
+// It is used so that ADR fields can carry guidance such as
+// "Supersedes: ADR-0002   # only if this replaces an earlier ADR".
+func stripComment(s string) string {
+	if i := strings.Index(s, "#"); i >= 0 {
+		return strings.TrimSpace(s[:i])
+	}
+	return strings.TrimSpace(s)
 }
 
 // hasGrandfatherLine reports whether the ADR carries a Grandfathered: line.
@@ -90,6 +105,48 @@ func hasGrandfatherLine(contents string) bool {
 		}
 	}
 	return false
+}
+
+func parseSupersededBy(contents string) string {
+	for _, line := range strings.Split(contents, "\n") {
+		s := strings.TrimSpace(line)
+		if !strings.HasPrefix(s, "Superseded by:") {
+			continue
+		}
+		val := stripComment(strings.TrimPrefix(s, "Superseded by:"))
+		val = strings.TrimPrefix(strings.TrimPrefix(val, "ADR-"), "adr-")
+		if c, err := canonicalADRNumber(val); err == nil {
+			return c
+		}
+	}
+	return ""
+}
+
+func parseSupersedes(contents string) string {
+	for _, line := range strings.Split(contents, "\n") {
+		s := strings.TrimSpace(line)
+		if !strings.HasPrefix(s, "Supersedes:") {
+			continue
+		}
+		val := stripComment(strings.TrimPrefix(s, "Supersedes:"))
+		val = strings.TrimPrefix(strings.TrimPrefix(val, "ADR-"), "adr-")
+		if c, err := canonicalADRNumber(val); err == nil {
+			return c
+		}
+	}
+	return ""
+}
+
+// Active reports whether the ADR is in force.
+// Empty, accepted, or proposed statuses are active; superseded, deprecated,
+// or rejected are inactive. An ADR is also inactive if it carries a
+// "Superseded by:" line, since its replacement carries the coverage.
+func (a ADR) Active() bool {
+	if a.SupersededBy != "" {
+		return false
+	}
+	s := strings.ToLower(strings.TrimSpace(a.Status))
+	return s == "" || s == "accepted" || s == "proposed"
 }
 
 // Show returns the full contents of the ADR identified by number.
@@ -153,8 +210,28 @@ func Check(fsys fs.FS, decisionsDir string, loopFS fs.FS, loopDir string) ([]str
 		if adr.Grandfather {
 			continue
 		}
+		if !adr.Active() {
+			continue
+		}
 		if !adrReferenced(adr, allBody) {
 			findings = append(findings, fmt.Sprintf("orphaned ADR %s (%s): not referenced by any work unit or evidence ledger", adr.Number, adr.Filename))
+		}
+	}
+
+	for _, adr := range adrs {
+		if adr.SupersededBy != "" {
+			if !adrExists(adrs, adr.SupersededBy) {
+				findings = append(findings, fmt.Sprintf("broken supersede chain: ADR %s references missing %s", adr.Number, adr.SupersededBy))
+			} else if sup := findADR(adrs, adr.SupersededBy); sup == nil || sup.Supersedes != adr.Number {
+				findings = append(findings, fmt.Sprintf("one-sided supersede: ADR %s says superseded by %s, but %s does not reference it", adr.Number, adr.SupersededBy, adr.SupersededBy))
+			}
+		}
+		if adr.Supersedes != "" {
+			if !adrExists(adrs, adr.Supersedes) {
+				findings = append(findings, fmt.Sprintf("broken supersede chain: ADR %s references missing %s", adr.Number, adr.Supersedes))
+			} else if sup := findADR(adrs, adr.Supersedes); sup == nil || sup.SupersededBy != adr.Number {
+				findings = append(findings, fmt.Sprintf("one-sided supersede: ADR %s says supersedes %s, but %s does not reference it", adr.Number, adr.Supersedes, adr.Supersedes))
+			}
 		}
 	}
 
@@ -239,4 +316,13 @@ func adrExists(adrs []ADR, number string) bool {
 		}
 	}
 	return false
+}
+
+func findADR(adrs []ADR, number string) *ADR {
+	for i := range adrs {
+		if adrs[i].Number == number {
+			return &adrs[i]
+		}
+	}
+	return nil
 }

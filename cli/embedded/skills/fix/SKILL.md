@@ -24,7 +24,7 @@ The loop owns orchestration. When `fix` is invoked by the loop, stop after appen
    - **Actionable** — the finding identifies a real issue with a clear fix. Create a work unit.
    - **Trivial** — one-line fix, no risk. Note it in the summary, don't create a unit.
    - **Disputed** — the finding is wrong or the reviewer is being overly cautious. Note the disagreement in the summary, don't create a unit. Move on.
-   - **Deferred** — the finding is valid but not worth fixing now. Note it in the summary or a backlog, don't create a unit.
+   - **Deferred** — the finding is valid but not worth fixing now. Note it in the summary or `LEARNINGS.md`, don't create a unit.
 
 3. **Create work units** for actionable findings. Use the standard work unit format from the `plan` skill. Each unit must have one observable outcome and one deterministic verify command. Reference the source finding in `Read first:` by pointing to `REVIEW.md` plus any evidence paths from the finding.
 

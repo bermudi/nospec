@@ -62,6 +62,7 @@ Don't force exploration on work that doesn't need it. The flow is composable: `b
 - `AGENTS.md` — operational context, working conventions
 - `decisions/` — existing ADRs that constrain the solution space
 - `glossary.md` — shared vocabulary, if it exists
+- `LEARNINGS.md` — durable domain and problem insights
 - The codebase itself — focus on the areas the task touches
 - Existing tests — they show what the code is supposed to do
 

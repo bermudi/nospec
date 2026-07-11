@@ -4,6 +4,10 @@ A tiny loop-packet runner for agentic development.
 
 Compiles human intent into disposable work unit queues, then runs one unit at a time behind deterministic verification gates. Ships with a read-only CLI that validates structure, tracks decisions, and scaffolds the default skill set into any project.
 
+## Why knack
+
+AI agents eagerly build the wrong thing because they skip the hard part: understanding the problem. The verify gate in the loop catches the symptoms, but the bigger lever is the **explore** stance — grill the intent before writing any code. The `explore` skill is the entry point, not just another phase. The loop is for when you already know what to build.
+
 ## Quickstart
 
 Build the CLI:
@@ -46,6 +50,8 @@ cd /path/to/new-project
 9. If `--review` is set, the runner invokes review after the queue drains, reads the actionable count from `REVIEW.md`, invokes fix when actionable findings exist, and runs another build pass for appended units.
 
 Review is opt-in. Without `--review`, the loop runs build ticks only; with it, review/fix are loop-orchestrated but still skill-owned.
+
+Before the loop: run `explore` to grill intent. The loop is for when you already know what to build.
 
 ## Queue format
 
@@ -125,6 +131,7 @@ Full docs live in `docs/`:
 - `.agents/skills/` — the seven default skills (canonical source; the CLI embeds copies).
 - `decisions/` — durable ADRs.
 - `glossary.md` — ubiquitous language.
+- `LEARNINGS.md` — durable insights (domain/problem learnings).
 - `examples/` — sample queues.
 - `docs/` — user documentation.
 - `tests/run.sh` — test harness.

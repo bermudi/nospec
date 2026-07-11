@@ -175,7 +175,7 @@ This is the [[plan-disposability]] pattern — the handoff is a snapshot of coor
 ### What the loop does NOT do
 
 - It does not validate work unit structure (that's the CLI's job).
-- It does not run review (that's a skill the agent loads).
+- It does not judge review findings or decide whether a finding is actionable. When `--review` is set, the loop *orchestrates* the review/fix subloop — invoking the `review` and `fix` workers and reading only the actionable count from `REVIEW.md` — but the judgment stays in the skills (ADR-0008). Without `--review`, review and fix are manual skill invocations.
 - It does not manage ADRs or glossary (that's the `decide` and `domain-modeling` skills' job).
 - It does not talk to the CLI unless explicitly configured to (e.g., `loop.sh run --validate-between-ticks`).
 
@@ -248,6 +248,9 @@ project/
 ├── glossary.md                  # DURABLE — ubiquitous language
 │                                # small, curated, doesn't rot the way specs do
 │
+├── LEARNINGS.md                 # DURABLE — domain and problem insights
+│                                # not operational (that's AGENTS.md); not rulings (that's decisions/)
+│
 └── src/                         # THE SOURCE OF TRUTH
     └── ...                      # code + tests are the real specification
 ```
@@ -258,6 +261,7 @@ project/
 - `src/` — the code. The source of truth.
 - `decisions/` — ADRs. They're about rulings, not current behavior. A decision made 6 months ago is still valid even if the code moved on — it explains *why* the code is the way it is.
 - `glossary.md` — ubiquitous language. Terms don't rot; they evolve deliberately.
+- `LEARNINGS.md` — domain and problem insights. Not operational (that's AGENTS.md); not rulings (that's decisions/). It captures what the codebase teaches you about the problem itself.
 - `AGENTS.md` — operational context. Build commands, conventions. Updated when things change.
 - `.agents/skills/` — procedural knowledge. The workflow itself. Evolves ([[evolving-context]]).
 - `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved. Durable so `decisions check` can trace which ADRs a completed cycle referenced after its QUEUE.md is deleted.
@@ -300,19 +304,24 @@ The key inversion from litespec: **specs are disposable, code is durable.** lite
      to capture ADRs and glossary entries — these are durable
    agent may write operational learnings to AGENTS.md (evolving-context)
         │
-4. REVIEW (human re-runs the agent, or runs it themselves, with review skill)
-   agent loads review skill
-   two-axis parallel review:
-     1. standards (coding conventions, codebase patterns)
-     2. intent (does the change do what the work unit said)
-   review against actual codebase, not against specs
-   findings become new work units appended to QUEUE.md
+4. REVIEW + FIX — two paths:
+
+   Manual (default): human invokes the review skill, then re-runs loop.sh on
+   the updated QUEUE.md. Same per-tick behavior as step 3.
+
+   Orchestrated (--review): the loop runs a bounded build → review → fix subloop
+   after the build queue drains (ADR-0008):
+     - loop invokes a review worker that writes .loop/<name>/REVIEW.md
+     - loop reads only the actionable count from REVIEW.md
+     - if actionable > 0: loop invokes a fix worker that appends pending units
+       to QUEUE.md, then re-runs the build pass and reviews again
+     - stops when actionable = 0, --max-review-rounds is hit, --max-ticks is
+       exhausted, or fix produces no new units
+   In both paths the review skill owns judgment (two-axis standards + intent
+   review against the actual codebase); the loop owns only orchestration.
+
         │
-5. FIX (human re-runs loop.sh on the updated QUEUE.md)
-   loop runs again on the new work units from review
-   same per-tick behavior as step 3
-        │
-6. DONE
+5. DONE
    .loop/<name>/ discarded (queue, evidence, handoff, specs)
    what remains: code, tests, decisions, glossary, skills, AGENTS.md
    the code IS the specification now

@@ -224,5 +224,3 @@ func TestValidateIgnoresSubheadings(t *testing.T) {
 func lines(ss ...string) string {
 	return strings.Join(ss, "\n")
 }
-
-

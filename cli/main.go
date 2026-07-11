@@ -186,7 +186,11 @@ func decisionsListCmd() {
 		os.Exit(1)
 	}
 	for _, adr := range adrs {
-		fmt.Printf("%s: %s (%s)\n", adr.Number, adr.Title, adr.Status)
+		if adr.SupersededBy != "" {
+			fmt.Printf("%s: %s (%s) [superseded by %s]\n", adr.Number, adr.Title, adr.Status, adr.SupersededBy)
+		} else {
+			fmt.Printf("%s: %s (%s)\n", adr.Number, adr.Title, adr.Status)
+		}
 	}
 }
 
@@ -229,7 +233,7 @@ func statusCmd(args []string) {
 	}
 	fmt.Printf("total: %d pending, %d done, %d failed, %d evidence\n",
 		r.Total.Pending, r.Total.Done, r.Total.Failed, r.Total.Evidence)
-	fmt.Printf("adrs: %d\n", r.ADRs)
+	fmt.Printf("adrs: %d active (%d total)\n", r.ActiveADRs, r.ADRs)
 }
 
 func glossaryCmd(args []string) {

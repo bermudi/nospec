@@ -58,6 +58,18 @@ The `Verify:` command is the mechanically enforceable subset of `Done means:`. T
 
 Run both axes. They can be parallel (two passes over the same diff) or sequential. The order doesn't matter — what matters is that each axis is evaluated independently, without the other's conclusions bleeding in.
 
+## Confidence and evidence
+
+Every finding must cite the specific `file:line` that motivates it and state a confidence level. Before you write a finding into the report, quote the code that motivates it. If you can't, it goes to the appendix, not the report.
+
+Use three confidence levels:
+
+- **high** — you read the specific code and can quote the line. Promoted to the report, handed to `fix`.
+- **medium** — pattern match, likely but not verified against the actual code. Promoted but flagged; `fix` treats it as worth investigating, not worth acting on blindly.
+- **low / uncitable** — you can't point to a specific line. **Not promoted.** Banished to `## Speculative`. Only surfaces if the user reads the appendix.
+
+Confidence is orthogonal to classification. A finding can be `actionable` + `high confidence`, or `deferred` + `low confidence`.
+
 ## Findings become input to the fix skill
 
 Review findings are not just notes — they are written to `.loop/<name>/REVIEW.md` as the input to the `fix` skill, which triages them and appends actionable ones as new work units in `.loop/<name>/QUEUE.md`.
@@ -92,7 +104,7 @@ Each finding must include:
 - A stable id, such as `S1`, `I1`, or `X1`
 - Classification: `trivial`, `actionable`, `disputed`, or `deferred`
 - Confidence: `high`, `medium`, or `low`
-- Evidence: a `path/to/file:line` reference or a short quoted code excerpt
+- Evidence: a `path/to/file:line` reference and a short quoted code excerpt
 - Finding: the issue in one or two sentences
 - Fix direction: the smallest useful direction for the `fix` skill, or `None` for non-actionable findings
 
@@ -100,10 +112,12 @@ Use this finding shape:
 
 ```markdown
 - S1 | actionable | high
-  Evidence: `path/to/file:42`
-  Finding: The change violates the repo's existing queue parser behavior.
-  Fix direction: Align the parser with the shell loop's unit-header rules.
+  evidence: `path/to/file:42` — "the quoted line or block that motivates this"
+  finding: The change violates the repo's existing queue parser behavior.
+  fix direction: Align the parser with the shell loop's unit-header rules.
 ```
+
+Promoted findings go under `## Standards` or `## Intent`. Speculative findings (low confidence or uncitable) go under `## Speculative` so they don't pollute the actionable report.
 
 The `## Summary` section must include counts using this machine-readable shape:
 

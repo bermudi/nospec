@@ -23,7 +23,10 @@ If you discover an architectural ruling while implementing — "we need to handl
 
 ## Capturing operational learnings
 
-If you learn something about how the project works — a build command, a test convention, a gotcha — that isn't already in `AGENTS.md`, add it. `AGENTS.md` is the living operational context. If it grows stale, the next agent session starts with worse information.
+If you learn something about how the project works, capture it in the right durable file:
+
+- **Operational gotchas** — build commands, test conventions, loop behavior, how to verify work — go in `AGENTS.md`. That's the living operational context.
+- **Domain or problem insights** — "X doesn't work because Y", "the parser has this surprising property" — go in `LEARNINGS.md`. That's the durable learning ledger.
 
 Don't add trivia. Add things that would have saved you time if you'd known them upfront.
 

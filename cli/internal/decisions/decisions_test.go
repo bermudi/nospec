@@ -207,7 +207,7 @@ func TestCheckByFilename(t *testing.T) {
 
 func TestCheckGrandfatheredADRNotOrphaned(t *testing.T) {
 	fsys := makeADRFS(map[string]string{
-		"decisions/0001-first.md": "# 0001: First\nStatus: accepted\nGrandfathered: predates the ledger (ADR-0006).\n",
+		"decisions/0001-first.md":  "# 0001: First\nStatus: accepted\nGrandfathered: predates the ledger (ADR-0006).\n",
 		"decisions/0002-second.md": "# 0002: Second\nStatus: accepted\n",
 		".loop/QUEUE.md": lines(
 			"## Unit",
@@ -244,6 +244,260 @@ func TestCheckGrandfatheredADRStillParsedByList(t *testing.T) {
 	}
 	if !adrs[0].Grandfather {
 		t.Fatalf("expected Grandfather=true, got false")
+	}
+}
+
+func TestListParsesSupersedeChain(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-first.md":  "# 0001: First\nStatus: superseded\nSuperseded by: ADR-0002\n",
+		"decisions/0002-second.md": "# 0002: Second\nStatus: accepted\nSupersedes: ADR-0001\n",
+	})
+	adrs, err := List(fsys, "decisions")
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	if len(adrs) != 2 {
+		t.Fatalf("expected 2 ADRs, got %d", len(adrs))
+	}
+	if adrs[0].SupersededBy != "0002" {
+		t.Fatalf("expected 0001.SupersededBy=0002, got %q", adrs[0].SupersededBy)
+	}
+	if adrs[1].Supersedes != "0001" {
+		t.Fatalf("expected 0002.Supersedes=0001, got %q", adrs[1].Supersedes)
+	}
+}
+
+func TestCheckSkipsSuperseded(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-old.md": "# 0001: Old\nStatus: superseded\nSuperseded by: ADR-0002\n",
+		"decisions/0002-new.md": "# 0002: New\nStatus: accepted\nSupersedes: ADR-0001\n",
+		".loop/QUEUE.md": lines(
+			"## Unit",
+			"",
+			"Implements ADR-0002.",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"",
+			"Status: pending",
+		),
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("expected no findings (superseded ADR skipped), got: %v", findings)
+	}
+}
+
+func TestCheckBrokenSupersedeChain(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-old.md": "# 0001: Old\nStatus: superseded\nSuperseded by: ADR-0099\n",
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %v", len(findings), findings)
+	}
+	if !strings.Contains(findings[0], "broken supersede chain") {
+		t.Fatalf("expected broken supersede chain finding, got: %v", findings)
+	}
+}
+
+func TestCheckOneSidedSupersede(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-old.md": "# 0001: Old\nStatus: superseded\nSuperseded by: ADR-0002\n",
+		"decisions/0002-new.md": "# 0002: New\nStatus: accepted\n",
+		".loop/QUEUE.md": lines(
+			"## Unit",
+			"",
+			"Implements ADR-0002.",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"",
+			"Status: pending",
+		),
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %v", len(findings), findings)
+	}
+	if !strings.Contains(findings[0], "one-sided supersede") {
+		t.Fatalf("expected one-sided supersede finding, got: %v", findings)
+	}
+}
+
+func TestActivePredicate(t *testing.T) {
+	cases := []struct {
+		status string
+		active bool
+	}{
+		{"", true},
+		{"accepted", true},
+		{"proposed", true},
+		{"superseded", false},
+		{"deprecated", false},
+		{"rejected", false},
+		{"Superseded", false},
+	}
+	for _, c := range cases {
+		adr := ADR{Status: c.status}
+		if got := adr.Active(); got != c.active {
+			t.Fatalf("Active(%q) = %v, want %v", c.status, got, c.active)
+		}
+	}
+}
+
+func TestActiveHonorsSupersededByLine(t *testing.T) {
+	if adr := (ADR{Status: "accepted", SupersededBy: "0002"}); adr.Active() {
+		t.Fatalf("accepted ADR with SupersededBy should be inactive")
+	}
+	if adr := (ADR{Status: "superseded", SupersededBy: ""}); adr.Active() {
+		t.Fatalf("superseded ADR should be inactive")
+	}
+	if adr := (ADR{Status: "accepted", SupersededBy: ""}); !adr.Active() {
+		t.Fatalf("accepted ADR with no SupersededBy should be active")
+	}
+}
+
+func TestCheckSupersededByLineSkipsOrphan(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-old.md": "# 0001: Old\nStatus: accepted\nSuperseded by: ADR-0002\n",
+		"decisions/0002-new.md": "# 0002: New\nStatus: accepted\nSupersedes: ADR-0001\n",
+		".loop/QUEUE.md": lines(
+			"## Unit",
+			"",
+			"Implements ADR-0002.",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"",
+			"Status: pending",
+		),
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 0 {
+		t.Fatalf("expected no findings (0001 skipped by SupersededBy line), got: %v", findings)
+	}
+}
+
+func TestCheckOneSidedSupersedeFromNew(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-old.md": "# 0001: Old\nStatus: accepted\n",
+		"decisions/0002-new.md": "# 0002: New\nStatus: accepted\nSupersedes: ADR-0001\n",
+		".loop/QUEUE.md": lines(
+			"## Unit",
+			"",
+			"Implements ADR-0002.",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"",
+			"Status: pending",
+		),
+		".loop/old-cycle/EVIDENCE.md": lines(
+			"## 2026-07-06T12:00:00 — Old unit",
+			"",
+			"Status: done",
+			"",
+			"Unit:",
+			"````markdown",
+			"## Old unit",
+			"",
+			"Read first:",
+			"- decisions/0001-old.md",
+			"",
+			"Verify:",
+			"```bash",
+			"true",
+			"```",
+			"````",
+			"",
+			"Verify output:",
+			"```text",
+			"ok",
+			"```",
+		),
+	})
+	findings, err := Check(fsys, "decisions", fsys, ".loop")
+	if err != nil {
+		t.Fatalf("Check failed: %v", err)
+	}
+	if len(findings) != 1 {
+		t.Fatalf("expected 1 finding, got %d: %v", len(findings), findings)
+	}
+	if !strings.Contains(findings[0], "one-sided supersede") {
+		t.Fatalf("expected one-sided supersede finding, got: %v", findings)
+	}
+}
+
+func TestListParsesSupersedeCaseSensitive(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-first.md":  "# 0001: First\nStatus: superseded\nSuperseded by: ADR-0002\n",
+		"decisions/0002-second.md": "# 0002: Second\nStatus: accepted\nSupersedes: ADR-0001\n",
+		"decisions/0003-lower.md":  "# 0003: Lower\nStatus: superseded\nsuperseded by: ADR-0002\n",
+	})
+	adrs, err := List(fsys, "decisions")
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	want := map[string]struct {
+		supersededBy string
+		supersedes   string
+	}{
+		"0001": {"0002", ""},
+		"0002": {"", "0001"},
+		"0003": {"", ""},
+	}
+	if len(adrs) != len(want) {
+		t.Fatalf("expected %d ADRs, got %d", len(want), len(adrs))
+	}
+	for _, a := range adrs {
+		w, ok := want[a.Number]
+		if !ok {
+			t.Fatalf("unexpected ADR %s", a.Number)
+		}
+		if a.SupersededBy != w.supersededBy || a.Supersedes != w.supersedes {
+			t.Fatalf("ADR %s: SupersededBy=%q Supersedes=%q, want %q/%q", a.Number, a.SupersededBy, a.Supersedes, w.supersededBy, w.supersedes)
+		}
+	}
+}
+
+func TestListParsesSupersedeWithInlineComment(t *testing.T) {
+	fsys := makeADRFS(map[string]string{
+		"decisions/0001-old.md": lines("# 0001: Old", "Status: superseded", "Superseded by: ADR-0002   # replaced by second"),
+		"decisions/0002-new.md": lines("# 0002: New", "Status: accepted", "Supersedes: ADR-0001   # replaces first"),
+	})
+	adrs, err := List(fsys, "decisions")
+	if err != nil {
+		t.Fatalf("List failed: %v", err)
+	}
+	if len(adrs) != 2 {
+		t.Fatalf("expected 2 ADRs, got %d", len(adrs))
+	}
+	if adrs[0].SupersededBy != "0002" {
+		t.Fatalf("expected 0001.SupersededBy=0002, got %q", adrs[0].SupersededBy)
+	}
+	if adrs[1].Supersedes != "0001" {
+		t.Fatalf("expected 0002.Supersedes=0001, got %q", adrs[1].Supersedes)
 	}
 }
 

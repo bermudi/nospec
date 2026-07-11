@@ -30,7 +30,9 @@ Do **not** write an ADR for:
 # NNNN: <title — the ruling, not the topic>
 
 Date: <YYYY-MM-DD>
-Status: accepted
+Status: accepted | superseded
+Supersedes: ADR-NNNN      # only if this replaces an earlier ADR
+Superseded by: ADR-NNNN   # only if a later ADR replaces this one
 
 ## Context
 
@@ -47,10 +49,15 @@ Status: accepted
 
 NNNN is a zero-padded sequence number. Look at `decisions/` for the next available number. If the directory doesn't exist, create it and start at `0001`.
 
+An ADR is *active* unless its `Status` is `superseded` (or it carries a `Superseded by:` line). `knack decisions check` treats superseded ADRs as exempt from the orphan gate — their replacement carries coverage.
+
 ## Procedure
 
 1. Recognize that a ruling just crystallized. If you're in explore, plan, build, or review and you just resolved a tension with lasting consequences, that's a decision.
-2. Check `decisions/` for existing ADRs on the same topic. If one exists and the ruling changed, supersede it (add `Status: superseded by NNNN` to the old one, write a new one).
+2. Check `decisions/` for existing ADRs on the same topic. If one exists and the ruling changed, supersede it. This is a two-step link:
+   - Mark the old ADR `Status: superseded` and add `Superseded by: ADR-NNNN`.
+   - Write the new ADR with `Supersedes: ADR-NNNN` pointing back to the old one.
+   - The link must be mutual — both sides reference each other, or `knack decisions check` flags a broken chain.
 3. Pick the next sequence number.
 4. Write the ADR using the format above. The title is the ruling itself ("Use SQLite for local state" not "Database choice").
 5. Keep it short. One page. The value is in the *why*, not the *what* — the code already shows the what.

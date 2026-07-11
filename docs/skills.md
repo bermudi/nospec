@@ -6,7 +6,7 @@ Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/
 
 | Skill | Purpose |
 |---|---|
-| `explore` | Investigate a codebase, grill intent, and stress-test ideas before planning. |
+| `explore` | **Entry point.** Investigate a codebase, grill intent, and stress-test ideas before planning. Read-only, no artifacts, reaches clarity before any `QUEUE.md` is written. |
 | `plan` | Convert intent into a disposable `QUEUE.md` of verifiable work units. |
 | `build` | Implement one work unit from `QUEUE.md`; do not self-certify. |
 | `review` | Run two-axis adversarial review (standards + intent) and generate findings. |

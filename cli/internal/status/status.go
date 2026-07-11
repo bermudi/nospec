@@ -20,9 +20,10 @@ type CycleStatus struct {
 
 // Report captures the snapshot printed by `knack status`.
 type Report struct {
-	Cycles []CycleStatus
-	Total  CycleStatus
-	ADRs   int
+	Cycles     []CycleStatus
+	Total      CycleStatus
+	ADRs       int
+	ActiveADRs int
 }
 
 // Generate walks .loop/ for cycle subdirectories, reads their QUEUE.md and
@@ -35,6 +36,11 @@ func Generate(fsys fs.FS) (Report, error) {
 		// No .loop/ — return zero counts with ADRs.
 		if adrs, adrErr := decisions.List(fsys, "decisions"); adrErr == nil {
 			r.ADRs = len(adrs)
+			for _, a := range adrs {
+				if a.Active() {
+					r.ActiveADRs++
+				}
+			}
 		}
 		return r, nil
 	}
@@ -72,6 +78,11 @@ func Generate(fsys fs.FS) (Report, error) {
 
 	if adrs, err := decisions.List(fsys, "decisions"); err == nil {
 		r.ADRs = len(adrs)
+		for _, a := range adrs {
+			if a.Active() {
+				r.ActiveADRs++
+			}
+		}
 	}
 	return r, nil
 }

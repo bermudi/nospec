@@ -55,6 +55,8 @@ const adrTemplate = `# NNNN: <title>
 
 Date: <YYYY-MM-DD>
 Status: accepted
+# Supersedes: ADR-NNNN      # if this replaces an earlier ADR
+# Superseded by: ADR-NNNN   # if a later ADR replaces this one
 
 ## Context
 

@@ -43,6 +43,15 @@ func TestInstructionsAdr(t *testing.T) {
 	if !strings.Contains(out, "Status: accepted") {
 		t.Fatalf("expected Status: accepted in adr template, got:\n%s", out)
 	}
+	if !strings.Contains(out, "# Supersedes: ADR-NNNN") {
+		t.Fatalf("expected commented Supersedes field in adr template, got:\n%s", out)
+	}
+	if !strings.Contains(out, "# Superseded by: ADR-NNNN") {
+		t.Fatalf("expected commented Superseded by field in adr template, got:\n%s", out)
+	}
+	if strings.Contains(out, "\nSupersedes: ADR-NNNN") || strings.Contains(out, "\nSuperseded by: ADR-NNNN") {
+		t.Fatalf("ADR template has Supersedes/Superseded by as active fields, got:\n%s", out)
+	}
 }
 
 func TestInstructionsGlossaryEntry(t *testing.T) {

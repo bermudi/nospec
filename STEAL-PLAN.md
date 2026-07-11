@@ -43,7 +43,7 @@ This is the current map of `knack` — what exists and what is missing. Use it t
 - [x] `decisions/` (7 ADRs)
 - [x] `glossary.md`
 - [x] `.agents/skills/`
-- [ ] `LEARNINGS.md` (STEAL-PLAN Unit 4)
+- [x] `LEARNINGS.md` (STEAL-PLAN Unit 4)
 
 ### Agent support
 
@@ -55,11 +55,11 @@ This is the current map of `knack` — what exists and what is missing. Use it t
 
 ### Patterns to steal
 
-- [ ] Unit 1 — Decision supersede-chaining + active-decisions surfacing (CLI)
-- [ ] Unit 2 — Decision supersede-chaining (decide skill + ADR template)
-- [ ] Unit 3 — Confidence calibration + pre-emit verification gate (review skill)
-- [ ] Unit 4 — `LEARNINGS.md` as a durable artifact
-- [ ] Unit 5 — "Explore first" as positioning
+- [x] Unit 1 — Decision supersede-chaining + active-decisions surfacing (CLI)
+- [x] Unit 2 — Decision supersede-chaining (decide skill + ADR template)
+- [x] Unit 3 — Confidence calibration + pre-emit verification gate (review skill)
+- [x] Unit 4 — `LEARNINGS.md` as a durable artifact
+- [x] Unit 5 — "Explore first" as positioning
 - [x] Unit 6 — Review-fix subloop orchestration
 
 ---

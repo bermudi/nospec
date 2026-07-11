@@ -29,6 +29,7 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 - `.loop/<name>/REVIEW.md` — structured review artifact written when `--review` is enabled. The loop reads only the actionable count.
 - `decisions/` — durable ADRs (architectural rulings, not current behavior).
 - `glossary.md` — durable ubiquitous language.
+- `LEARNINGS.md` — durable domain and problem insights (not operational, not rulings).
 - `.agents/skills/` — procedural knowledge (explore, plan, build, review, fix, decide, domain-modeling).
 - `AGENTS.md` — operational context (this file).
 
@@ -62,6 +63,7 @@ The loop (`loop.sh`), all seven skills, and the Go CLI are built. The loop suppo
 - `Constraints:` state boundaries. A constraint says what must stay true or what is out of bounds, never what to edit. If it names a file, it is "don't touch X" or "X's public API must not change," not "update X."
 - Work units are `## <outcome>` headers — no "Slice" prefix, no numbering. Vertical slice is one type of work unit, not the required format.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
+- Operational gotchas go in `AGENTS.md`; domain/problem insights go in `LEARNINGS.md`.
 
 ## Verification
 

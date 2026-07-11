@@ -14,9 +14,9 @@ go build -o ../knack .
 | `skills init` | `[--target DIR]` | Scaffold the seven default skills into `<DIR>/.agents/skills/` (default `.`). Skips existing skills. |
 | `skills check` | `[--dir DIR]` | Validate skills in `DIR` (default `.agents/skills`). |
 | `validate` | `<queue-file>` | Validate work-unit structure in a queue. |
-| `decisions list` | | List all ADRs in `decisions/`. |
+| `decisions list` | | List all ADRs in `decisions/`. Superseded ADRs show the number that replaced them. |
 | `decisions show` | `NNNN` | Print the full ADR with that number. |
-| `decisions check` | | Flag orphaned ADRs and dangling references. |
+| `decisions check` | | Flag orphaned ADRs, dangling references, and broken/one-sided supersede chains. |
 | `status` | | Aggregate work-unit counts across all `.loop/<name>/` cycles. |
 | `glossary check` | `[--file glossary.md]` | Check `glossary.md` term references. |
 | `instructions` | `<template>` | Print a template. `<template>` is `work-unit`, `adr`, or `glossary-entry`. |
@@ -47,7 +47,7 @@ cd /path/to/project
 ./knack decisions check
 ```
 
-An ADR is orphaned if it is not referenced by any `QUEUE.md` or `EVIDENCE.md` in `.loop/`. A dangling reference points to an ADR that does not exist.
+An ADR is orphaned if it is not referenced by any `QUEUE.md` or `EVIDENCE.md` in `.loop/`. A dangling reference points to an ADR that does not exist. A broken supersede chain points to a missing or non-mutual link between ADRs.
 
 ### Status across cycles
 
@@ -60,7 +60,7 @@ Output:
 ```text
 cycle go-cli: 1 pending, 2 done, 0 failed, 3 evidence
 total: 1 pending, 2 done, 0 failed, 3 evidence
-adrs: 7
+adrs: 7 active (7 total)
 ```
 
 ### Get a template

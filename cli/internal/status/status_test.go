@@ -69,6 +69,9 @@ func TestStatusCounts(t *testing.T) {
 	if r.ADRs != 2 {
 		t.Fatalf("expected ADR count 2, got %d", r.ADRs)
 	}
+	if r.ActiveADRs != 2 {
+		t.Fatalf("expected active ADR count 2, got %d", r.ActiveADRs)
+	}
 }
 
 func TestStatusMissingLoop(t *testing.T) {
@@ -85,6 +88,9 @@ func TestStatusMissingLoop(t *testing.T) {
 	}
 	if r.ADRs != 0 {
 		t.Fatalf("expected 0 ADRs, got %d", r.ADRs)
+	}
+	if r.ActiveADRs != 0 {
+		t.Fatalf("expected 0 active ADRs, got %d", r.ActiveADRs)
 	}
 }
 
@@ -153,6 +159,9 @@ func TestStatusMultipleCycles(t *testing.T) {
 	if r.ADRs != 1 {
 		t.Fatalf("expected ADR count 1, got %d", r.ADRs)
 	}
+	if r.ActiveADRs != 1 {
+		t.Fatalf("expected active ADR count 1, got %d", r.ActiveADRs)
+	}
 }
 
 func TestStatusFlatQueue(t *testing.T) {
@@ -188,6 +197,9 @@ func TestStatusFlatQueue(t *testing.T) {
 	if r.ADRs != 1 {
 		t.Fatalf("expected ADR count 1, got %d", r.ADRs)
 	}
+	if r.ActiveADRs != 1 {
+		t.Fatalf("expected active ADR count 1, got %d", r.ActiveADRs)
+	}
 }
 
 func TestStatusLoopWithNoSubdirs(t *testing.T) {
@@ -214,6 +226,30 @@ func TestStatusLoopWithNoSubdirs(t *testing.T) {
 	}
 	if r.ADRs != 1 {
 		t.Fatalf("expected ADR count 1, got %d", r.ADRs)
+	}
+	if r.ActiveADRs != 1 {
+		t.Fatalf("expected active ADR count 1, got %d", r.ActiveADRs)
+	}
+}
+
+func TestStatusMissingLoopWithDecisions(t *testing.T) {
+	fsys := makeStatusFS(map[string]string{
+		"decisions/0001-one.md":   "# 0001: One\nStatus: accepted\n",
+		"decisions/0002-two.md":   "# 0002: Two\nStatus: superseded\nSuperseded by: ADR-0001\n",
+		"decisions/0003-three.md": "# 0003: Three\nStatus: accepted\n",
+	})
+	r, err := Generate(fsys)
+	if err != nil {
+		t.Fatalf("Generate failed: %v", err)
+	}
+	if len(r.Cycles) != 0 {
+		t.Fatalf("expected 0 cycles, got %d", len(r.Cycles))
+	}
+	if r.ADRs != 3 {
+		t.Fatalf("expected 3 ADRs, got %d", r.ADRs)
+	}
+	if r.ActiveADRs != 2 {
+		t.Fatalf("expected 2 active ADRs, got %d", r.ActiveADRs)
 	}
 }
 
