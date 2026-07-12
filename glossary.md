@@ -51,5 +51,6 @@ The theory behind these terms lives in the [AgenticWiki](https://github.com/berm
 - [plan-disposability](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/plan-disposability.md) — plans are ephemeral coordination state, not contracts
 - [code-clarifies-spec](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/code-clarifies-spec.md) — implementing surfaces decisions the spec missed
 - [decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md) — keep the decisions, not the spec
+- [ubiquitous-language](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/ubiquitous-language.md) — the shared vocabulary that lets human and agent mean the same thing by the same word
 - [evolving-context](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/evolving-context.md) — agents refine their own context over time
 - [aiming-problem](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/aiming-problem.md) — verify the real property, not a gameable proxy

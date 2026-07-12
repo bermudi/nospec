@@ -1,19 +1,17 @@
 ---
 name: domain-modeling
-description: Use when domain terms surface during explore, plan, or review and need to be defined, challenged, or stress-tested against the project's ubiquitous language. Manages `glossary.md` — the project's shared vocabulary. Triggers on "what does X mean here", "are these the same concept", "let's define our terms", "that term is ambiguous", or when a domain concept is used inconsistently across a conversation or codebase.
+description: Use when domain terms surface during exploration, planning, or review and need to be defined, challenged, or stress-tested against the project's ubiquitous language. Manages `glossary.md` — the project's shared vocabulary. Triggers on "what does X mean here", "are these the same concept", "let's define our terms", "that term is ambiguous", or when a domain concept is used inconsistently across a conversation or codebase.
 ---
 
 # Domain Modeling
 
-Manage the project's ubiquitous language. Terms used in code, specs, conversations, and skills should mean the same thing everywhere. The glossary is the single source of truth for that shared meaning, and a durable part of the shared design concept.
+Manage the project's [ubiquitous language](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/ubiquitous-language.md) — the shared vocabulary that lets human and agent mean the same thing by the same word, in code, specs, conversation, and skills. A shared glossary is the protocol for precision between human and agent; without it, the agent drifts toward competing terminology and slop.
 
-This is a shared skill — called by explore, plan, and review. It is not a separate phase.
+This is a shared skill — called inline by `explore`, `plan`, and `review` whenever a term needs defining, in any attention-mode. It is not a separate phase. If you're exploring and a term is being used inconsistently, define it now, then continue.
 
 ## The glossary
 
-The glossary lives in `glossary.md` at the project root. It is a small, curated file — not an encyclopedia. Each entry defines one term in one or two sentences.
-
-If `glossary.md` doesn't exist, don't create one preemptively. Create it when the first term actually needs defining.
+The glossary lives in `glossary.md` at the project root. It is small and curated — not an encyclopedia. Each entry defines one term in one or two sentences, stating what it means *in this project*, not in general. If `glossary.md` doesn't exist, don't create one preemptively — create it when the first term actually needs defining.
 
 ## Format
 
@@ -29,40 +27,22 @@ If `glossary.md` doesn't exist, don't create one preemptively. Create it when th
 <...>
 ````
 
-Alphabetical order. No categories, no nesting. Flat and scannable.
+Alphabetical. No categories, no nesting. Flat and scannable.
 
 ## When to update the glossary
 
 - **A term is used inconsistently** — two parts of the codebase or conversation use the same word for different things.
-- **A term is introduced** — a new domain concept surfaces that will recur in future work.
+- **A term is introduced** — a new domain concept surfaces that will recur.
 - **A term is challenged** — someone asks "what does X mean here?" and the answer isn't obvious.
 - **A term is overloaded** — one word is doing too much work and should be split.
 - **A term has gone stale** — a defined term no longer appears in code, docs, or conversation. Remove the entry, or relink it to the wiki if it's a general concept rather than a project-specific one.
 
-Do **not** add:
-- Terms with no project-specific meaning (don't define "database" or "API")
-- Terms that appear once and won't recur
-- Terms that are obvious from the code itself
+Don't add terms with no project-specific meaning (don't define "database" or "API"), terms that appear once and won't recur, or terms obvious from the code itself.
 
 ## Stress-testing terms
 
-When a term feels slippery, stress-test it with edge-case scenarios:
-
-1. State the term and its current definition.
-2. Pose an edge case: "Is X a <term> if it <unusual condition>?"
-3. If the answer is unclear, the definition needs sharpening — not the edge case.
-4. Rewrite the definition until the edge case has a clear answer.
-5. If the term can't be sharpened, it may be two concepts masquerading as one. Split it.
-
-## Procedure
-
-1. Notice that a domain term is being used — either by you, the user, or in the codebase.
-2. Check `glossary.md` (if it exists). Is the term already defined?
-3. If yes — does the current usage match the definition? If not, either update the definition or correct the usage.
-4. If no — does this term warrant a glossary entry? (See "When to update" above.)
-5. If yes — add it. Keep it to one or two sentences. State the project-specific meaning, not the dictionary meaning.
-6. If the term is slippery, stress-test it before committing to a definition.
+When a term feels slippery, stress-test it with edge cases — the way ubiquitous-language practice road-tests definitions against concrete scenarios. Pose an edge case: "Is X still a `<term>` if it `<unusual condition>`?" If the answer is unclear, the definition needs sharpening, not the edge case. Rewrite it until the edge case has a clear answer. If it can't be sharpened, the term may be two concepts masquerading as one — split it.
 
 ## Delegation
 
-Other skills call this skill inline. If you're exploring a codebase and notice a term being used inconsistently, define it now, then continue exploring. Don't queue it.
+Other skills call this skill inline. A term that needs defining is defined now, not deferred.
