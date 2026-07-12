@@ -1,8 +1,6 @@
 ---
 name: domain-modeling
 description: Use when domain terms surface during explore, plan, or review and need to be defined, challenged, or stress-tested against the project's ubiquitous language. Manages `glossary.md` — the project's shared vocabulary. Triggers on "what does X mean here", "are these the same concept", "let's define our terms", "that term is ambiguous", or when a domain concept is used inconsistently across a conversation or codebase.
-metadata:
-  version: "1.0.0"
 ---
 
 # Domain Modeling

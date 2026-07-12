@@ -27,7 +27,7 @@ For each concept a skill teaches, it carries:
 
 - **What it is** — the concept (e.g., a tracer bullet is a thin end-to-end slice to get early integration feedback).
 - **Why it exists** — the failure mode it prevents (e.g., discovering the schema doesn't support the UI in week 3 instead of hour 1).
-- **A pointer to depth** — the wiki link. The wiki is the cited source of the "why"; skills do not redefine wiki concepts.
+- **A pointer to depth** — the wiki link. The skill carries an operational synopsis (what the concept is, locally, in this project's terms); the wiki carries the full theory, evidence, and elaboration. Summarize briefly; do not duplicate the full theory.
 - **Optionally, a reasoned default** — a default behavior for the common case, always accompanied by the reasoning for *when to override* it. Defaults are scaffolding, never mandates. A default without its override-reasoning is just a rule in disguise.
 
 The split that keeps the backbone intact:
@@ -37,7 +37,7 @@ The split that keeps the backbone intact:
 
 Concretely: the `plan` skill will **not** say "lead with a vertical slice, then go horizontal." It will transmit the decomposition concepts (tracer bullet, vertical slice, horizontal/breadth), link each to the wiki, state the failure mode each prevents, and stop. The agent chooses. This reconciles with — and generalizes — ADR-0005: per-unit *format* is free (0005); *decomposition* is concept-guided (this ADR). They are different axes the old docs conflated.
 
-The glossary is the same ruling applied to vocabulary: knack-domain terms (work unit, verify gate, tick) get defined; wiki concepts (doc-rot, ralph-loop, backpressure) get *linked*, never redefined. The glossary stops competing with the wiki.
+The glossary is the same ruling applied to vocabulary: knack-domain terms (work unit, verify gate, tick) get defined; wiki concepts (doc-rot, ralph-loop, backpressure) get a one-line local pointer plus a link — the full theory lives in the wiki, not duplicated here. The glossary stops competing with the wiki.
 
 ## Consequences
 

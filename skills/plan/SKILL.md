@@ -1,140 +1,103 @@
 ---
 name: plan
-description: Use when converting a software task, bug, cleanup, or vague human intent into a disposable `.loop/<name>/QUEUE.md` loop packet of verifiable work units. The planner picks a short, descriptive name for the cycle (e.g., `go-cli`, `parser-bug`).
-metadata:
-  version: "1.0.0"
+description: Use when decomposing a software task, bug, cleanup, or vague human intent into bounded, observable, independently-verifiable outcomes. When execution will use loop.sh, serialize them as a `.loop/<name>/QUEUE.md`; the planner picks a short name for the cycle (e.g., `parser-bug`).
 ---
 
 # Plan
 
-Convert intent into a `.loop/<name>/QUEUE.md` loop packet: a bounded queue of disposable, independently verifiable work units. Pick a short, descriptive name for the cycle (e.g., `go-cli`, `parser-bug`).
+Decompose work into bounded, observable outcomes — each one independently verifiable. That core is the same whether you're planning interactively with the human or producing a packet for unattended batch execution. Only the *serialization* differs: batch work is written as a `.loop/<name>/QUEUE.md` the loop runner consumes; interactive work need not be serialized at all.
 
-The goal is not to create durable specs. The goal is to give the loop runner work units that can be attempted one at a time and externally verified. When the work is done, the queue is deleted.
+A plan is **ephemeral coordination state, not a contract** — when it drifts, throw it away and regenerate from the codebase; salvaging a stale plan costs more than rewriting it ([plan-disposability](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/plan-disposability.md)). The goal is verifiable outcomes, not durable specs. When the work is done, the plan is deleted.
 
-## Entry points
+For a batch cycle, pick a short, descriptive name (`parser-bug`, `go-cli`) — it scopes the `.loop/<name>/` directory.
 
-You may enter plan from two places:
+## Decomposition concepts
 
-- **After explore** — the codebase has been read, intent has been grilled, decisions may already be captured as ADRs in `decisions/`, terms may be in `glossary.md`. Use that context. Don't re-derive what explore already established.
-- **Directly** — for small work where explore isn't needed. A bug fix, a patch, a small feature. Skip the ceremony.
+These are [leading words](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/leading-words.md) — dense phrases that shape how you reason about decomposition. Use the one that fits the work; don't force one shape onto everything.
 
-If you're entering directly and the work is large or greenfield (no existing codebase to ground against), consider producing disposable specs first (see "Big work" below).
+- **[Tracer bullet](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/tracer-bullets.md)** — a thin slice that crosses *all* layers end-to-end, to get real integration feedback early. Its purpose is to discover mismatches (schema vs. UI, contract vs. consumer) in hour one rather than week three. It earns its keep when there *is* an end-to-end path to prove; a mechanical migration or a one-line fix has nothing to trace.
+- **Vertical slice** — crosses enough layers to produce a user- or system-visible change. The same idea as a tracer bullet, emphasized for the depth of feedback.
+- **Horizontal breadth** — one change applied across a layer or family of cases. Efficient when the contract is already understood; its risk is delaying integration feedback when the contract is still uncertain. It can legitimately come first when a shared invariant or mechanical migration *is* the outcome.
 
-## When a queue already exists
+The tradeoff each carries is the reason to know them — not a rule for when to deploy them. Read the work, choose the decomposition that fits.
 
-If `.loop/<name>/QUEUE.md` already exists, read it before writing. If it is stale, doesn't match the current code, or no longer reflects the real goal, discard it and write a fresh queue. Plans are disposable coordination state; regenerating from the actual codebase is cheaper than salvaging a drifting plan.
+## The work unit
 
-## Work unit types
+A work unit is one observable outcome that can be verified. It carries:
 
-A work unit is whatever shape the work is. Pick the right type per unit:
+- **`Read first:`** — context the worker needs (ADRs, code areas, rulings). Context, *not* scope. Naming files-to-edit here smuggles in a script and the worker becomes a script-executor instead of an agent (ADR-0005). Point at the relevant areas; let the worker find the edits.
+- **`Constraints:`** — what must stay true or what is out of bounds. If it names a file, it's "don't touch X" or "X's public API must not change," never "update X." Constraints close the solution space; they don't prescribe the path through it.
+- **`Done means:`** — the acceptance criteria: what's observably true afterward.
+- **`Verify:`** — the mechanically enforceable subset of `Done means:`.
 
-- **vertical slice** — crosses enough layers to produce a user-visible or system-visible improvement. The default preference.
-- **patch** — small, localized fix. One change, one verify.
-- **investigation** — produces findings or ADRs, not necessarily code. Verify checks that the findings exist and are recorded.
-- **bug fix** — reproduce → fix → verify. The verify command must fail before the fix and pass after.
-- **refactor** — restructure without behavior change. Verify checks that existing tests still pass.
+The gap between `Done means:` and `Verify:` is the **review surface** — what the command can't check, review does. A unit whose outcome can't be captured as a deterministic verify plus a short acceptance list isn't ready; vague shape plus weak verify gives the worker nothing to aim at ([aiming-problem](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/aiming-problem.md)).
 
-"Vertical slice" is the preferred default, not a required format. The planner prefers slices and rejects horizontal phases, but a unit can be a patch, investigation, or bug fix when the work genuinely isn't sliceable.
+## Verification follows the outcome
 
-## Planning procedure
+Shape the verify from the nature of the change, not from a template:
 
-1. Restate the user's goal as an observable outcome.
-2. Identify the strongest deterministic verification command available now.
-3. Split work into units that each leave the repo better if the loop stops immediately after.
-4. Prefer vertical slices. Reject horizontal phases (see below).
-5. For every unit, pick its type from the taxonomy above.
-6. Keep the queue short enough for bounded execution (prefer 2-5 units) and within the runner's hard stops (max ticks, no-progress detection). If the work is larger, the loop will pause and write a handoff; the next session resumes from there.
-7. If no deterministic verification exists, make the first unit create or identify one.
-8. If a decision crystallizes during decomposition, capture it as an ADR (use the `decide` skill).
-9. If domain terms are ambiguous or inconsistent, define them (use the `domain-modeling` skill).
+- A **bug fix** is verified by a regression that *fails before* the fix and *passes after* — a test that already passes proves nothing about the bug.
+- A **refactor** is verified by existing behavior staying unchanged (existing tests still pass); if behavior could change, it isn't a refactor.
+- An **investigation** produces decision-relevant evidence — a finding that changes what to build next — not merely a file. For batch execution, mechanically verify the *observable* evidence that can be checked (the benchmark ran, the data was collected); the evidence's *relevance* is judgment, so it lives in `Done means:` and the review surface, not in the verify command. An investigation with no observable evidence to check isn't batch-runnable — run it interactively.
 
-## Valid work unit test
+These aren't categories to tag units with; they're reminders that the verify must actually probe the claimed outcome.
 
-A work unit is valid only if all are true:
+## Hard rules (mechanical contracts)
 
-- It has one observable outcome.
-- It has one verification command.
-- That verification command is deterministic and executable by the runner (not an LLM-as-judge).
-- It has a narrow scope.
-- Its constraints state what must stay true or what is out of bounds — never what to edit. If a constraint names a file, it is "don't touch X" or "X's public API must not change," not "update X."
-- It can leave the repo better if the loop stops immediately afterward.
-- It does not depend on future units to have value.
+Non-negotiable because they're mechanisms, not judgment:
 
-A unit whose outcome cannot be captured by a deterministic `Verify:` command plus a short `Done means:` list is not ready. Vague shape plus weak verify gives the worker nothing to aim at.
+- **Every outcome needs credible verification** — name how it will be checked: a test, a type-check, running the thing, a manual check. This is universal.
+- **For batch execution specifically, `Verify:` must be deterministic and runnable by the runner, not an LLM-as-judge.** That is the [backpressure](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/backpressure.md) — the loop mechanically rejecting wrong output, outside the agent. Tests, type checks, builds; not "ask the model if it looks right." Interactive outcomes have no runner; they name their check but need not use a `Verify:` field or reduce it to a shell command.
+- **Batch serialization format** (only when execution uses loop.sh): `.loop/<name>/QUEUE.md`, one unit per `## <outcome>` header (no "Slice" prefix, no numbering), each with a `Status:` line starting at `pending`. The loop's parser requires this; interactive planning has no such constraint.
 
-## Horizontal phase rejection
+## Reasoned defaults
 
-Reject and rewrite units named after layers or activities:
+Defaults for the common case. Override when the reasoning says to — not because a rule told you to:
 
-- "Types"
-- "CLI wiring"
-- "Backend"
-- "Frontend"
-- "Tests"
-- "Refactor"
-- "Verification phase"
-- "Implement all X"
+- **Keep a batch queue short (2–5 units).** The loop has hard stops (max ticks, no-progress detection); a longer queue means it pauses mid-way and writes a handoff. If the work genuinely needs more, let it — the next session resumes from the handoff.
+- **Reach for a tracer bullet when there's an end-to-end path to prove.** When there isn't, don't — there's nothing to trace.
+- **If no deterministic verify exists yet, make the first outcome create one.** An outcome without a verify can't be checked.
 
-Rewrite them as end-to-end outcomes:
+## When to regenerate
 
-- Bad: `Add JSON result types`
-- Good: `validate --json reports one existing validation error as machine-readable JSON`
+If an existing `.loop/<name>/QUEUE.md` is stale, contradicts the current code, or no longer matches the real goal, discard it and write fresh. Regenerating from the actual codebase is cheaper than salvaging a drifting plan.
 
-- Bad: `Wire CLI flag`
-- Good: `validate --json and text mode report the same broken-link error on the same fixture`
+## The design note
 
-- Bad: `Write tests`
-- Good: `the regression fixture fails before the fix and passes after the fix`
+For cycles where the worker can't recover the reasoning from the codebase alone — an external spec constrains the shape, a trade-off was resolved, a decision spans units — write a one-page `.loop/<name>/DESIGN.md`: the *why* behind the units. **The trigger is not size; it is reasoning the worker cannot recover from the codebase.** That guard prevents both ceremony on every large task and missing context for a small but externally constrained one. The note serves the worker, the reviewer, and the fixer. It is disposable.
 
-This is a heuristic, not a gate. If a unit genuinely can't be vertical (a patch, an investigation), use the right type instead.
+## Capture decisions and terms inline
 
-## Design note
+If a ruling crystallizes while you plan, write the ADR now via the `decide` skill — don't queue it. If a domain term is ambiguous or inconsistent, define it now via `domain-modeling`. Decisions and terms are durable; the plan is not.
 
-For any cycle where external constraints, non-obvious decisions, or spec compliance applies across multiple units, write `.loop/<name>/DESIGN.md` before decomposing into units. This is reasoning context — the *why* behind the work — that the codebase alone can't provide.
+## Batch queue format
 
-The trigger is not size. The trigger is: **is there context the worker can't get from reading the codebase?** Examples:
-
-- An external spec or validator constrains the shape of the work (e.g., agentskills.io frontmatter rules enforced by `skills-ref`).
-- A decision was made during explore that affects multiple units (e.g., "use `metadata.version` not top-level `version` because the spec rejects unknown top-level fields").
-- A trade-off was resolved that the worker would otherwise have to re-derive (e.g., "we preserve old manifest hashes for modified skills because recomputing them erases the locally-customized signal").
-
-The design note is one page. It states the constraints, the decisions, and the reasoning. It is **disposable** — consumed during build, then deleted with the rest of `.loop/<name>/`. Code is the source of truth. The note exists to give the worker, reviewer, and fixer the reasoning context they need to make judgment calls correctly.
-
-Skip it for small work. A bug fix, a typo, a one-unit patch doesn't need a design note. If the work is greenfield or large, you may also produce `.loop/<name>/specs/proposal.md` (what and why, one page) for broader context — but the design note is the one that matters for judgment calls during build and fix.
-
-## Queue template
-
-Use this exact structure unless the target repo already has a loop convention:
+When execution will use loop.sh, serialize the outcomes as:
 
 ````markdown
 # Loop Queue: <short name>
 
 Goal:
-<one paragraph describing the desired end state>
+<one paragraph — the desired end state>
 
 Stop condition:
 `<command that proves the whole packet is done, if one exists>`
 
 ## <outcome — what changes, observable>
 
-Agent: <optional — overrides LOOP_AGENT_CMD for this unit only>
+Agent: <optional — overrides LOOP_AGENT_CMD for this unit>
 
-Why:
-<only if non-obvious — else omit>
+Why: <optional — only if non-obvious>
 
 Read first:
-- .loop/<name>/DESIGN.md (if it exists — cycle-level reasoning context)
-- <context the worker needs: ADR, area, or file>
-- <2–4 entries; context, not scope>
+- .loop/<name>/DESIGN.md (if it exists — cycle-level reasoning)
+- <ADRs, code areas, or rulings — context, not scope>
 
 Constraints:
-- <boundary or guardrail>
-- <what must stay true or what is out of bounds>
-- <if it names a file, it is "don't touch X" or "X's public API must not change", not "update X">
+- <what must stay true, or what is out of bounds>
 
 Done means:
 - <observable condition>
-- <no regression condition>
 
 Verify:
 ```bash
@@ -142,22 +105,8 @@ Verify:
 ```
 
 Status: pending
-
-## <next outcome>
-...
 ````
-
-### Field notes
-
-- **Header** is `## <outcome>` — no numbered prefix, no "Slice" word. The outcome itself is the title.
-- **Agent:** is optional. Omit unless this unit needs a different model or command than the global `LOOP_AGENT_CMD`.
-- **Why:** is optional. Fill in only when there's non-obvious context worth preserving. No padding.
-- **Read first:** is context, not scope. Two to four entries: ADRs, code areas, or rulings. Prefer areas and rulings over file enumerations. If `.loop/<name>/DESIGN.md` exists, list it first — it carries the reasoning context the worker needs for judgment calls.
-- **Constraints:** are boundaries. A constraint states what must stay true or what is out of bounds — never what to edit. If it names a file, it is "don't touch X" or "X's public API must not change," not "update X."
-- **Done means:** is the acceptance criteria — what must be observably true after the unit.
-- **Verify:** is the mechanically enforceable subset of `Done means:`. A unit whose outcome can't be captured by a deterministic verify command plus a short `Done means:` list isn't ready.
-- **Status:** starts as `pending`. The loop updates it to `in_progress`, `done`, `verify_failed`, `no_progress`, or `blocked`.
 
 ## Disposability
 
-`.loop/<name>/QUEUE.md` is disposable coordination state. When the work is done and verified, delete the cycle's `.loop/<name>/` subdirectory. What persists: code, tests, decisions in `decisions/`, glossary entries in `glossary.md`, ADRs, AGENTS.md. The queue is not an artifact — it's a scratchpad.
+`.loop/<name>/` is scratchpad, not artifact. When the work is done and verified, delete the cycle's subdirectory. What persists: code, tests, `decisions/`, `glossary.md`, `AGENTS.md`.

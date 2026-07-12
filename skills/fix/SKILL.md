@@ -1,8 +1,6 @@
 ---
 name: fix
 description: Use when addressing review findings and feeding them back into the loop. Converts review findings into new verifiable work units in `.loop/<name>/QUEUE.md` and runs another loop pass. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need to be resolved.
-metadata:
-  version: "1.0.0"
 ---
 
 # Fix
