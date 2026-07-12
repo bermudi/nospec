@@ -50,9 +50,9 @@ An ADR is *active* unless its `Status` is `superseded`. Superseding is a two-ste
 
 ## Orphan-ADR hygiene
 
-An ADR is *orphaned* if nothing references it — neither current work nor a record of completed work. In a batch cycle that's `QUEUE.md` (in flight) and `EVIDENCE.md` (completed); interactively, judge it against the change in flight and the codebase as it stands. When you write an ADR, thread a reference to it through the work so it stays covered; when you supersede one, carry that reference into the replacement.
+An ADR is *orphaned* when it no longer explains or constrains the system — when nothing about the current code or ongoing work depends on its ruling. A negative ruling ("we will not build X") can be alive with no citing work at all; a convention can constrain future work without driving an immediate change. References — a `QUEUE.md` or `EVIDENCE.md` in a batch cycle, the change in flight, the codebase, the docs — are *evidence* of relevance, not the definition (ADR-0012).
 
-This is judgment, not a gate — read `decisions/` against what's actually being done and notice orphans yourself.
+When you write an ADR, thread a reference to it through the work; that creates evidence of its relevance. When you supersede one, carry that reference into the replacement. This is judgment, not a gate — read `decisions/` against the system as it stands and notice orphans yourself.
 
 ## What makes a good ADR
 
@@ -60,7 +60,7 @@ This is judgment, not a gate — read `decisions/` against what's actually being
 - **Context names the alternatives.** If there were no real alternatives, it's not a decision.
 - **Decision is a statement, not a discussion.** "We will X because Y."
 - **Consequences are honest.** Include what gets harder, not just what gets easier.
-- **Short enough to read in 30 seconds.** If it's longer, the decision was probably compound — split it.
+- **Bias toward ADRs that can be understood quickly.** Split one only when it contains independently changeable rulings — not to hit a length target. Some single rulings genuinely need substantial context and consequences.
 
 ## Delegation
 

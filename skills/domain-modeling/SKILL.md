@@ -1,13 +1,13 @@
 ---
 name: domain-modeling
-description: Use when domain terms surface during exploration, planning, or review and need to be defined, challenged, or stress-tested against the project's ubiquitous language. Manages `glossary.md` — the project's shared vocabulary. Triggers on "what does X mean here", "are these the same concept", "let's define our terms", "that term is ambiguous", or when a domain concept is used inconsistently across a conversation or codebase.
+description: Use when domain terms surface during exploration, planning, building, or review and need to be defined, challenged, or stress-tested against the project's ubiquitous language. Manages `glossary.md` — the project's shared vocabulary. Triggers on "what does X mean here", "are these the same concept", "let's define our terms", "that term is ambiguous", or when a domain concept is used inconsistently across a conversation or codebase.
 ---
 
 # Domain Modeling
 
 Manage the project's [ubiquitous language](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/ubiquitous-language.md) — the shared vocabulary that lets human and agent mean the same thing by the same word, in code, specs, conversation, and skills. A shared glossary is the protocol for precision between human and agent; without it, the agent drifts toward competing terminology and slop.
 
-This is a shared skill — called inline by `explore`, `plan`, and `review` whenever a term needs defining, in any attention-mode. It is not a separate phase. If you're exploring and a term is being used inconsistently, define it now, then continue.
+This is a shared skill — called inline by `explore`, `plan`, `build`, and `review` whenever a term needs defining, in any attention-mode. It is not a separate phase. If a term is being used inconsistently, define it now, then continue.
 
 ## The glossary
 
@@ -15,19 +15,23 @@ The glossary lives in `glossary.md` at the project root. It is small and curated
 
 ## Format
 
+The glossary has two zones — keep them separate; don't flatten one into the other.
+
+**Project terms** — one `## <Term>` header per entry, one or two sentences stating what it means *in this project*, not in general:
+
 ````markdown
-# Glossary
+## work unit
 
-## <Term>
-
-<One to two sentences. What the term means in this project, not in general.>
-
-## <Another Term>
-
-<...>
+One chunk of work in a `QUEUE.md`... The atom the loop processes.
 ````
 
-Alphabetical. No categories, no nesting. Flat and scannable.
+**External concepts** — a `## Concepts (external)` section of one-line wiki pointers. Link, don't redefine (ADR-0010): the synopsis lives here, the full theory in the wiki.
+
+````markdown
+## Concepts (external)
+
+- [tracer bullets](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/tracer-bullets.md) — thin end-to-end slices for early feedback
+````
 
 ## When to update the glossary
 
@@ -35,7 +39,7 @@ Alphabetical. No categories, no nesting. Flat and scannable.
 - **A term is introduced** — a new domain concept surfaces that will recur.
 - **A term is challenged** — someone asks "what does X mean here?" and the answer isn't obvious.
 - **A term is overloaded** — one word is doing too much work and should be split.
-- **A term has gone stale** — a defined term no longer appears in code, docs, or conversation. Remove the entry, or relink it to the wiki if it's a general concept rather than a project-specific one.
+- **A term has gone stale** — it no longer belongs to the project's current domain model, or its definition no longer matches current usage. Remove the entry, or relink it to the wiki if it's a general concept rather than a project-specific one. Search results (code, docs, conversation) are evidence of staleness, not the test — a term can appear everywhere and still have a stale definition.
 
 Don't add terms with no project-specific meaning (don't define "database" or "API"), terms that appear once and won't recur, or terms obvious from the code itself.
 
