@@ -23,5 +23,6 @@ Naming the path — not just the name — removes dependence on each agent's dis
 ## Consequences
 
 - `prompts/worker.md` is the single place the worker skill is named; changing it means editing one prompt.
+- The `.agents/skills/build/` path in the example above was the layout at decision time; [ADR-0011](0011-ship-as-skills-via-skills-sh-delete-cli.md) relocated skills to `skills/` at the repo root, and the prompt now reads `skills/build/`. (That path resolves against the worker's cwd — the target repo — so it relies on the skills being installed there; making it absolute is a future loop.sh hardening, relevant once the project publishes and runs against external repos.)
 - Agent integrations (`LOOP_AGENT_CMD`) only need to consume the prompt file; they don't implement skill discovery. Agent-agnosticism holds.
 - A worker that ignores the prompt and never loads the skill is still possible. The backpressure is the verify gate, not skill loading — and that is the right thing to enforce mechanically (the gate catches wrong output, which is what matters).

@@ -32,9 +32,9 @@ npx skills add <owner>/<repo>
 |---|---|
 | **explore** | read the codebase, grill intent, stress-test ideas *before* planning |
 | **plan** | decompose intent into a disposable `QUEUE.md` of verifiable work units |
-| **build** | implement one work unit; never self-certify (the loop owns the verify gate) |
+| **build** | implement a bounded observable outcome; verify-first, don't declare done until it passes |
 | **review** | two-axis adversarial review — standards + intent — against the actual codebase |
-| **fix** | turn review findings into new work units, feed them back |
+| **fix** | resolve review findings — directly, or as new work units appended to the queue |
 | **decide** *(shared)* | capture architectural rulings as ADRs in `decisions/`, inline as they crystallize |
 | **domain-modeling** *(shared)* | manage `glossary.md`, the project's ubiquitous language |
 

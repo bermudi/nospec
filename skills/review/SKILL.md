@@ -1,21 +1,23 @@
 ---
 name: review
-description: Use when reviewing completed work units or a finished queue. Two-axis adversarial review — standards (does the change follow codebase conventions?) and intent (does the change do what the work unit said?). Reviews against the actual codebase, not specs. Triggers on "review", "check this", "is this right", "what did we miss", "stress-test the implementation", or when work needs adversarial scrutiny before being accepted.
+description: Use when reviewing a change against intent and standards — adversarial scrutiny before accepting work. Two axes — standards (does the change follow the codebase's own conventions?) and intent (does it do what it was supposed to?). Reviews against the actual codebase, not specs. Triggers on "review", "check this", "is this right", "what did we miss", "stress-test the implementation", or when work needs adversarial scrutiny before being accepted.
 ---
 
 # Review
 
-Adversarial review of completed work. Two axes, run independently so neither pollutes the other:
+Adversarial review of a change. Two axes, run independently so neither pollutes the other:
 
 1. **Standards** — does the change follow the repo's coding conventions and codebase patterns?
-2. **Intent** — does the change do what the work unit said it would?
+2. **Intent** — does the change do what it was supposed to?
 
-Review against the **actual codebase**, not against specs that may have rotted. The code is the source of truth.
+Review against the **actual codebase**, not against specs that may have rotted — stale specs are worse than none ([doc-rot](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/doc-rot.md)); the code is the source of truth.
+
+That core is the same whether the change is an interactive edit or a completed batch work unit. What the batch path adds is artifacts: a `QUEUE.md` unit states what was promised, an `EVIDENCE.md` records what verify proved, and a `REVIEW.md` carries findings to the `fix` skill. Interactively, the "unit" is the stated intent and the change itself; findings go straight to the human or back into the work.
 
 ## When to review
 
-- After a work unit is marked `done` and verify passed
-- After a full queue is completed
+- After a change is made and its verify passes
+- After a full batch queue is completed
 - When the user asks for a sanity check
 - Before accepting work as finished
 
@@ -23,9 +25,7 @@ Review is not a gate the loop enforces — it's a skill the user or agent invoke
 
 ## Before you review
 
-Read the work unit from `.loop/<name>/QUEUE.md` and the evidence from `.loop/<name>/EVIDENCE.md` for the unit you're reviewing. The evidence tells you what the verify command actually proved; the work unit tells you what was promised. Review against the actual codebase, not the specs.
-
-If the prompt includes a `Design:` path, read `.loop/<name>/DESIGN.md` before reviewing. It carries the reasoning context — external constraints, decisions, trade-offs — that the work units were planned against. Use it to ground your findings: a deviation from the design note's stated constraints is a stronger finding than one based on inference alone.
+Read the change (the diff). If there's a work unit (`.loop/<name>/QUEUE.md`) and evidence (`.loop/<name>/EVIDENCE.md`), read them — the unit states what was promised, the evidence what verify proved. If the prompt includes a `Design:` path, read `.loop/<name>/DESIGN.md` for the reasoning context (external constraints, decisions, trade-offs) the work was planned against; a deviation from its stated constraints is a stronger finding than one based on inference. Interactively, gather the stated intent from the request or conversation.
 
 ## Two-axis review
 
@@ -43,44 +43,38 @@ The question is not "is this good code?" — that's subjective. The question is 
 
 ### Axis 2: Intent
 
-Does the change do what the work unit said it would?
+Does the change do what it was supposed to?
 
-- Read the work unit's `Done means:` and `Constraints:` fields.
+- Read the stated outcome and constraints — from the work unit's `Done means:` / `Constraints:` if present, otherwise from the request.
 - Read the actual diff.
-- Does the diff satisfy the stated outcome?
-- Does the diff stay within the stated constraints?
-- Did the change introduce anything the unit didn't ask for?
-- Did the change miss anything the unit said it would do?
+- Does the diff satisfy the stated outcome? Stay within the constraints?
+- Did it introduce anything not asked for, or miss anything it said it would?
 
-The `Verify:` command is the mechanically enforceable subset of `Done means:`. The gap between `Done means:` and `Verify:` is the review surface: intent review checks what the verify command cannot.
+The `Verify:` command is the mechanically enforceable subset of the outcome. The gap between the outcome and its verify is the review surface: intent review checks what the verify command cannot.
 
 > **Intent review is a judgment check, not a deterministic gate.** Be explicit about its scope and confidence. Any finding that becomes a new work unit must have a deterministic `Verify` command the runner can execute.
 
 ## Running the axes
 
-Run both axes. They can be parallel (two passes over the same diff) or sequential. The order doesn't matter — what matters is that each axis is evaluated independently, without the other's conclusions bleeding in.
+Run both. They can be parallel (two passes over the same diff) or sequential. The order doesn't matter — what matters is that each axis is evaluated independently, without the other's conclusions bleeding in.
 
 ## Confidence and evidence
 
 Every finding must cite the specific `file:line` that motivates it and state a confidence level. Before you write a finding into the report, quote the code that motivates it. If you can't, it goes to the appendix, not the report.
 
-Use three confidence levels:
+- **high** — you read the specific code and can quote the line. Promoted to the report.
+- **medium** — pattern match, likely but not verified against the actual code. Promoted but flagged.
+- **low / uncitable** — you can't point to a specific line. **Not promoted.** Banished to `## Speculative`.
 
-- **high** — you read the specific code and can quote the line. Promoted to the report, handed to `fix`.
-- **medium** — pattern match, likely but not verified against the actual code. Promoted but flagged; `fix` treats it as worth investigating, not worth acting on blindly.
-- **low / uncitable** — you can't point to a specific line. **Not promoted.** Banished to `## Speculative`. Only surfaces if the user reads the appendix.
-
-Confidence is orthogonal to classification. A finding can be `actionable` + `high confidence`, or `deferred` + `low confidence`.
+Confidence is orthogonal to classification. This discipline exists because reviewers overcorrect — asked to explain and propose fixes, LLMs systematically misclassify correct code as defective ([overcorrection-bias](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/overcorrection-bias.md)). Citing a line you actually read is the filter that keeps false negatives out of the report.
 
 ## Findings become input to the fix skill
 
-Review findings are not just notes — they are written to `.loop/<name>/REVIEW.md` as the input to the `fix` skill, which triages them and appends actionable ones as new work units in `.loop/<name>/QUEUE.md`.
+- **Trivial** findings (a typo, a missing newline) can be fixed inline during review — but only interactively. In batch the reviewer prompt forbids editing source, so hand them to `fix` like any actionable finding.
+- **Actionable** findings are handed to `fix`. In a batch cycle they're written to `.loop/<name>/REVIEW.md` for `fix` to triage into new work units; do not write the units yourself, `fix` owns that. Interactively, hand them to the human or act on them directly.
+- **Disputed** or **deferred** findings are recorded in the review summary, not turned into units.
 
-- **Trivial** findings (a typo, a missing newline) can be fixed inline during review.
-- **Actionable** findings are handed to the `fix` skill. Do not write the work units yourself; `fix` owns the triage and formatting.
-- **Disputed** or **deferred** findings are recorded in the review summary but not turned into units.
-
-The output of review is a structured review artifact, not a queue edit.
+The output of review is a structured set of findings, not a queue edit.
 
 ## What review is not
 
@@ -90,7 +84,7 @@ The output of review is a structured review artifact, not a queue edit.
 
 ## Output
 
-Write the structured review artifact to the requested review output path. In the loop this is `.loop/<name>/REVIEW.md`; if the prompt provides a different `Review output:` path, write there.
+In a batch cycle, write the structured artifact to the requested review output path (`.loop/<name>/REVIEW.md`, or wherever the prompt's `Review output:` points). Interactively, communicate findings directly — the format below is the batch contract the loop's parser reads; use it when there's a runner, skip it when there isn't.
 
 `REVIEW.md` must have exactly these top-level sections:
 
@@ -99,18 +93,18 @@ Write the structured review artifact to the requested review output path. In the
 3. `## Speculative`
 4. `## Summary`
 
-Put standards-axis findings under `## Standards` and intent-axis findings under `## Intent`. Use `## Speculative` only for concerns that are plausible but not grounded enough to become a standards or intent finding. If a section is clean, write `No issues found.` under that section.
+Put standards-axis findings under `## Standards`, intent-axis under `## Intent`. Use `## Speculative` for plausible-but-ungrounded concerns. If a section is clean, write `No issues found.`
 
 Each finding must include:
 
-- A stable id, such as `S1`, `I1`, or `X1`
+- A stable id (`S1`, `I1`, `X1`)
 - Classification: `trivial`, `actionable`, `disputed`, or `deferred`
 - Confidence: `high`, `medium`, or `low`
-- Evidence: a `path/to/file:line` reference and a short quoted code excerpt
+- Evidence: a `path/to/file:line` reference and a short quoted excerpt
 - Finding: the issue in one or two sentences
-- Fix direction: a single, unambiguous direction for the `fix` skill, or `None` for non-actionable findings. Do not offer options or conditional branches — the fixer should not have to make a judgment call. If you see two valid approaches, pick one and state it. The design note (if provided) should help you decide which is correct.
+- Fix direction: a single, unambiguous direction for `fix`, or `None` for non-actionable findings. Do not offer options or conditional branches — the fixer should not have to make a judgment call. If you see two valid approaches, pick one and state it. (Ambiguity invites the fixer to overcorrect; the design note, if provided, should help you decide.)
 
-Use this finding shape:
+Finding shape:
 
 ```markdown
 - S1 | actionable | high
@@ -119,9 +113,9 @@ Use this finding shape:
   fix direction: Align the parser with the shell loop's unit-header rules.
 ```
 
-Promoted findings go under `## Standards` or `## Intent`. Speculative findings (low confidence or uncitable) go under `## Speculative` so they don't pollute the actionable report.
+The full shape — with `evidence: file:line` — applies to Standards and Intent findings. Speculative findings relax it: free-form grounding, or omit `evidence:` (they're in `## Speculative` precisely because you couldn't cite a specific line).
 
-The `## Summary` section must include counts using this machine-readable shape:
+The `## Summary` section must include counts:
 
 ```markdown
 ## Summary
@@ -134,4 +128,4 @@ The `## Summary` section must include counts using this machine-readable shape:
 - deferred: 0
 ```
 
-The `- actionable: N` line is the loop's continue/stop signal. Count only findings classified as `actionable`, including actionable speculative findings if you intentionally create one. If there are no actionable findings, write `- actionable: 0`.
+The `- actionable: N` line is the loop's continue/stop signal. Count only findings classified as `actionable`. If there are none, write `- actionable: 0`.

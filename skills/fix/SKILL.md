@@ -1,75 +1,49 @@
 ---
 name: fix
-description: Use when addressing review findings and feeding them back into the loop. Converts review findings into new verifiable work units in `.loop/<name>/QUEUE.md` and runs another loop pass. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need to be resolved.
+description: Use when resolving review findings — directly when interactive, or as new verifiable work units appended to a `.loop/<name>/QUEUE.md` when running batch. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need resolving.
 ---
 
 # Fix
 
-Address review findings by triaging `REVIEW.md` and generating new work units that feed back into the loop. The `fix` skill is the bridge between review and another build pass; it owns the triage and the queue format. It appends to the existing `.loop/<name>/QUEUE.md` file for the same cycle.
+Resolve review findings. Interactively, fix them directly (or hand them to the human). In a batch cycle, triage the findings and append the actionable ones as new work units to `.loop/<name>/QUEUE.md`; the loop runs the next build pass and review re-checks.
 
-The loop owns orchestration. When `fix` is invoked by the loop, stop after appending units and reporting the triage summary; the loop will run the next build pass.
+That review → fix → build → review cycle is [iterative self-correction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/iterative-self-correction.md), and its known failure mode is overcorrection — the loop can oscillate rather than converge. So fix units stay narrow, guard what review already approved, and don't rewrite: a finding that needs a broad rewrite is a new planning pass, not a fix.
+
+The loop owns orchestration. When the loop invokes fix, stop after appending units and reporting the triage summary; the loop decides whether to run another build pass.
 
 ## Inputs
 
-- `.loop/<name>/REVIEW.md` — structured findings from the `review` skill. Read it, but do not edit it.
-- `.loop/<name>/QUEUE.md` — the existing work queue. Read it before appending so new units preserve the queue's current structure and statuses.
-- `.loop/<name>/DESIGN.md` — if the prompt includes a `Design:` path, read it. It carries the reasoning context the work units were planned against. Use it to resolve ambiguity in a finding's `fix direction`: if the design note states a constraint or decision, the fix direction must align with it, not contradict it.
+- The findings — from `.loop/<name>/REVIEW.md` in a batch cycle, or from the review/conversation interactively. Read them; don't edit them.
+- `.loop/<name>/QUEUE.md` — the existing queue (batch). Read it before appending so new units preserve its structure and statuses.
+- `.loop/<name>/DESIGN.md` — if a `Design:` path is provided. It carries the reasoning the work was planned against; use it to resolve ambiguity in a finding's fix direction — the fix must align with the design note's constraints, not contradict them.
 
-`REVIEW.md` is expected to include `## Standards`, `## Intent`, `## Speculative`, and `## Summary` sections. The summary's actionable count is the loop's signal; the finding entries are the fix skill's input. Use the finding classification, confidence, and evidence when deciding whether to generate a work unit.
+`REVIEW.md` carries `## Standards`, `## Intent`, `## Speculative`, and `## Summary` sections; the summary's actionable count is the loop's signal.
 
-## Procedure
+## Triage
 
-1. **Read `REVIEW.md`.** Each standards or intent finding is a candidate work unit. `review` has already classified findings as trivial / actionable / disputed / deferred; use those classifications or re-triage as needed. Treat speculative findings as notes for future explore/plan work unless the review explicitly classifies one as actionable.
+Not every finding warrants a fix:
 
-2. **Triage.** Not every finding warrants a work unit:
-   - **Actionable** — the finding identifies a real issue with a clear fix. Create a work unit.
-   - **Trivial** — one-line fix, no risk. Note it in the summary, don't create a unit.
-   - **Disputed** — the finding is wrong or the reviewer is being overly cautious. Note the disagreement in the summary, don't create a unit. Move on.
-   - **Deferred** — the finding is valid but not worth fixing now. Note it in the summary or `LEARNINGS.md`, don't create a unit.
+- **Actionable** — a real issue with a clear fix. Resolve it (interactively) or create a work unit (batch).
+- **Trivial** — one-line, no risk. Fix inline; note it in the summary.
+- **Disputed** — the finding is wrong or overcautious. Note the disagreement; don't act. Move on.
+- **Deferred** — valid but not now. Note it in the summary or `LEARNINGS.md`.
 
-3. **Create work units** for actionable findings. Use the standard work unit format from the `plan` skill. Each unit must have one observable outcome and one deterministic verify command. Reference the source finding in `Read first:` by pointing to `REVIEW.md` plus any evidence paths from the finding.
+Treat speculative findings as notes for future work unless review explicitly classified one as actionable.
 
-````markdown
-## <fix for the finding — observable outcome>
+## Creating fix units (batch)
 
-Read first:
-- .loop/<name>/REVIEW.md (<finding id or heading>)
-- <evidence path from the finding, if any>
-- <2–4 entries; context, not scope>
+For actionable findings in a batch cycle, create work units using the format from the `plan` skill — one observable outcome, one deterministic verify. Don't restate the format here; load `plan`. Reference the source finding in `Read first:` (point to `REVIEW.md` plus the finding's evidence paths). Each fix unit's `Done means:` should include a no-regression condition, and its verify should cover both the fix and the preservation of what was already working — fix units must not break what review approved.
 
-Constraints:
-- <boundary>
-- <what must stay true or out of bounds; if a file is named, it is "don't touch X" or "X's public API must not change", not "update X">
-
-Done means:
-- <the finding is resolved>
-- <no new issue introduced>
-
-Verify:
-```bash
-<deterministic command that proves the fix>
-```
-
-Status: pending
-````
-
-4. **Append to `QUEUE.md`.** Append new units to the end of the existing `.loop/<name>/QUEUE.md`. Do not reorder existing units, do not edit existing unit bodies, and do not change any existing `Status:` lines. If there are no actionable findings, append nothing.
-
-5. **Stop after the queue edit.** Report the triage summary and the number of appended units. The loop will decide whether to run another build pass.
+Append new units to the end of the existing `.loop/<name>/QUEUE.md`. Don't reorder existing units, edit existing unit bodies, or change existing `Status:` lines — the loop's parser keys on `## ` headers and `Status:` lines (editing them desyncs status tracking), and review's approvals are recorded in those statuses. If there are no actionable findings, append nothing.
 
 ## What fix is not
 
-- Not a re-review — the findings are already known. Fix turns them into work.
-- Not a debate — if a finding is disputed, note it and move on. Don't argue with the review in the queue.
-- Not a rewrite — each fix unit should be narrow. If a finding requires a broad rewrite, that's a new explore → plan cycle, not a fix.
-- Not the orchestrator — the loop invokes review, invokes fix, and runs the next build pass.
-
-## Guardrail
-
-Fix units must not break what review already approved. Each fix unit's `Done means:` should include a no-regression condition. The verify command should cover both the fix and the preservation of what was already working.
+- Not a re-review — the findings are known. Fix turns them into work.
+- Not a debate — if a finding is disputed, note it and move on.
+- Not a rewrite — each fix is narrow. A broad rewrite is a new planning pass, not a fix.
+- Not the orchestrator — in batch, the loop invokes review, invokes fix, and runs the next pass.
 
 ## Output
 
-- New `Status: pending` work units appended to `.loop/<name>/QUEUE.md`
-- A summary of what was triaged (actionable / trivial / disputed / deferred)
-- The number of units appended
+- Interactive: the fixes applied, plus a summary of what was triaged.
+- Batch: new `Status: pending` units appended to `QUEUE.md`, plus a triage summary (actionable / trivial / disputed / deferred) and the count of units appended. Stop after the queue edit; the loop decides whether to run another pass.

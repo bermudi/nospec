@@ -44,7 +44,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 
 - Ship as skills. `npx skills` is the package manager; skills.sh is the directory. Don't build distribution machinery.
 - Skills transmit concepts + reasoning (ADR-0010). Don't prescribe *when* to deploy a concept as a rule. Hard rules are only for mechanical contracts.
-- The worker never self-certifies. In batch mode the loop owns the verify gate.
+- The worker never declares done without a passing verify. In batch the loop owns the gate; interactively the worker runs it — the principle survives across modes, the enforcement mechanism doesn't.
 - A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge.
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic). `LOOP_REVIEW_CMD` / `LOOP_FIX_CMD` override review/fix. Per-unit `Agent:` overrides for one unit.
 - Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.

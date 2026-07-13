@@ -518,6 +518,7 @@ fi
 
 if [[ -z "$(first_pending_unit "$queue_abs")" ]]; then
   cat "$fix_out"
-  die "fix worker generated no pending work units"
+  echo "knack: fix produced no new units — review findings overturned or triaged out; stopping clean"
+  exit 0
 fi
 done
