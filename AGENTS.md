@@ -22,11 +22,13 @@ Work with agents happens across a spectrum of **human attention**, not a pipelin
 
 Skills serve all three; the loop serves only batch. Skills are the product; the loop is an optional companion.
 
-Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (decomposition, process, depth) is concept-guided — the agent decides. Mechanical contracts (the verify gate runs outside the agent and must exit 0; hard stops) stay hard rules. The wiki is the cited source of the "why"; skills link to it rather than redefine its concepts.
+Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (decomposition, process, depth) is concept-guided — the agent decides. Mechanical contracts (the verify gate runs outside the agent and must exit 0; hard stops) stay hard rules. The wiki is the cited source of the "why"; the project's docs link to it rather than redefine its concepts — skills carry the synopsis, docs carry the link (ADR-0013).
 
 ## Current state
 
-- `skills/` — seven skills (explore, plan, build, review, fix, decide, domain-modeling). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. Content rework under ADR-0010 is in progress.
+Two layers live in this repo. **`skills/` is the product** — what `npx skills add` installs into *other* projects, so it must be self-contained: no external links, which would be dead weight in a foreign project's context (ADR-0013). **Everything else here is knack's own development context** — `AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `DESIGN.md`, `docs/` — which guides working *on* knack, is never installed, and links freely.
+
+- `skills/` — seven skills (explore, plan, build, review, fix, decide, domain-modeling). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. All seven reworked to ADR-0010 (mode-independent, concept-forward); no external links.
 - `loop.sh` — optional AFK batch runner. Agent-agnostic via `LOOP_AGENT_CMD`. Owns the verify gate. Supports per-unit `Agent:` overrides and opt-in review/fix via `--review`.
 - `prompts/` — worker / reviewer / fixer prompts the loop sends.
 - `decisions/` — durable ADRs. `glossary.md` — ubiquitous language: knack-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).

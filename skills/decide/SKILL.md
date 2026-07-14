@@ -5,7 +5,7 @@ description: Use when an architectural ruling crystallizes — during exploratio
 
 # Decide
 
-Capture architectural rulings as ADRs. Decisions persist; specs and plans don't. A plan is disposable coordination state — throw it away when it drifts and regenerate from the codebase ([plan-disposability](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/plan-disposability.md)) — but a decision stays, explaining why the code is the way it is long after the code has moved on.
+Capture architectural rulings as ADRs. Decisions persist; specs and plans don't. A plan is disposable coordination state — throw it away when it drifts and regenerate from the codebase (plan-disposability) — but a decision stays, explaining why the code is the way it is long after the code has moved on.
 
 This is a shared skill — called inline by `explore`, `plan`, `build`, and `review` whenever a ruling crystallizes, in any attention-mode. It is not a separate phase. If you're mid-plan and a decision crystallizes, write the ADR now, then continue planning; don't queue it for later.
 

@@ -54,3 +54,5 @@ The theory behind these terms lives in the [AgenticWiki](https://github.com/berm
 - [ubiquitous-language](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/ubiquitous-language.md) — the shared vocabulary that lets human and agent mean the same thing by the same word
 - [evolving-context](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/evolving-context.md) — agents refine their own context over time
 - [aiming-problem](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/aiming-problem.md) — verify the real property, not a gameable proxy
+- [overcorrection-bias](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/overcorrection-bias.md) — reviewers misclassify correct code as defective when pushed to explain and fix
+- [iterative-self-correction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/iterative-self-correction.md) — feedback loops that can amplify error rather than converge

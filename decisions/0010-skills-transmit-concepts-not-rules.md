@@ -27,7 +27,7 @@ For each concept a skill teaches, it carries:
 
 - **What it is** — the concept (e.g., a tracer bullet is a thin end-to-end slice to get early integration feedback).
 - **Why it exists** — the failure mode it prevents (e.g., discovering the schema doesn't support the UI in week 3 instead of hour 1).
-- **A pointer to depth** — the wiki link. The skill carries an operational synopsis (what the concept is, locally, in this project's terms); the wiki carries the full theory, evidence, and elaboration. Summarize briefly; do not duplicate the full theory.
+- **A pointer to depth** — the wiki link. The skill carries an operational synopsis (what the concept is, locally, in this project's terms); the wiki carries the full theory, evidence, and elaboration. Summarize briefly; do not duplicate the full theory. *(Refined by [ADR-0013](0013-wiki-links-live-in-docs-not-in-skill-text.md): the link lives in human-facing docs, not in skill text — the skill carries the synopsis/phrase; docs carry the link.)*
 - **Optionally, a reasoned default** — a default behavior for the common case, always accompanied by the reasoning for *when to override* it. Defaults are scaffolding, never mandates. A default without its override-reasoning is just a rule in disguise.
 
 The split that keeps the backbone intact:

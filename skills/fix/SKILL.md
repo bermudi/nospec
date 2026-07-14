@@ -7,7 +7,7 @@ description: Use when resolving review findings — directly when interactive, o
 
 Resolve review findings. Interactively, fix them directly (or hand them to the human). In a batch cycle, triage the findings and append the actionable ones as new work units to `.loop/<name>/QUEUE.md`; the loop runs the next build pass and review re-checks.
 
-That review → fix → build → review cycle is [iterative self-correction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/iterative-self-correction.md), and its known failure mode is overcorrection — the loop can oscillate rather than converge. So fix units stay narrow, guard what review already approved, and don't rewrite: a finding that needs a broad rewrite is a new planning pass, not a fix.
+That review → fix → build → review cycle is iterative self-correction, and its known failure mode is overcorrection — the loop can oscillate rather than converge. So fix units stay narrow, guard what review already approved, and don't rewrite: a finding that needs a broad rewrite is a new planning pass, not a fix.
 
 The loop owns orchestration. When the loop invokes fix, stop after appending units and reporting the triage summary; the loop decides whether to run another build pass.
 

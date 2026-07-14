@@ -10,7 +10,7 @@ Adversarial review of a change. Two axes, run independently so neither pollutes 
 1. **Standards** — does the change follow the repo's coding conventions and codebase patterns?
 2. **Intent** — does the change do what it was supposed to?
 
-Review against the **actual codebase**, not against specs that may have rotted — stale specs are worse than none ([doc-rot](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/doc-rot.md)); the code is the source of truth.
+Review against the **actual codebase**, not against specs that may have rotted — stale specs are worse than none (doc-rot); the code is the source of truth.
 
 That core is the same whether the change is an interactive edit or a completed batch work unit. What the batch path adds is artifacts: a `QUEUE.md` unit states what was promised, an `EVIDENCE.md` records what verify proved, and a `REVIEW.md` carries findings to the `fix` skill. Interactively, the "unit" is the stated intent and the change itself; findings go straight to the human or back into the work.
 
@@ -66,7 +66,7 @@ Every finding must cite the specific `file:line` that motivates it and state a c
 - **medium** — pattern match, likely but not verified against the actual code. Promoted but flagged.
 - **low / uncitable** — you can't point to a specific line. **Not promoted.** Banished to `## Speculative`.
 
-Confidence is orthogonal to classification. This discipline exists because reviewers overcorrect — asked to explain and propose fixes, LLMs systematically misclassify correct code as defective ([overcorrection-bias](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/overcorrection-bias.md)). Citing a line you actually read is the filter that keeps false negatives out of the report.
+Confidence is orthogonal to classification. This discipline exists because reviewers overcorrect — asked to explain and propose fixes, LLMs systematically misclassify correct code as defective (overcorrection-bias). Citing a line you actually read is the filter that keeps false negatives out of the report.
 
 ## Findings become input to the fix skill
 

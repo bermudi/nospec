@@ -22,11 +22,11 @@ Verify-first: read the `Verify:` command before you change code, so you know wha
 - **Interactive** — run the verify yourself before you stop. If it fails, fix the cause if it belongs to this outcome; otherwise report the blocker. Don't claim success the command didn't confirm.
 - **Batch (under loop.sh)** — the runner runs `Verify:` after you exit. You don't self-certify and you don't mark the unit done; you make the repository state satisfy the command. Don't edit `.loop/<name>/EVIDENCE.md` — the runner writes the evidence ledger after verification.
 
-The verify gate is the [backpressure](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/backpressure.md) — the mechanism that mechanically rejects wrong output, outside the agent. Your relationship to it is to aim the work at making it pass, not to assert that it would.
+The verify gate is the backpressure — the mechanism that mechanically rejects wrong output, outside the agent. Your relationship to it is to aim the work at making it pass, not to assert that it would.
 
 ## Capturing decisions during build
 
-Implementation surfaces decisions the spec missed — the code pushes back, and that's when the most valuable rulings crystallize ([code-clarifies-spec](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/code-clarifies-spec.md)). If you discover one — "we need to handle X this way because Y" — write the ADR now via the `decide` skill, inline, not after the outcome. It's a durable trace, not part of the verify scope.
+Implementation surfaces decisions the spec missed — the code pushes back, and that's when the most valuable rulings crystallize (code-clarifies-spec). If you discover one — "we need to handle X this way because Y" — write the ADR now via the `decide` skill, inline, not after the outcome. It's a durable trace, not part of the verify scope.
 
 ## Capturing operational learnings
 

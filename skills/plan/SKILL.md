@@ -7,15 +7,15 @@ description: Use when decomposing a software task, bug, cleanup, or vague human 
 
 Decompose work into bounded, observable outcomes — each one independently verifiable. That core is the same whether you're planning interactively with the human or producing a packet for unattended batch execution. Only the *serialization* differs: batch work is written as a `.loop/<name>/QUEUE.md` the loop runner consumes; interactive work need not be serialized at all.
 
-A plan is **ephemeral coordination state, not a contract** — when it drifts, throw it away and regenerate from the codebase; salvaging a stale plan costs more than rewriting it ([plan-disposability](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/plan-disposability.md)). The goal is verifiable outcomes, not durable specs. When the work is done, the plan is deleted.
+A plan is **ephemeral coordination state, not a contract** — when it drifts, throw it away and regenerate from the codebase; salvaging a stale plan costs more than rewriting it (plan-disposability). The goal is verifiable outcomes, not durable specs. When the work is done, the plan is deleted.
 
 For a batch cycle, pick a short, descriptive name (`parser-bug`, `go-cli`) — it scopes the `.loop/<name>/` directory.
 
 ## Decomposition concepts
 
-These are [leading words](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/leading-words.md) — dense phrases that shape how you reason about decomposition. Use the one that fits the work; don't force one shape onto everything.
+These are leading words — dense phrases that shape how you reason about decomposition. Use the one that fits the work; don't force one shape onto everything.
 
-- **[Tracer bullet](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/tracer-bullets.md)** — a thin slice that crosses *all* layers end-to-end, to get real integration feedback early. Its purpose is to discover mismatches (schema vs. UI, contract vs. consumer) in hour one rather than week three. It earns its keep when there *is* an end-to-end path to prove; a mechanical migration or a one-line fix has nothing to trace.
+- **Tracer bullet** — a thin slice that crosses *all* layers end-to-end, to get real integration feedback early. Its purpose is to discover mismatches (schema vs. UI, contract vs. consumer) in hour one rather than week three. It earns its keep when there *is* an end-to-end path to prove; a mechanical migration or a one-line fix has nothing to trace.
 - **Vertical slice** — crosses enough layers to produce a user- or system-visible change. The same idea as a tracer bullet, emphasized for the depth of feedback.
 - **Horizontal breadth** — one change applied across a layer or family of cases. Efficient when the contract is already understood; its risk is delaying integration feedback when the contract is still uncertain. It can legitimately come first when a shared invariant or mechanical migration *is* the outcome.
 
@@ -30,7 +30,7 @@ A work unit is one observable outcome that can be verified. It carries:
 - **`Done means:`** — the acceptance criteria: what's observably true afterward.
 - **`Verify:`** — the mechanically enforceable subset of `Done means:`.
 
-The gap between `Done means:` and `Verify:` is the **review surface** — what the command can't check, review does. A unit whose outcome can't be captured as a deterministic verify plus a short acceptance list isn't ready; vague shape plus weak verify gives the worker nothing to aim at ([aiming-problem](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/aiming-problem.md)).
+The gap between `Done means:` and `Verify:` is the **review surface** — what the command can't check, review does. A unit whose outcome can't be captured as a deterministic verify plus a short acceptance list isn't ready; vague shape plus weak verify gives the worker nothing to aim at (aiming-problem).
 
 ## Verification follows the outcome
 
@@ -47,7 +47,7 @@ These aren't categories to tag units with; they're reminders that the verify mus
 Non-negotiable because they're mechanisms, not judgment:
 
 - **Every outcome needs credible verification** — name how it will be checked: a test, a type-check, running the thing, a manual check. This is universal.
-- **For batch execution specifically, `Verify:` must be deterministic and runnable by the runner, not an LLM-as-judge.** That is the [backpressure](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/backpressure.md) — the loop mechanically rejecting wrong output, outside the agent. Tests, type checks, builds; not "ask the model if it looks right." Interactive outcomes have no runner; they name their check but need not use a `Verify:` field or reduce it to a shell command.
+- **For batch execution specifically, `Verify:` must be deterministic and runnable by the runner, not an LLM-as-judge.** That is the backpressure — the loop mechanically rejecting wrong output, outside the agent. Tests, type checks, builds; not "ask the model if it looks right." Interactive outcomes have no runner; they name their check but need not use a `Verify:` field or reduce it to a shell command.
 - **Batch serialization format** (only when execution uses loop.sh): `.loop/<name>/QUEUE.md`, one unit per `## <outcome>` header (no "Slice" prefix, no numbering), each with a `Status:` line starting at `pending`. The loop's parser requires this; interactive planning has no such constraint.
 
 ## Reasoned defaults
