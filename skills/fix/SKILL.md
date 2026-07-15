@@ -30,6 +30,14 @@ Not every finding warrants a fix:
 
 Treat speculative findings as notes for future work unless review explicitly classified one as actionable.
 
+## Diagnose before you iterate
+
+A fix that patches a symptom without the cause fixes one thing and breaks another; iterate without diagnosis and the loop amplifies error rather than converging — each attempt addresses a surface failure and opens a new one. The signal is blunt: many attempts on the same failing spot, no convergence.
+
+Before the next attempt, isolate the cause. Re-read the code around the failure; find the invariant actually being violated, not the test reporting it. A fix that lands in one or two attempts usually had the cause right; one that needs many almost certainly doesn't — more attempts won't help, a diagnosis will. When the cause is genuinely ambiguous, that's a design question for the `decide` skill or the human, not a fifth fix attempt.
+
+This is judgment, not a gate on attempt count — the point is to switch from patching to diagnosing the moment iteration stops converging.
+
 ## Creating fix units (batch)
 
 For actionable findings in a batch cycle, create work units using the format from the `plan` skill — one observable outcome, one deterministic verify. Don't restate the format here; load `plan`. Reference the source finding in `Read first:` (point to `REVIEW.md` plus the finding's evidence paths). Each fix unit's `Done means:` should include a no-regression condition, and its verify should cover both the fix and the preservation of what was already working — fix units must not break what review approved.

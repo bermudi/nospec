@@ -38,6 +38,7 @@ Does the change follow the codebase's existing patterns?
 - Check error handling, naming, file layout, test style.
 - Look for regressions — did the change break something nearby?
 - Check for dead code, unused imports, leftover debugging.
+- Check for over-reach — does the change add abstraction, wrappers, or parallel paths the outcome never asked for? Speculative structure is a standards finding even when it works: surface area is bug surface, and the bugs land in the layers nobody required.
 
 The question is not "is this good code?" — that's subjective. The question is "does this match the codebase's own standards?"
 
@@ -51,6 +52,8 @@ Does the change do what it was supposed to?
 - Did it introduce anything not asked for, or miss anything it said it would?
 
 The `Verify:` command is the mechanically enforceable subset of the outcome. The gap between the outcome and its verify is the review surface: intent review checks what the verify command cannot.
+
+Verify passing is a proxy, not proof — it means the mechanically enforceable subset held, not that the outcome is genuinely satisfied. Intent review asks the harder question: does the change *generalize*? Does it hold up against behavior the verify doesn't exercise, or did it satisfy the visible surface while leaving the real property unmet? A change that passes its verify only by fitting the visible tests — not by implementing the underlying behavior — is the signature intent finding, and it's the one the gate is structurally blind to.
 
 > **Intent review is a judgment check, not a deterministic gate.** Be explicit about its scope and confidence. Any finding that becomes a new work unit must have a deterministic `Verify` command the runner can execute.
 

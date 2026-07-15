@@ -15,6 +15,18 @@ The scope is the outcome plus its constraints — never a file list. You decide 
 
 If the unit's `Read first:` cites `.loop/<name>/DESIGN.md`, read it first — it carries cycle-level reasoning you can't recover from the codebase alone. The planner's `Read first:` is the worker's channel to it (review and fix get `Design:` injected directly, because they span the whole queue).
 
+## Execution discipline
+
+How you reach the outcome matters as much as reaching it. Three concepts, each preventing a concrete failure mode:
+
+**Close the loop early.** The strongest predictor of a clean outcome is *when* you first run something executable against the work — not whether you verify at the end, but how soon you close a feedback loop after the first change. Bugs bake into unverified code; the longer the gap between writing and first testing, the more error accumulates blind and the costlier the eventual fix. Default: as soon as a sliver of the outcome works end-to-end, run it — don't accumulate a large diff you've never exercised. Override: a change small enough to hold in your head — but notice when "trivial" is a rationalization for not closing the loop.
+
+**Edit structurally.** Prefer replacing a coherent block over chaining fragile inline patches. Each inline string-surgery edit is a chance to break syntax, imports, or formatting, and failed edits cascade into repair cycles that consume the budget without advancing the outcome. Default: replace whole functions or blocks; reach for inline edits only on genuine one-liners, and validate after each. Override: a harness where inline edits are the sane primitive — but never batch fragile edits and hope.
+
+**Keep it minimal.** The smallest change that satisfies the outcome is the default; abstraction is earned, not assumed. Every speculative layer, wrapper, or parallel path is an invariant you now have to get right *and* verify — surface area is bug surface, and the bugs land in the layers the outcome never asked for. Default: extend the existing path before building a parallel one; add abstraction only when the outcome demands it. Override: a change whose purpose *is* to introduce an abstraction — but then the abstraction is the outcome, not decoration.
+
+These are judgment, not gates. The verify gate below is the mechanical contract; these are how you reach it without baking in avoidable error.
+
 ## Verification
 
 Verify-first: read the `Verify:` command before you change code, so you know what state the repo must reach. Then make it pass.
@@ -43,7 +55,7 @@ Do as much as keeps the repo in a working state, then hand off what remains — 
 
 ## When you're blocked
 
-State the blocker clearly, note what would unblock you (a decision, a dependency, a missing file), and stop. Don't thrash. Interactively that's a message to the human; in a batch cycle the runner marks the unit `blocked` and writes a handoff the next session picks up.
+State the blocker clearly, note what would unblock you (a decision, a dependency, a missing file), and stop. Don't thrash — and recognize thrashing's signature: if verify keeps failing on the same spot, you're almost certainly treating a symptom, not the cause. Stop patching and re-read the code to isolate the invariant actually being violated; a fix that needs many attempts is a diagnosis problem, not an attempt-count problem. Interactively that's a message to the human; in a batch cycle the runner marks the unit `blocked` and writes a handoff the next session picks up.
 
 ## Batch behavior (under loop.sh)
 

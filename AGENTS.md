@@ -45,6 +45,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 ## Working conventions
 
 - Ship as skills. `npx skills` is the package manager; skills.sh is the directory. Don't build distribution machinery.
+- The AgenticWiki — knack's cited theory — has a local checkout at `~/Documents/AgenticWiki`. When a task needs to read, cite, or enrich the wiki (ingests, concept synopses for the skills, glossary depth), work in that tree — don't clone a duplicate. (A fresh clone once landed in `~/build/` and an ingest went into the wrong tree; the knack docs named only the GitHub URL, never the local path.)
 - Skills transmit concepts + reasoning (ADR-0010). Don't prescribe *when* to deploy a concept as a rule. Hard rules are only for mechanical contracts.
 - The worker never declares done without a passing verify. In batch the loop owns the gate; interactively the worker runs it — the principle survives across modes, the enforcement mechanism doesn't.
 - A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge.

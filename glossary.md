@@ -56,3 +56,6 @@ The theory behind these terms lives in the [AgenticWiki](https://github.com/berm
 - [aiming-problem](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/aiming-problem.md) — verify the real property, not a gameable proxy
 - [overcorrection-bias](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/overcorrection-bias.md) — reviewers misclassify correct code as defective when pushed to explain and fix
 - [iterative-self-correction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/iterative-self-correction.md) — feedback loops that can amplify error rather than converge
+- [verification-loop](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/verification-loop.md) — close the feedback loop early and often; the rate of feedback is the speed limit
+- [infrastructure-blindness](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/infrastructure-blindness.md) — finding the right code but reimplementing its machinery instead of calling it
+- [over-engineering](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/over-engineering.md) — patches that add speculative abstraction beyond the requirement; the extra surface is where the bugs live

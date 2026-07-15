@@ -21,6 +21,8 @@ These are concepts, not a script — they interleave, not sequence. Read the wor
 
 - **Stress-test ideas.** Before committing to an approach, poke holes. What breaks if we do it this way? What's the simplest thing that could work? What are we assuming that might be wrong? Is there an existing pattern in the codebase to follow?
 
+- **Find the existing path before building a new one.** Before committing to an approach, find the machinery that already does — or nearly does — what's needed, and plan to extend it rather than parallel it. Reinventing existing capability produces a worse copy: it misses the edge cases the original already handled, and it's usually larger too. The failure mode is subtle — you find the right code, read it as context, then rebuild it from scratch instead of calling it. A sibling format, parser, matcher, or helper that solves an adjacent problem is the template, not the competition. Surfacing this during explore is what keeps build from reinventing it.
+
 - **Capture decisions inline.** If a ruling crystallizes during exploration — "we'll use X because Y" — write the ADR now via the `decide` skill, not queued for later. If a domain term is ambiguous or inconsistent, define it now via `domain-modeling`. Decisions made during exploration are recorded during exploration.
 
 ## What explore is not
