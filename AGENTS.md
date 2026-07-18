@@ -36,7 +36,7 @@ Two layers live in this repo. **`skills/` is the product** — what `npx skills 
 
 ## Core artifacts
 
-**Durable** (persist, don't rot): `skills/`, `decisions/`, `glossary.md`, `LEARNINGS.md`, this file, and `.loop/<name>/EVIDENCE.md` (the append-only ledger kept after a cycle's `QUEUE.md` is deleted).
+**Durable** (maintained records whose value survives the work cycle): `skills/`, `decisions/`, `glossary.md`, `LEARNINGS.md`, this file, and `.loop/<name>/EVIDENCE.md` (the append-only ledger kept after a cycle's `QUEUE.md` is deleted).
 
 **Disposable** (consumed then discarded): `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`.
 

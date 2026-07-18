@@ -102,7 +102,7 @@ Both axes run as parallel sub-agents so neither pollutes the other. Review again
 
 **fix** — address review findings. Read the existing `.loop/<name>/QUEUE.md`, append new work units generated from findings, and run another loop pass.
 
-**decide** (shared) — when you make an architectural ruling, capture it as an ADR in `decisions/`. Decisions persist; specs don't. A decision made 6 months ago is still valid even if the code moved on — it explains *why* the code is the way it is. ([decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md).) Also carries the orphan-ADR hygiene concept (ADR-0012): an ADR is orphaned when it no longer explains or constrains the system — references are evidence of relevance, not the test.
+**decide** (shared) — when you make an architectural ruling, capture it as an ADR in `decisions/`. Decisions persist; specs don't. A decision made 6 months ago still explains *why* a choice was made, even if the code moved on. ([decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md).) Also carries the orphan-ADR hygiene concept (ADR-0012): an ADR is orphaned when it no longer explains or constrains the system — references are evidence of relevance, not the test.
 
 **domain-modeling** (shared) — manage the project's ubiquitous language. Challenge terms against the glossary, stress-test with edge-case scenarios, update `glossary.md` inline. Used by explore, plan, review. In a user's project this glossary is operational context — the skill must not teach adding wiki links to it (ADR-0013).
 
@@ -232,11 +232,11 @@ project/
 
 ## Durable vs disposable
 
-**Durable (persists, doesn't rot):**
-- `src/` — the code. The source of truth.
+**Durable (maintained records whose value survives the work cycle):**
+- `src/` — code and executable tests. Authoritative for current implemented behavior.
 - `skills/` — procedural knowledge. The workflow itself. Evolves ([evolving-context](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/evolving-context.md)).
-- `decisions/` — ADRs. They're about rulings, not current behavior. A decision made 6 months ago is still valid even if the code moved on — it explains *why* the code is the way it is.
-- `glossary.md` — ubiquitous language. Terms don't rot; they evolve deliberately.
+- `decisions/` — ADRs. Authoritative for rulings, not current behavior. A decision made 6 months ago still explains *why* a choice was made, even if the code moved on — and can be superseded when it stops explaining or constraining the system (ADR-0012).
+- `glossary.md` — ubiquitous language. Authoritative for domain terms. Terms evolve deliberately; they can stale and need pruning.
 - `LEARNINGS.md` — domain and problem insights. Not operational (that's AGENTS.md); not rulings (that's decisions/). It captures what the codebase teaches you about the problem itself.
 - `AGENTS.md` — operational context. Build commands, conventions. Updated when things change.
 - `.loop/<name>/EVIDENCE.md` — append-only ledger of what each tick proved. Durable so a completed cycle still anchors its ADR references after its `QUEUE.md` is deleted.
@@ -414,7 +414,7 @@ Status: pending
 
 - The flow shape: explore → plan → build → review → fix (now composable, not rigid)
 - Skills as procedural knowledge (think/plan/build/review → explore/plan/build/review/fix + shared decide/domain-modeling)
-- Decisions (ADRs) — they don't rot because they're about rulings, not current behavior
+- Decisions (ADRs) — they persist because they're about rulings, not current behavior; they can be superseded but not silently rot
 - Glossary — small, curated, doesn't rot the way specs do
 - The patch lane concept (lightweight for small changes — now the default, not a special mode)
 
