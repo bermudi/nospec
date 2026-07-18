@@ -65,19 +65,19 @@ Stop condition:
 
 Read first:
 - `loop.sh` queue parser
-- `cli/internal/queue/queue.go`
+- `tests/run.sh` parser tests
 
 Constraints:
 - `loop.sh` behavior remains the source of truth for the parser.
 - No other headings are affected.
 
 Done means:
-- The `cli` parser matches `loop.sh` behavior.
+- `loop.sh` does not treat `###` lines as unit boundaries.
 - Existing tests still pass.
 
 Verify:
 ```bash
-cd cli && go test ./...
+./tests/run.sh
 ```
 
 Status: pending
@@ -89,4 +89,4 @@ See [loop.md](./loop.md#work-unit-statuses) for the list and meanings.
 
 ## Disposability
 
-When a cycle is complete and verified, `QUEUE.md` and `HANDOFF.md` are disposable. Delete them. Keep `EVIDENCE.md` if you want `knack decisions check` to trace which ADRs the cycle referenced.
+When a cycle is complete and verified, `QUEUE.md` and `HANDOFF.md` are disposable. Delete them. Keep `EVIDENCE.md` if you want to trace which ADRs the cycle referenced.

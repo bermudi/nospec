@@ -76,7 +76,7 @@ The subloop stops when review is clean, `--max-review-rounds` is reached, `--max
 
 `loop.sh` writes next to the queue:
 
-- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, and worker output. It is durable; keep it after deleting `QUEUE.md` so `knack decisions check` can still see which ADRs the cycle referenced.
+- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, and worker output. It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references.
 - `HANDOFF.md` — written on non-clean exit. Sections: completed, in progress, remaining, next action. Delete when the work resumes.
 - `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line.
 
@@ -103,6 +103,6 @@ LOOP_FIX_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral 
 
 ## Verification notes
 
-- `loop.sh` does **not** validate `QUEUE.md` structure. Use `knack validate` first.
+- `loop.sh` does **not** validate `QUEUE.md` structure. The loop trusts the format; use the `plan` skill or inspect the file directly before running.
 - `loop.sh` runs review and fix only when `--review` is set. It invokes the skills and reads the actionable count from `REVIEW.md`; it does not judge findings or manage ADRs/glossary.
 - The `Verify:` command must be deterministic and executable by the runner — tests, builds, type checks, not an LLM-as-judge.

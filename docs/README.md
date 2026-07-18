@@ -1,24 +1,26 @@
 # knack documentation
 
-This folder holds the living user documentation for **knack**, the agent-agnostic harness for agentic development.
+This folder holds the living user documentation for **knack**. Each doc has one job; if you are looking for something specific, use the map below.
 
 ## What is knack?
 
-knack is an agent-agnostic harness for agentic development. It starts with **explore** — reading the codebase and grilling intent before any work is planned. When the problem is clear, `plan` turns intent into a disposable `QUEUE.md`, and the `build` loop runs one unit at a time behind deterministic verification gates. It ships with a loop runner, a read-only CLI, and seven agent-agnostic skills.
+See [`docs/architecture.md`](./architecture.md) for the conceptual shape, human-attention spectrum, and artifact-role model.
 
-## Start here: explore
+## Where to find what
 
-The biggest failure mode of agentic development is building the wrong thing quickly. The `explore` skill exists to slow that down: read the code, challenge the stated goal, and reach clarity before `plan` produces work units.
+| Question | Owning document |
+|---|---|
+| What is knack, and why does it exist? | [`README.md`](../README.md) |
+| Why was an architectural choice made? | [`decisions/`](../decisions/) |
+| How do I install and use the skills? | [`getting-started.md`](./getting-started.md) |
+| How do the skills compose? | [`skills.md`](./skills.md) |
+| How does `loop.sh` work? | [`loop.md`](./loop.md) |
+| What is the `QUEUE.md` format? | [`queue-format.md`](./queue-format.md) |
+| What does a knack term mean? | [`glossary.md`](../glossary.md) |
+| How do I work on the knack repo? | [`AGENTS.md`](../AGENTS.md) |
+| Where is the historical reasoning and wiki grounding? | [`theory.md`](./theory.md) |
+| Where are durability and documentation concepts? | [`skills/document/`](../skills/document/SKILL.md) and ADR-0015 |
 
-## Navigating the docs
+## Editing these docs
 
-- [Getting started](./getting-started.md) — build, install, run the smoke test, and scaffold skills.
-- [Skills guide](./skills.md) — the seven default skills. Start with `explore`.
-- [Loop reference](./loop.md) — `loop.sh` command, flags, environment variables, and queue lifecycle.
-- [CLI reference](./cli.md) — `knack` binary commands and flags.
-- [Queue format](./queue-format.md) — the `QUEUE.md` work unit protocol.
-- [FAQ](./faq.md) — common questions and short answers.
-
-## Source of truth
-
-When in doubt, read the code: `loop.sh`, `cli/`, `prompts/worker.md`, and `.agents/skills/`. Docs describe behavior, but the code is the source of truth.
+Do not duplicate claims across docs. Put the claim in the authoritative record and project it in a view. If you change a record, update the views that link to it. If you are unsure where something belongs, load the `document` skill.

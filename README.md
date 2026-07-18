@@ -37,6 +37,7 @@ npx skills add <owner>/<repo>
 | **fix** | resolve review findings — directly, or as new work units appended to the queue |
 | **decide** *(shared)* | capture architectural rulings as ADRs in `decisions/`, inline as they crystallize |
 | **domain-modeling** *(shared)* | manage `glossary.md`, the project's ubiquitous language |
+| **document** *(shared)* | route knowledge to its authoritative artifact and maintain coherent projections |
 
 `explore → plan → build → review → fix` is a default path, not a gate. `bug → plan → build → done` is equally valid. Skills compose.
 
@@ -54,19 +55,19 @@ Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix
 ## The thinking
 
 - [AgenticWiki](https://github.com/bermudi/AgenticWiki) — the cited theory behind every concept.
-- [decisions/](decisions/) — durable ADRs. The spine: [0009](decisions/0009-skills-are-the-product-loop-is-optional.md) (skills are the product), [0010](decisions/0010-skills-transmit-concepts-not-rules.md) (concepts not rules), [0011](decisions/0011-ship-as-skills-via-skills-sh-delete-cli.md) (ship via skills.sh).
-- [DESIGN.md](DESIGN.md) — design doc, **partially stale**: ADRs 0009–0011 are authoritative; the body (three-artifacts framing, CLI section) is mid-reframe.
+- [decisions/](decisions/) — durable ADRs. The spine: [0009](decisions/0009-skills-are-the-product-loop-is-optional.md) (skills are the product), [0010](decisions/0010-skills-transmit-concepts-not-rules.md) (concepts not rules), [0011](decisions/0011-ship-as-skills-via-skills-sh-delete-cli.md) (ship via skills.sh), [0014](decisions/0014-durability-is-maintenance-not-permanence.md) (durability is maintenance), [0015](decisions/0015-artifact-roles-and-ownership.md) (artifact roles and ownership).
+- [docs/architecture.md](docs/architecture.md) — conceptual overview, attention modes, and artifact roles.
 
 ## Repo layout
 
 ```
-skills/        the seven skills — the product
+skills/        the eight skills — the product
 loop.sh        optional AFK batch runner
 prompts/       worker / reviewer / fixer prompts the loop sends
 decisions/     durable ADRs
 glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
 LEARNINGS.md   durable domain/problem insights
-docs/          user docs (being updated post-reframe)
+docs/          user and architecture docs
 tests/run.sh   test harness for loop.sh
 ```
 

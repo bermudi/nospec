@@ -35,6 +35,8 @@ Keep it scannable. A flat list of definitions is usually enough; split into sect
 
 Don't add terms with no project-specific meaning (don't define "database" or "API"), terms that appear once and won't recur, or terms obvious from the code itself.
 
+After adding, removing, or redefining a term, invoke the `document` skill to check whether `AGENTS.md`, the relevant skills, or other durable docs use the old meaning in a projection.
+
 ## Stress-testing terms
 
 When a term feels slippery, stress-test it with edge cases — the way ubiquitous-language practice road-tests definitions against concrete scenarios. Pose an edge case: "Is X still a `<term>` if it `<unusual condition>`?" If the answer is unclear, the definition needs sharpening, not the edge case. Rewrite it until the edge case has a clear answer. If it can't be sharpened, the term may be two concepts masquerading as one — split it.

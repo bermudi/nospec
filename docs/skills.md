@@ -13,6 +13,7 @@ Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/
 | `fix` | Convert review findings into new work units. |
 | `decide` | Capture architectural rulings as ADRs in `decisions/`. |
 | `domain-modeling` | Define and update `glossary.md` terms. |
+| `document` | Route knowledge to its authoritative artifact and maintain coherent projections. |
 
 ## Skill format
 
@@ -45,10 +46,7 @@ Without `--review`, review and fix remain manual skill invocations.
 
 ## Customizing skills
 
-- After `knack skills init`, the project owns the `.agents/skills/` directory.
-- Edit, override, or delete skills as needed.
-- The CLI embeds the default skills. If you edit the defaults in the `knack` repo, run `cli/sync-skills.sh` to copy them into `cli/embedded/skills` and `diff -r .agents/skills cli/embedded/skills` to verify sync.
-- Use `knack skills check` to validate your local skills.
+After `npx skills add`, the project owns the `.agents/skills/` directory. Edit, override, or delete skills as needed. The repo's `skills/` directory is the source; `npx skills update` refreshes the local copies.
 
 ## Composable flows
 
@@ -60,4 +58,4 @@ bug report → explore → plan → build → done
 big feature → explore → plan → build --review → review → fix → build → done
 ```
 
-Decisions are captured inline throughout the flow using the `decide` skill, and terms are updated using `domain-modeling`.
+Decisions are captured inline throughout the flow using the `decide` skill, terms are updated using `domain-modeling`, and durable-context placement is checked using `document`.

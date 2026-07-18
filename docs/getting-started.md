@@ -1,92 +1,47 @@
 # Getting started
 
-knack is a loop runner (`loop.sh`) plus a read-only CLI (`knack`). You can use the loop without the CLI, but the CLI makes validating queues, scaffolding skills, and checking decisions much easier.
+knack is a skills collection plus an optional bash loop for unattended batch work. Most work is interactive; reach for the loop when you want to leave.
 
-## Prerequisites
-
-- Bash 4+
-- Python 3 (used by `loop.sh` for small path helpers)
-- Git (optional; used for work snapshots and changed-files reporting)
-- Go 1.21+ (only to build the CLI from source)
-
-## Build the CLI
+## Install the skills
 
 ```bash
-cd cli
-go build -o ../knack .
+npx skills add <owner>/<repo>
 ```
 
-This writes a `knack` binary in the repo root. You can run it as `./knack`.
+[`npx skills`](https://github.com/vercel-labs/skills) detects your agent and installs into its native skills path. Update with `npx skills update`; remove with `npx skills remove`.
 
-## Run the smoke test
+Once installed, invoke a skill by name: `explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, or `document`.
 
-Dry-run the bundled smoke queue to see the loop parse a work unit:
+## Use the skills interactively
+
+```
+explore → plan → build → review → fix → done
+```
+
+This is a default path, not a gate. `bug → plan → build → done` is equally valid.
+
+## Run the loop (optional)
+
+The loop runs a `QUEUE.md` one work unit at a time while you are away:
 
 ```bash
-./loop.sh run examples/smoke/.loop/smoke/QUEUE.md --dry-run
+LOOP_AGENT_CMD='pi -p --no-session' ./loop.sh run .loop/<name>/QUEUE.md
 ```
 
-To run a real tick with a fake worker:
+See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix subloop.
 
-```bash
-mkdir -p /tmp/smoke/.loop
-cp examples/smoke/.loop/smoke/QUEUE.md /tmp/smoke/.loop/QUEUE.md
-LOOP_AGENT_CMD='touch smoke.done' ./loop.sh run /tmp/smoke/.loop/QUEUE.md --repo /tmp/smoke --max-ticks 1
-```
+## Write a queue
 
-The worker creates `smoke.done` in `/tmp/smoke`, the verify command sees it, and the unit is marked `done`.
+Create `.loop/<name>/QUEUE.md` using the format in [`queue-format.md`](./queue-format.md). Each work unit needs an outcome, constraints, done criteria, and a deterministic `Verify:` command.
 
-## Scaffold skills into a new project
-
-```bash
-cd /path/to/new-project
-/path/to/knack skills init
-```
-
-This writes the seven default skills into `.agents/skills/`. The project owns them after that point — edit, override, or delete as needed.
-
-## Write your first queue
-
-Create a file named `.loop/<name>/QUEUE.md` using the format in [queue-format.md](./queue-format.md). Then validate it:
-
-```bash
-./knack validate .loop/my-cycle/QUEUE.md
-```
-
-`knack instructions work-unit` prints a template you can copy.
-
-## Run the loop
-
-```bash
-LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
-```
-
-Other common patterns:
-
-```bash
-LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
-LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
-LOOP_AGENT_CMD='opencode run --auto "$(cat "$LOOP_PROMPT_FILE")"' ./loop.sh run .loop/my-cycle/QUEUE.md
-LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' ./loop.sh run .loop/my-cycle/QUEUE.md
-```
-
-The `Agent:` field in an individual work unit overrides `LOOP_AGENT_CMD` for that unit only.
-
-## Verify the project
+## Test the repo
 
 ```bash
 ./tests/run.sh
 ```
 
-For CLI-only work:
-
-```bash
-cd cli && go test ./...
-```
-
 ## Next steps
 
-- [Queue format](./queue-format.md)
-- [Loop reference](./loop.md)
-- [CLI reference](./cli.md)
-- [Skills guide](./skills.md)
+- Read [`architecture.md`](./architecture.md) for the conceptual overview.
+- Read [`skills.md`](./skills.md) for the skill catalog.
+- Read [`loop.md`](./loop.md) if you want batch mode.

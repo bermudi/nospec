@@ -54,6 +54,8 @@ An ADR is *orphaned* when it no longer explains or constrains the system — whe
 
 When you write an ADR, thread a reference to it through the work; that creates evidence of its relevance. When you supersede one, carry that reference into the replacement. This is judgment, not a gate — read `decisions/` against the system as it stands and notice orphans yourself.
 
+After superseding an ADR, invoke the `document` skill to check which views still cite the old ruling and need projection updates. A superseded ADR is a common source of stale documentation.
+
 ## What makes a good ADR
 
 - **Title is the ruling.** "Use SQLite for local state" not "Storage decision."

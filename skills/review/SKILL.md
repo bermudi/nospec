@@ -39,6 +39,7 @@ Does the change follow the codebase's existing patterns?
 - Look for regressions — did the change break something nearby?
 - Check for dead code, unused imports, leftover debugging.
 - Check for over-reach — does the change add abstraction, wrappers, or parallel paths the outcome never asked for? Speculative structure is a standards finding even when it works: surface area is bug surface, and the bugs land in the layers nobody required.
+- Check for durable-context drift — if the change alters a public interface, a convention, a ruling, or a domain term, does it leave stale projections behind? If so, invoke the `document` skill to assess coherence and route corrections to the owning record.
 
 The question is not "is this good code?" — that's subjective. The question is "does this match the codebase's own standards?"
 

@@ -364,6 +364,21 @@ mkdir -p "$repo_empty"
 assert_contains /tmp/loop-view-empty.txt "Knack Dashboard"
 assert_contains /tmp/loop-view-empty.txt "Active Cycles: 0"
 
+# No references to deleted CLI commands remain in user-facing docs
+echo "checking for stale CLI references in README.md and docs/..."
+stale_refs=0
+for doc in "$root/README.md" "$root/docs"/*.md; do
+  if grep -nE 'knack (validate|skills init|decisions check|status)|cli\.md|cli/' "$doc" | grep -v 'decisions/0011' >/tmp/stale.txt 2>&1; then
+    echo "stale CLI reference in $doc:" >&2
+    cat /tmp/stale.txt >&2
+    stale_refs=1
+  fi
+done
+if [[ $stale_refs -ne 0 ]]; then
+  echo "found stale CLI references" >&2
+  exit 1
+fi
+
 if command -v skills-ref >/dev/null 2>&1; then
   for skill_dir in "$root/skills"/*; do
     if [[ -d "$skill_dir" ]]; then
