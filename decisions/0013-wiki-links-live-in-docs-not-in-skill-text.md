@@ -13,7 +13,7 @@ The root question is what a link *does*. The **synopsis is the payload** — it 
 The first cut at this ruling — "links are human-facing provenance, so keep them out of anything an LLM reads" — proved too broad: it stripped `AGENTS.md`, which is a *development* doc agents genuinely benefit from linking. The right line is **product vs development**. This repo holds two layers:
 
 - **The product (`skills/`)** travels — `npx skills add` installs it into *other* projects, where it becomes operational LLM context. In a foreign project knack's AgenticWiki links are dead weight: no surrounding context, never fetched. So the product must be self-contained.
-- **knack's own development context** (`AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `DESIGN.md`, `docs/`) *stays* in this repo. It guides anyone working *on* knack, where the links are load-bearing — knack's theory *is* the AgenticWiki. These are never installed; they link freely.
+- **knack's own development context** (`AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `DESIGN.md`, `docs/`) *stays* in this repo. It guides anyone working *on* knack, where the links are load-bearing — knack's theory *is* the AgenticWiki. These are never installed; they link freely. *(Subsequently amended by ADR-0015: `DESIGN.md` was deleted and its content redistributed to `docs/architecture.md` and `docs/theory.md`. The product-vs-development split this ruling establishes is unchanged.)*
 
 This also disambiguates two files that share a name: **knack's own `glossary.md`** (a development doc, links freely) vs **the `glossary.md` the `domain-modeling` skill manages in a user's project** (operational context there — no links; the skill must not instruct adding them).
 

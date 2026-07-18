@@ -5,7 +5,7 @@ This doc is a view, not a record. It preserves the reasoning that led to knack's
 ## What we're keeping from litespec
 
 - The flow shape: `explore → plan → build → review → fix` (now composable, not rigid)
-- Skills as procedural knowledge (`think/plan/build/review` → `explore/plan/build/review/fix` + shared `decide`/`domain-modeling`/`document`)
+- Skills as procedural knowledge (`think/plan/build/review` → `explore/plan/build/review/fix` + shared `decide`/`domain-modeling`; `document` was added later by ADR-0015)
 - Decisions (ADRs) — they persist because they're about rulings, not current behavior; when they stop applying, they're explicitly superseded, not left to silently rot
 - Glossary — small, curated, doesn't rot the way specs do
 - The patch lane concept (lightweight for small changes — now the default, not a special mode)
@@ -40,7 +40,7 @@ This doc is a view, not a record. It preserves the reasoning that led to knack's
 ## What we're stealing from mattpocock/skills
 
 - Composable skills, not a monolithic flow (each skill independently invokable)
-- Shared vocabulary skills (`domain-modeling`, `codebase-design` pattern → our `decide` + `domain-modeling` + `document`)
+- Shared vocabulary skills (`domain-modeling`, `codebase-design` pattern → our `decide` + `domain-modeling`; `document` extends the same shared-skill pattern, added by ADR-0015)
 - ADRs captured inline during grilling, not as a separate phase
 - Two-axis parallel review (Standards vs Intent, run as parallel sub-agents)
 - No semantic validator (verification is distributed: execution, grilling, reproduction, human gates)

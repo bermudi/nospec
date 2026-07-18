@@ -35,13 +35,15 @@ Authority is partitioned, not collapsed into code:
 - **Glossary** is authoritative for *domain terms*. Terms evolve deliberately; they can stale and need pruning.
 - **Work artifacts** (`QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`) describe intent only while being consumed.
 
-The slogan "code is the source of truth" is retained in the thesis lines (the one-sentence and thesis sections of DESIGN.md) as the rhetorical anchor for the anti-litespec inversion. It is *not* used as a definition in the durable-artifact list, where the partitioned-authority formulation replaces it.
+The slogan "code is the source of truth" is retained in the thesis lines (the one-sentence and thesis sections of the architecture view) as the rhetorical anchor for the anti-litespec inversion. It is *not* used as a definition in the durable-artifact list, where the partitioned-authority formulation replaces it.
 
 ## Consequences
 
-- The DESIGN.md `decide` skill synopsis, the "Durable vs disposable" section (header, `src/`/`decisions/`/`glossary.md` entries), and the "What we're keeping from litespec" ADRs bullet now use the maintained-records framing and the partitioned-authority formulation. AGENTS.md's "Core artifacts" durable header matches. The qualified comparative ("doesn't rot the way specs do") is retained where it already appeared.
+- The `decide` skill synopsis, the "Durable vs disposable" section (header, `decisions/`/`glossary.md` entries), and the "What we're keeping from litespec" ADRs bullet now use the maintained-records framing and the partitioned-authority formulation. `AGENTS.md`'s "Core artifacts" durable header matches. The qualified comparative ("doesn't rot the way specs do") is retained where it already appeared.
 - The slogan survives as a tagline only; readers of the durable list get the precise model.
 - "Still valid" → "still explains why a choice was made" aligns the durable docs with ADR-0012's supersession model.
-- Glossary-staleness is now consistent across DESIGN.md and AGENTS.md (both admit it).
+- Glossary-staleness is now consistent across the architecture view and `AGENTS.md` (both admit it).
 - No skill text needed changing — `skills/decide/SKILL.md` already framed decisions as "explaining why the code is the way it is," not as "still valid." The overclaim was a docs-only drift.
 - Risk: "maintained records whose value survives the work cycle" is longer than "doesn't rot." Mitigation: the slogan still carries the short form where rhetoric matters; the durable list carries the precise form where definition matters.
+
+> Note: the original consequences referenced `DESIGN.md` line numbers (105, 235–239, 417). ADR-0015 deleted `DESIGN.md` and redistributed its content to `docs/architecture.md` and `docs/theory.md`. The line-number references are dropped; the substantive claims are preserved against the successor view.

@@ -20,7 +20,6 @@ Durable knowledge is organized by **artifact role**, not by topic or length:
   - `decisions/` — architectural rulings
   - `glossary.md` — domain terms
   - `AGENTS.md` — operational context
-  - `LEARNINGS.md` — domain/problem observations
   - code/tests — implemented behavior
 - **View** — helps a reader understand several records together, but is not itself authoritative.
   - `README.md` — entry-point view
@@ -31,7 +30,7 @@ Durable knowledge is organized by **artifact role**, not by topic or length:
   - `docs/README.md` — documentation ownership map
 - **Ledger** — append-only record of what happened.
   - `.loop/<name>/EVIDENCE.md` — cycle evidence
-  - `LEARNINGS.md` — durable insights
+  - `LEARNINGS.md` — domain/problem insights
 - **Work state** — coordination state consumed then discarded.
   - `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`
 

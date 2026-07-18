@@ -16,7 +16,7 @@ Authoritative rulings live in `decisions/`; this doc is a view that ties them to
 
 ## One sentence
 
-knack turns intent into a disposable queue of verifiable work units, runs each unit behind a deterministic verify gate, and encodes the resulting know-how as reusable skills — with decisions, glossary, and operational context kept as durable records.
+A composable skills collection for agentic development — procedural knowledge as reusable concepts, with decisions, glossary, and operational context as durable records, and an optional bash loop for unattended batch work.
 
 ## Human attention spectrum
 
@@ -51,7 +51,7 @@ Durable knowledge is organized by role. Each fact has one owner; other documents
 
 | Role | Examples | Purpose |
 |---|---|---|
-| **Record** | `skills/`, `decisions/`, `glossary.md`, `AGENTS.md`, `LEARNINGS.md`, code/tests | Owns a class of claim |
+| **Record** | `skills/`, `decisions/`, `glossary.md`, `AGENTS.md`, code/tests | Owns a class of claim |
 | **View** | `README.md`, `docs/architecture.md`, `docs/getting-started.md`, `docs/skills.md`, `docs/loop.md` | Helps readers understand records together |
 | **Ledger** | `.loop/<name>/EVIDENCE.md`, `LEARNINGS.md` | Append-only record of what happened |
 | **Work state** | `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/` | Coordination state consumed then discarded |
@@ -62,7 +62,7 @@ Views summarize and link; they do not independently redefine what they project. 
 
 Durable artifacts survive the work cycle because they are maintained records:
 
-- `src/` / code and tests — implemented behavior
+- code and tests — implemented behavior
 - `skills/` — procedural knowledge
 - `decisions/` — architectural rulings
 - `glossary.md` — domain terms

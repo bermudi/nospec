@@ -11,25 +11,24 @@ Durable knowledge rots when it has no clear owner or when several documents make
 
 ## Artifact roles
 
-Every durable artifact plays one of these roles:
+Every durable artifact plays one of these roles. The specific files below are examples — a project may use different names or only some of them. What matters is the role each artifact plays, not the filename.
 
 - **Record** — owns a class of claim.
-  - `skills/` — procedural knowledge
-  - `decisions/` — architectural rulings
-  - `glossary.md` — domain terms
-  - `AGENTS.md` — operational context
-  - `LEARNINGS.md` — domain/problem observations
+  - procedural-knowledge files (e.g., `skills/`)
+  - architectural rulings (e.g., `decisions/`)
+  - domain vocabulary (e.g., `glossary.md`)
+  - operational context (e.g., `AGENTS.md`)
   - code and tests — implemented behavior
 - **View** — helps a reader understand records together, without becoming an alternate authority.
-  - `README.md` — entry point
-  - `docs/architecture.md` — conceptual shape
-  - `docs/getting-started.md` — first-use guide
-  - `docs/skills.md`, `docs/loop.md`, `docs/queue-format.md` — reference views
+  - entry point (e.g., `README.md`)
+  - conceptual overview (e.g., `docs/architecture.md`)
+  - first-use guide (e.g., `docs/getting-started.md`)
+  - reference pages (e.g., `docs/<topic>.md`)
 - **Ledger** — append-only record of what happened.
-  - `.loop/<name>/EVIDENCE.md` — cycle evidence
-  - `LEARNINGS.md` — durable insights
+  - cycle evidence (e.g., `.loop/<name>/EVIDENCE.md`)
+  - domain/problem insights (e.g., `LEARNINGS.md`)
 - **Work state** — coordination state consumed then discarded.
-  - `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`
+  - queues, handoffs, review artifacts, scratch specs (e.g., `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`)
 
 The rule is not that each fact appears once. It is that each fact has one owner; everything else is a deliberate projection.
 
@@ -41,15 +40,15 @@ These are concepts, not a script. Use the ones that fit the situation.
 
 When new knowledge appears, ask: what question will a future reader ask, and which record should answer it?
 
-- A new convention → `AGENTS.md`
-- A new architectural ruling → `decisions/`
-- A new domain term or refined meaning → `glossary.md`
-- A lesson the codebase taught about the problem → `LEARNINGS.md`
-- A new workflow concept → the relevant `skills/` file
-- A user-facing protocol or interface → `docs/<reference>.md`
+- A new convention → operational-context record (e.g., `AGENTS.md`)
+- A new architectural ruling → rulings record (e.g., `decisions/`)
+- A new domain term or refined meaning → domain-vocabulary record (e.g., `glossary.md`)
+- A lesson the codebase taught about the problem → insights ledger (e.g., `LEARNINGS.md`)
+- A new workflow concept → the relevant procedural-knowledge file (e.g., `skills/<name>/SKILL.md`)
+- A user-facing protocol or interface → a reference page (e.g., `docs/<reference>.md`)
 - The current behavior of the code → code/tests
 
-Do not place the same claim in two records. If a summary is needed, put the claim in the record and project it in a view.
+If the project does not have a record for a class of claim, do not invent one preemptively — create it when the first claim of that kind actually appears. Do not place the same claim in two records. If a summary is needed, put the claim in the record and project it in a view.
 
 ### Maintain the projection
 
@@ -67,10 +66,10 @@ Coherence is the relationship between durable artifacts. It is not the same as c
 Look for:
 
 - A view describing a behavior the code no longer has
-- An ADR cited as current when it has been superseded
-- A glossary term whose definition no longer matches usage
-- `AGENTS.md` instructions that no longer work
-- A skill advising a workflow the ADRs have retired
+- A ruling cited as current when it has been superseded
+- A domain term whose definition no longer matches usage
+- Operational-context instructions that no longer work
+- A skill advising a workflow the rulings have retired
 - Two documents answering the same question differently
 
 When you find one, route the correction to the owning record and update its projections.
@@ -97,7 +96,7 @@ Superseded or duplicated explanations do not need to be kept for posterity. ADRs
 
 Other skills call `document` inline when durable context changes:
 
-- `decide` — after superseding an ADR, check which views still cite the old ruling and need projection updates.
-- `domain-modeling` — after adding or changing a term, check whether `glossary.md`, `AGENTS.md`, or skills use the old meaning in a projection.
-- `build` — when an operational learning surfaces, route it to `AGENTS.md` or `LEARNINGS.md` and update any view that quotes it.
+- `decide` — after superseding a ruling, check which views still cite the old ruling and need projection updates.
+- `domain-modeling` — after adding or changing a term, check whether the operational context, skills, or other views use the old meaning in a projection.
+- `build` — when an operational learning surfaces, route it to the operational-context record or the insights ledger and update any view that quotes it.
 - `review` — under the standards axis, when a change affects a public interface or a ruling, flag projection drift as a standards finding and invoke `document` to assess coherence.
