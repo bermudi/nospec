@@ -25,7 +25,7 @@ Review is not a gate the loop enforces — it's a skill the user or agent invoke
 
 ## Before you review
 
-Read the change (the diff). If there's a work unit (`.loop/<name>/QUEUE.md`) and evidence (`.loop/<name>/EVIDENCE.md`), read them — the unit states what was promised, the evidence what verify proved. If the prompt includes a `Design:` path, read `.loop/<name>/DESIGN.md` for the reasoning context (external constraints, decisions, trade-offs) the work was planned against; a deviation from its stated constraints is a stronger finding than one based on inference. Interactively, gather the stated intent from the request or conversation.
+Read the change (the diff). If there's a work unit (`.loop/<name>/QUEUE.md`) and evidence (`.loop/<name>/EVIDENCE.md`), read them — the unit states what was promised, the evidence what verify proved. Read the `Pin alerts:` section of `EVIDENCE.md` if present — each alert means a durable doc that a prior cycle pinned has since changed, which is a coherence signal the verify gate cannot see. If the prompt includes a `Design:` path, read `.loop/<name>/DESIGN.md` for the reasoning context (external constraints, decisions, trade-offs) the work was planned against; a deviation from its stated constraints is a stronger finding than one based on inference. Interactively, gather the stated intent from the request or conversation.
 
 ## Two-axis review
 
@@ -40,6 +40,7 @@ Does the change follow the codebase's existing patterns?
 - Check for dead code, unused imports, leftover debugging.
 - Check for over-reach — does the change add abstraction, wrappers, or parallel paths the outcome never asked for? Speculative structure is a standards finding even when it works: surface area is bug surface, and the bugs land in the layers nobody required.
 - Check for durable-context drift — if the change alters a public interface, a convention, a ruling, or a domain term, does it leave stale projections behind? If so, invoke the `document` skill to assess coherence and route corrections to the owning record.
+- Check `Pin alerts:` in `EVIDENCE.md` — each alert is a durable doc that a prior cycle pinned and has since changed. Route each alert to the `document` skill to assess whether the change left stale projections in other durable docs that describe or depend on it. A pin alert is a triage trigger, not a coherence finding by itself — it says "something moved," not "something is wrong." `document` judges whether the move broke coherence.
 
 The question is not "is this good code?" — that's subjective. The question is "does this match the codebase's own standards?"
 

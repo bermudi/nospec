@@ -68,7 +68,7 @@ Durable artifacts survive the work cycle because they are maintained records:
 - `glossary.md` — domain terms
 - `LEARNINGS.md` — domain/problem insights
 - `AGENTS.md` — operational context
-- `.loop/<name>/EVIDENCE.md` — what each tick proved
+- `.loop/<name>/EVIDENCE.md` — what each tick proved (registry-derived proof boundary + durable-doc pin state; ADR-0016)
 
 Disposable artifacts are consumed then discarded:
 

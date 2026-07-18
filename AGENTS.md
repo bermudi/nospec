@@ -17,6 +17,7 @@ The spine:
 - **ADR-0013** — wiki links live in docs, not in skill text.
 - **ADR-0014** — durability is maintenance, not permanence.
 - **ADR-0015** — durable knowledge is organized by artifact role with clear ownership.
+- **ADR-0016** — proof-boundary is mechanical; pin-state is provenance, not coherence.
 
 ## Thesis
 
@@ -59,6 +60,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
 - Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment — transmitted as concepts in the `decide`, `domain-modeling`, and `document` skills, not enforced by gate commands.
+- The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary (mechanical: `loop.sh` derives it from the verify command) and a pin-state record (mechanical: `loop.sh` records which durable docs were touched and alerts when a prior pin moves). Pin alerts are triage triggers for `review` → `document`, not coherence gates (ADR-0016).
 - Operational gotchas go here; domain/problem insights go in `LEARNINGS.md`.
 
 ## Verification
@@ -75,7 +77,7 @@ Exercises `loop.sh` (parsing, verify gate, handoff, review-fix) and validates sk
 - **The worker prompt names the skill explicitly (ADR-0007).** `prompts/worker.md` tells the worker to load the `build` skill by name and path; the loop passes it via `LOOP_PROMPT_FILE`. Trigger-based discovery isn't reliable enough across agents.
 - **A verify command run across units compounds.** Each unit's verify runs prior units' tests too, so regressions surface at the next gate.
 - **Review catches what verify can't.** The queue-parser regex `^##\s*(.*)$` once matched `###` subheadings as work units — a real bug tests missed because no fixture used `###`. Adversarial review against the actual codebase found it. Fix: exclude `###` in the unit-header check.
-- **The verify gate proves the mechanical contract, not the coherence contract.** Tests-green + no-dead-refs-in-code can coexist with a durable doc that contradicts the ADRs: `AGENTS.md` once claimed `glossary.md` held "knack-domain terms only" while the file was 21 wiki-concept redefinitions, and the `README` linked the AgenticWiki as a public backbone while it was a private repo. After changing rulings, separately check that durable docs (`AGENTS.md`, `glossary.md`, `README`, `docs/`) still cohere with them — the grep that proves "no dead CLI refs in code" deliberately excludes docs and will not catch this. Coherence is a separate gate from compilation, handled by the `document` skill.
+- **The verify gate proves the mechanical contract, not the coherence contract.** Tests-green + no-dead-refs-in-code can coexist with a durable doc that contradicts the ADRs: `AGENTS.md` once claimed `glossary.md` held "knack-domain terms only" while the file was 21 wiki-concept redefinitions, and the `README` linked the AgenticWiki as a public backbone while it was a private repo. After changing rulings, separately check that durable docs (`AGENTS.md`, `glossary.md`, `README`, `docs/`) still cohere with them — the grep that proves "no dead CLI refs in code" deliberately excludes docs and will not catch this. Coherence is a separate gate from compilation, handled by the `document` skill. The pin-state record (ADR-0016) catches *direct* drift — a durable doc that a prior cycle pinned has since changed — and routes it to `review` → `document`. It does not catch *indirect* coherence failure (A changed in a way that contradicts unpinned B); that remains judgment.
 - **Verify commands must be path-correct.** A unit once had `cd subproj && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `subproj/` after the `cd`, not the repo root. The loop correctly caught the failure; the verify command was wrong. Always test verify commands manually before writing them into a queue.
 - **Workers scope to the outcome plus constraints, not a file list (ADR-0005).** A constraint states what must stay true or what is out of bounds — never what to edit. Naming files in constraints smuggles scope the same way the old `Work:` field did.
 - **Orphan-ADR semantics.** An ADR is orphaned when it no longer explains or constrains the system — references (`QUEUE.md`, `EVIDENCE.md`, code, docs) are evidence of relevance, not the definition; a negative ruling can be alive with no citing work. (Established by ADR-0012, which supersedes the deleted checker's citation model from ADR-0006; transmitted as a concept by the `decide` skill, not a gate — ADR-0011.)

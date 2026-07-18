@@ -105,6 +105,43 @@ assert_contains "$repo5/.loop/QUEUE.md" "Status: blocked"
 assert_contains "$repo5/.loop/HANDOFF.md" "## In progress"
 assert_contains "$repo5/.loop/HANDOFF.md" "blocked"
 
+# ADR-0016: registry-derived proof claims replace the vacuous negative.
+# The verify `test -f smoke.done` should derive "file exists: smoke.done".
+assert_contains "$repo1/.loop/EVIDENCE.md" "file exists: smoke.done"
+assert_contains "$repo1/.loop/EVIDENCE.md" "What remains unverified:"
+assert_contains "$repo1/.loop/EVIDENCE.md" "see the verify command for the exact check"
+# Failed verify should not claim anything was proven
+assert_contains "$repo2/.loop/EVIDENCE.md" "The work unit is not externally verified."
+
+# ADR-0016: pin-state records durable docs touched in changed_files.
+# repo1 has no durable docs (temp dir), so pins should be empty.
+assert_contains "$repo1/.loop/EVIDENCE.md" "Pinned durable docs:"
+assert_contains "$repo1/.loop/EVIDENCE.md" "- (none)"
+
+# ADR-0016: pin alerts fire when a durable doc changes between cycles.
+repo_pin="$tmp/repo-pin-alerts"
+mkdir -p "$repo_pin"
+git init -q "$repo_pin"
+echo "# AGENTS v1" > "$repo_pin/AGENTS.md"
+make_queue "$repo_pin" "test -f pin1.done"
+( cd "$repo_pin" && git add -A && git commit -q -m init )
+LOOP_AGENT_CMD='touch pin1.done; echo "# AGENTS v2" > AGENTS.md' \
+  "$root/loop.sh" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
+assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pinned: AGENTS.md @"
+# No pin alerts on the first cycle
+if grep -q 'Pin alert:' "$repo_pin/.loop/EVIDENCE.md"; then
+  echo "expected no pin alerts on first cycle" >&2
+  exit 1
+fi
+( cd "$repo_pin" && git add -A && git commit -q -m "cycle 1" )
+make_queue "$repo_pin" "test -f pin2.done"
+LOOP_AGENT_CMD='touch pin2.done; echo "# AGENTS v3" > AGENTS.md' \
+  "$root/loop.sh" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
+# Second cycle should have a pin alert for AGENTS.md
+assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pin alert: AGENTS.md moved since"
+assert_contains "$repo_pin/.loop/EVIDENCE.md" "was "
+assert_contains "$repo_pin/.loop/EVIDENCE.md" "now "
+
 # Per-unit Agent: override
 repo4="$tmp/repo-agent-override"
 mkdir -p "$repo4/.loop"

@@ -153,6 +153,173 @@ work_snapshot() {
   fi
 }
 
+derive_proof_claims() {
+  local verify_cmd=$1
+  python - "$verify_cmd" <<'PY'
+import re, sys
+
+def classify(segment):
+    s = segment.strip()
+    # Strip common prefixes that don't affect the proof claim
+    s = re.sub(r'^cd\s+\S+\s+', '', s)
+    s = re.sub(r'^env\s+-C\s+\S+\s+', '', s)
+    s = s.strip().strip('()').strip()
+    if not s:
+        return None
+    if s.startswith('go test'):
+        return 'Go test suite passes'
+    if s.startswith('go build'):
+        return 'Go binary compiles'
+    if s.startswith('go run'):
+        return 'Go program runs'
+    if s.startswith('! grep'):
+        m = re.search(r"['\"]([^'\"]*)['\"]", s)
+        pat = m.group(1) if m else 'pattern'
+        return f'no matches for "{pat}" in scope'
+    if s.startswith('grep -q') or s.startswith('grep -E -q'):
+        m = re.search(r"['\"]([^'\"]*)['\"]", s)
+        pat = m.group(1) if m else 'pattern'
+        return f'pattern "{pat}" found in target'
+    if s.startswith('diff -r'):
+        return 'directories match'
+    if s.startswith('test -f'):
+        m = re.search(r'test -f\s+(\S+)', s)
+        path = m.group(1) if m else 'path'
+        return f'file exists: {path}'
+    if s.startswith('bash -n'):
+        return 'shell script syntax valid'
+    if './tests/run.sh' in s:
+        return 'project test suite passes'
+    if 'glossary check' in s:
+        return 'glossary has no undefined/stale terms'
+    if 'decisions check' in s:
+        return 'decisions are internally consistent'
+    # Fallback for unknown commands — never interpret, just record exit-0.
+    # Includes pipe-to-count constructs like `test $(... | wc -l) -eq N`:
+    # the real claim is relational (N matches for pattern in scope), which
+    # mechanical decomposition cannot extract without misclassification risk.
+    short = s if len(s) <= 60 else s[:57] + '...'
+    return f'command exited 0: {short}'
+
+cmd = sys.argv[1]
+# Simple split on && — conservative; misclassification is bounded
+# because the raw command is always adjacent in the evidence entry
+segments = re.split(r'\s*&&\s*', cmd)
+claims = []
+for seg in segments:
+    c = classify(seg)
+    if c:
+        claims.append(c)
+if not claims:
+    claims = ['- The verify command passed for this work unit in the current repo state.']
+for c in claims:
+    print(f'- {c}')
+PY
+}
+
+record_pin_state() {
+  local evidence=$1 repo_dir=$2
+  python - "$evidence" "$repo_dir" <<'PY'
+import re, sys, subprocess, os
+from pathlib import Path
+
+evidence_path, repo_dir = sys.argv[1], sys.argv[2]
+
+# Durable-doc patterns (knack-specific; see ADR-0016)
+DURABLE_PATTERNS = [
+    re.compile(r'^decisions/.*\.md$'),
+    re.compile(r'^glossary\.md$'),
+    re.compile(r'^AGENTS\.md$'),
+    re.compile(r'^README\.md$'),
+    re.compile(r'^LEARNINGS\.md$'),
+    re.compile(r'^docs/.*\.md$'),
+    re.compile(r'^skills/.*SKILL\.md$'),
+]
+
+def is_durable(path):
+    return any(p.match(path) for p in DURABLE_PATTERNS)
+
+def file_sha(repo_dir, path):
+    full = os.path.join(repo_dir, path)
+    if not os.path.isfile(full):
+        return None
+    try:
+        result = subprocess.run(
+            ['git', '-C', repo_dir, 'hash-object', full],
+            capture_output=True, text=True
+        )
+        if result.returncode == 0:
+            return result.stdout.strip()[:12]
+    except Exception:
+        pass
+    return None
+
+# Get changed files from git status, filter for durable docs
+changed_durable = []
+result = subprocess.run(
+    ['git', '-C', repo_dir, 'status', '--short', '--untracked-files=all'],
+    capture_output=True, text=True
+)
+if result.returncode == 0:
+    for line in result.stdout.strip().split('\n'):
+        if not line.strip():
+            continue
+        # Format: XY path (2-char status, space, path)
+        path = line[3:].strip()
+        if path.startswith('.loop/'):
+            continue
+        if is_durable(path):
+            changed_durable.append(path)
+
+# Scan prior evidence entries for pins on the same paths
+prior_pins = {}
+if os.path.isfile(evidence_path):
+    content = Path(evidence_path).read_text()
+    current_ts = None
+    for line in content.split('\n'):
+        # Only match evidence entry headers (timestamp starts with a date)
+        m = re.match(r'^## (\d{4}-\d{2}-\d{2}T\S+)', line)
+        if m:
+            current_ts = m.group(1)
+            continue
+        m = re.match(r'^- Pinned:\s+(\S+)\s+@\s+(\S+)', line)
+        if m and current_ts:
+            path, sha = m.group(1), m.group(2)
+            prior_pins.setdefault(path, []).append((current_ts, sha))
+
+# Compute current pins (SHA of each durable doc touched this cycle)
+current_pins = {}
+for path in sorted(set(changed_durable)):
+    sha = file_sha(repo_dir, path)
+    if sha:
+        current_pins[path] = sha
+
+# Compute alerts: a prior pin on the same path with a different SHA
+alerts = []
+for path, sha in current_pins.items():
+    if path in prior_pins:
+        last_ts, last_sha = prior_pins[path][-1]
+        if last_sha != sha:
+            alerts.append(
+                f'- Pin alert: {path} moved since {last_ts} (was {last_sha}, now {sha})'
+            )
+
+# Output
+print('Pinned durable docs:')
+if current_pins:
+    for path, sha in sorted(current_pins.items()):
+        print(f'- Pinned: {path} @ {sha}')
+else:
+    print('- (none)')
+
+if alerts:
+    print()
+    print('Pin alerts:')
+    for a in alerts:
+        print(a)
+PY
+}
+
 changed_files() {
   local repo_dir=$1
   if git -C "$repo_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -198,13 +365,19 @@ append_evidence() {
     echo
     echo "What this proves:"
     if [[ "$status" == "done" ]]; then
-      echo "- The verify command passed for this work unit in the current repo state."
+      derive_proof_claims "$verify"
     else
       echo "- The work unit is not externally verified."
     fi
     echo
     echo "What remains unverified:"
-    echo "- Anything outside the verify command's proof scope."
+    if [[ "$status" == "done" ]]; then
+      echo "- Anything outside the above proof scope; see the verify command for the exact check."
+    else
+      echo "- The verify command did not pass; nothing is proven."
+    fi
+    echo
+    record_pin_state "$evidence" "$repo_dir"
   } >> "$evidence"
 }
 

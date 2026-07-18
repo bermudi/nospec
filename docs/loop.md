@@ -76,7 +76,7 @@ The subloop stops when review is clean, `--max-review-rounds` is reached, `--max
 
 `loop.sh` writes next to the queue:
 
-- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, and worker output. It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references.
+- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary (what this verify mechanically proves, derived from the command), and a pin-state record (which durable docs were touched and whether any prior pins have moved). It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references. Pin alerts in the ledger are triage triggers for the `review` skill, not coherence gates (ADR-0016).
 - `HANDOFF.md` — written on non-clean exit. Sections: completed, in progress, remaining, next action. Delete when the work resumes.
 - `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line.
 

@@ -83,6 +83,7 @@ Superseded or duplicated explanations do not need to be kept for posterity. ADRs
 - **Default to placing knowledge where it is authoritative.** Override: during exploration, a temporary note is fine; move it before the work is done.
 - **Default to updating views after a record changes.** Override: a trivial wording change that does not affect meaning can skip a view update.
 - **Default to checking coherence after an ADR is superseded or a public interface changes.** Override: skip for purely internal changes that no view or skill describes.
+- **Default to scoping from the diff when invoked from a pin alert.** A pin alert says a durable doc changed since a prior cycle pinned it. Scope the coherence check from the diff of the pinned file — what changed, and which other durable docs describe or depend on it? The alert is a trigger, not a finding; it says "something moved," not "coherence broke." Judge whether the move left stale projections. Override: skip if the change is trivial (whitespace, formatting) and no projection references the changed content.
 - **Default to deleting duplicated or superseded docs.** Override: keep a migration note only if users of a published version still need it.
 
 ## What document is not
@@ -99,4 +100,4 @@ Other skills call `document` inline when durable context changes:
 - `decide` — after superseding a ruling, check which views still cite the old ruling and need projection updates.
 - `domain-modeling` — after adding or changing a term, check whether the operational context, skills, or other views use the old meaning in a projection.
 - `build` — when an operational learning surfaces, route it to the operational-context record or the insights ledger and update any view that quotes it.
-- `review` — under the standards axis, when a change affects a public interface or a ruling, flag projection drift as a standards finding and invoke `document` to assess coherence.
+- `review` — under the standards axis, when a change affects a public interface or a ruling, flag projection drift as a standards finding and invoke `document` to assess coherence. Also route `Pin alerts:` from `EVIDENCE.md` — each alert is a durable doc that moved since a prior cycle pinned it, and `document` scopes the coherence check from the diff.
