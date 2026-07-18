@@ -29,7 +29,7 @@ Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (deco
 Two layers live in this repo. **`skills/` is the product** — what `npx skills add` installs into *other* projects, so it must be self-contained: no external links, which would be dead weight in a foreign project's context (ADR-0013). **Everything else here is knack's own development context** — `AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `DESIGN.md`, `docs/` — which guides working *on* knack, is never installed, and links freely.
 
 - `skills/` — seven skills (explore, plan, build, review, fix, decide, domain-modeling). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. All seven reworked to ADR-0010 (mode-independent, concept-forward); no external links.
-- `loop.sh` — optional AFK batch runner. Agent-agnostic via `LOOP_AGENT_CMD`. Owns the verify gate. Supports per-unit `Agent:` overrides and opt-in review/fix via `--review`.
+- `loop.sh` — optional AFK batch runner. Agent-agnostic via `LOOP_AGENT_CMD`. Owns the verify gate. Supports per-unit `Agent:` overrides and opt-in review/fix via `--review`. `./loop.sh view [--repo DIR]` prints a read-only dashboard of all cycles, work units, and decisions.
 - `prompts/` — worker / reviewer / fixer prompts the loop sends.
 - `decisions/` — durable ADRs. `glossary.md` — ubiquitous language: knack-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
 - No CLI, no compile step. Distribution is skills.sh's job.

@@ -286,6 +286,84 @@ assert_contains "$repo_review/.loop/REVIEW.md" "- actionable: 0"
 assert_contains "$repo_review/review-count.txt" "2"
 assert_contains "$repo_review/app.txt" "fixed"
 
+# view: read-only dashboard of cycles, work units, and decisions
+repo_view="$tmp/repo-view"
+mkdir -p "$repo_view/.loop/feature-a" "$repo_view/decisions"
+cat > "$repo_view/.loop/feature-a/QUEUE.md" <<'EOF'
+# Loop Queue: feature-a
+
+Goal:
+Test the view dashboard.
+
+Stop condition:
+All units done.
+
+## first unit is done
+
+Verify:
+```bash
+true
+```
+
+Status: done
+
+## second unit is pending
+
+Verify:
+```bash
+true
+```
+
+Status: pending
+
+## third unit is in progress
+
+Verify:
+```bash
+true
+```
+
+Status: in_progress
+EOF
+
+cat > "$repo_view/decisions/0001-first-ruling.md" <<'EOF'
+# 0001: First ruling
+
+Date: 2026-07-17
+Status: accepted
+
+## Context
+Test.
+EOF
+
+cat > "$repo_view/decisions/0002-proposed-ruling.md" <<'EOF'
+# 0002: Proposed ruling
+
+Date: 2026-07-17
+Status: proposed
+
+## Context
+Test.
+EOF
+
+"$root/loop.sh" view --repo "$repo_view" >/tmp/loop-view.txt
+assert_contains /tmp/loop-view.txt "Knack Dashboard"
+assert_contains /tmp/loop-view.txt "Active Cycles: 1"
+assert_contains /tmp/loop-view.txt "feature-a"
+assert_contains /tmp/loop-view.txt "1/3 done"
+assert_contains /tmp/loop-view.txt "Decisions"
+assert_contains /tmp/loop-view.txt "0001"
+assert_contains /tmp/loop-view.txt "accepted"
+assert_contains /tmp/loop-view.txt "0002"
+assert_contains /tmp/loop-view.txt "proposed"
+
+# view with no cycles and no decisions is not an error
+repo_empty="$tmp/repo-empty"
+mkdir -p "$repo_empty"
+"$root/loop.sh" view --repo "$repo_empty" >/tmp/loop-view-empty.txt
+assert_contains /tmp/loop-view-empty.txt "Knack Dashboard"
+assert_contains /tmp/loop-view-empty.txt "Active Cycles: 0"
+
 if command -v skills-ref >/dev/null 2>&1; then
   for skill_dir in "$root/skills"/*; do
     if [[ -d "$skill_dir" ]]; then

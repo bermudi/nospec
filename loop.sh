@@ -5,9 +5,13 @@ usage() {
   cat <<'EOF'
 Usage:
   ./loop.sh run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
+  ./loop.sh view [--repo DIR]
 
 The queue is usually .loop/<name>/QUEUE.md in the target repo. Use --repo when the
 queue lives outside the repository it should operate on.
+
+view prints a read-only dashboard of all cycles, work units, and decisions under
+--repo (default: current directory).
 EOF
 }
 
@@ -290,10 +294,168 @@ run_phase_agent() {
   fi
 }
 
+cmd_view() {
+  local repo_dir
+  repo_dir=$(pwd)
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --repo)
+        [[ $# -ge 2 ]] || die "--repo needs a value"
+        repo_dir=$(abs_path "$2")
+        shift 2
+        ;;
+      *) die "unknown argument: $1" ;;
+    esac
+  done
+  [[ -d "$repo_dir" ]] || die "repo not found: $repo_dir"
+  python - "$repo_dir" <<'PY'
+import sys, re, time
+from pathlib import Path
+
+repo = Path(sys.argv[1])
+W = "=" * 60
+D = "-" * 60
+
+def parse_queue(path):
+    units = []
+    current = None
+    for line in path.read_text().splitlines():
+        if re.match(r'^## ', line) and not re.match(r'^###', line):
+            if current:
+                units.append(current)
+            current = {"title": line[3:].strip(), "status": "pending"}
+        elif current:
+            m = re.match(r'^Status:\s*(\S+)', line)
+            if m:
+                current["status"] = m.group(1)
+    if current:
+        units.append(current)
+    return units
+
+def progress_bar(done, total, width=20):
+    filled = 0 if total == 0 else int(round(done / total * width))
+    bar = "#" * filled + "." * (width - filled)
+    pct = 0 if total == 0 else int(round(done / total * 100))
+    return f"[{bar}] {pct:3d}%"
+
+def time_ago(mtime):
+    delta = time.time() - mtime
+    if delta < 60:
+        return "just now"
+    if delta < 3600:
+        return f"{int(delta // 60)}m ago"
+    if delta < 86400:
+        return f"{int(delta // 3600)}h ago"
+    return f"{int(delta // 86400)}d ago"
+
+# --- Cycles ---
+cycles = []
+loop_dir = repo / ".loop"
+if loop_dir.is_dir():
+    for entry in sorted(loop_dir.iterdir()):
+        if entry.is_dir() and (entry / "QUEUE.md").is_file():
+            cycles.append(entry)
+
+cycle_data = []
+t_pending = t_inprog = t_done = 0
+for cycle in cycles:
+    units = parse_queue(cycle / "QUEUE.md")
+    done = sum(1 for u in units if u["status"] == "done")
+    pending = sum(1 for u in units if u["status"] == "pending")
+    in_prog = len(units) - done - pending
+    mtime = (cycle / "QUEUE.md").stat().st_mtime
+    cycle_data.append((cycle.name, done, pending, in_prog, len(units), mtime))
+    t_done += done
+    t_pending += pending
+    t_inprog += in_prog
+
+# --- Decisions ---
+decisions = []
+dec_dir = repo / "decisions"
+if dec_dir.is_dir():
+    for f in sorted(dec_dir.glob("*.md")):
+        text = f.read_text()
+        sm = re.search(r'^Status:\s*(\S+)', text, re.MULTILINE)
+        status = sm.group(1) if sm else "unknown"
+        m = re.match(r'(\d+)-(.+)', f.stem)
+        num = m.group(1) if m else "?"
+        slug = m.group(2) if m else f.stem
+        decisions.append((num, slug, status))
+
+# --- Glossary ---
+glossary_terms = 0
+glossary = repo / "glossary.md"
+if glossary.is_file():
+    for line in glossary.read_text().splitlines():
+        if re.match(r'^##\s+', line) and not re.match(r'^###', line):
+            glossary_terms += 1
+
+# --- Learnings ---
+learnings = 0
+learn = repo / "LEARNINGS.md"
+if learn.is_file():
+    for line in learn.read_text().splitlines():
+        if re.match(r'^##\s+', line) and not re.match(r'^###', line):
+            learnings += 1
+
+# --- Render ---
+print()
+print("Knack Dashboard")
+print()
+print(W)
+print("Summary:")
+print(f"  * Active Cycles: {len(cycles)}")
+if cycles:
+    print(f"  * Work Units: {t_pending} pending, {t_inprog} in progress, {t_done} done")
+if decisions:
+    accepted = sum(1 for d in decisions if d[2] == "accepted")
+    proposed = sum(1 for d in decisions if d[2] == "proposed")
+    superseded = sum(1 for d in decisions if d[2] == "superseded")
+    other = len(decisions) - accepted - proposed - superseded
+    parts = [f"{accepted} accepted"]
+    if proposed:
+        parts.append(f"{proposed} proposed")
+    if superseded:
+        parts.append(f"{superseded} superseded")
+    if other:
+        parts.append(f"{other} other")
+    print(f"  * Decisions: {len(decisions)} total ({', '.join(parts)})")
+if glossary_terms:
+    print(f"  * Glossary: {glossary_terms} terms")
+if learnings:
+    print(f"  * Learnings: {learnings} entries")
+
+if cycle_data:
+    print()
+    print("Active Cycles")
+    print(D)
+    for name, done, pending, inprog, total, mtime in cycle_data:
+        bar = progress_bar(done, total)
+        print(f"  o {name:<30} {bar}  {done}/{total} done  (touched {time_ago(mtime)})")
+
+if decisions:
+    print()
+    print("Decisions")
+    print(D)
+    for num, slug, status in decisions:
+        label = slug if len(slug) <= 45 else slug[:42] + "..."
+        print(f"  {num:>4}  {label:<45} {status}")
+
+print()
+print(W)
+print()
+PY
+}
+
 [[ $# -ge 1 ]] || { usage; exit 1; }
 cmd=$1
 shift
-[[ "$cmd" == "run" ]] || { usage; exit 1; }
+case "$cmd" in
+  run) ;;
+  view) cmd_view "$@"; exit 0 ;;
+  help|-h|--help) usage; exit 0 ;;
+  *) usage; exit 1 ;;
+esac
 [[ $# -ge 1 ]] || die "missing queue path"
 
 queue_abs=$(abs_path "$1")
