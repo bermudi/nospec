@@ -414,7 +414,7 @@ Status: pending
 
 - The flow shape: explore → plan → build → review → fix (now composable, not rigid)
 - Skills as procedural knowledge (think/plan/build/review → explore/plan/build/review/fix + shared decide/domain-modeling)
-- Decisions (ADRs) — they persist because they're about rulings, not current behavior; they can be superseded but not silently rot
+- Decisions (ADRs) — they persist because they're about rulings, not current behavior; when they stop applying, they're explicitly superseded, not left to silently rot
 - Glossary — small, curated, doesn't rot the way specs do
 - The patch lane concept (lightweight for small changes — now the default, not a special mode)
 

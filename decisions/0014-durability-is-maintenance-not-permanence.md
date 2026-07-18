@@ -35,11 +35,11 @@ Authority is partitioned, not collapsed into code:
 - **Glossary** is authoritative for *domain terms*. Terms evolve deliberately; they can stale and need pruning.
 - **Work artifacts** (`QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`) describe intent only while being consumed.
 
-The slogan "code is the source of truth" is retained in the thesis lines (DESIGN.md:15, 27, 250) as the rhetorical anchor for the anti-litespec inversion. It is *not* used as a definition in the durable-artifact list, where the partitioned-authority formulation replaces it.
+The slogan "code is the source of truth" is retained in the thesis lines (the one-sentence and thesis sections of DESIGN.md) as the rhetorical anchor for the anti-litespec inversion. It is *not* used as a definition in the durable-artifact list, where the partitioned-authority formulation replaces it.
 
 ## Consequences
 
-- DESIGN.md:105, 235–239, 417 and AGENTS.md:39 now use the maintained-records framing and the partitioned-authority formulation. The qualified comparative ("doesn't rot the way specs do") is retained where it already appeared.
+- The DESIGN.md `decide` skill synopsis, the "Durable vs disposable" section (header, `src/`/`decisions/`/`glossary.md` entries), and the "What we're keeping from litespec" ADRs bullet now use the maintained-records framing and the partitioned-authority formulation. AGENTS.md's "Core artifacts" durable header matches. The qualified comparative ("doesn't rot the way specs do") is retained where it already appeared.
 - The slogan survives as a tagline only; readers of the durable list get the precise model.
 - "Still valid" → "still explains why a choice was made" aligns the durable docs with ADR-0012's supersession model.
 - Glossary-staleness is now consistent across DESIGN.md and AGENTS.md (both admit it).
