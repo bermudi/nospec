@@ -98,9 +98,9 @@ skills/
 1. **Standards** — does the change follow the repo's coding conventions and codebase patterns?
 2. **Intent** — does the change do what the work unit said it would? (Judgment, not a deterministic gate.)
 
-Both axes run as parallel sub-agents so neither pollutes the other. Review against the actual codebase, not against a spec that may have rotted. Findings become new work units in `.loop/<name>/QUEUE.md` with deterministic `Verify` commands.
+Both axes run as parallel sub-agents so neither pollutes the other. Review against the actual codebase, not against a spec that may have rotted. Review emits structured findings (with evidence and fix direction); it does not edit the queue — `fix` owns the conversion of actionable findings into new work units in `.loop/<name>/QUEUE.md` with deterministic `Verify` commands.
 
-**fix** — address review findings. Read the existing `.loop/<name>/QUEUE.md`, append new work units generated from findings, and run another loop pass.
+**fix** — convert actionable review findings into new work units (batch) or address them directly (interactive). In a batch cycle, append `Status: pending` units to `.loop/<name>/QUEUE.md` and stop — the loop runs the next build pass; fix does not. Interactively, apply the fixes and report the triage.
 
 **decide** (shared) — when you make an architectural ruling, capture it as an ADR in `decisions/`. Decisions persist; specs don't. A decision made 6 months ago still explains *why* a choice was made, even if the code moved on. ([decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md).) Also carries the orphan-ADR hygiene concept (ADR-0012): an ADR is orphaned when it no longer explains or constrains the system — references are evidence of relevance, not the test.
 
