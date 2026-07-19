@@ -24,6 +24,16 @@ This doc is a view, not a record. It preserves the reasoning that led to knack's
 - Specs required for every change → too much ceremony for small work ([spec-driven-development](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/spec-driven-development.md) explicitly says SDD is "not for" simple prototypes and brownfield at scale)
 - A semantic validator that pretends to judge plan quality → judgment belongs in skills (ADR-0010), not gate commands (ADR-0011)
 
+## What we're betting against from OpenAI's ExecPlan pattern
+
+OpenAI's [`PLANS.md` / ExecPlan](https://developers.openai.com/cookbook/articles/codex_exec_plans) pattern (the recipe that reportedly drove Codex for 7+ hours from a single prompt) treats the plan as a **living, self-contained design document**: the agent maintains a Progress checklist, Decision Log, and Surprises section as it works; "it should always be possible to restart from *only* the ExecPlan and no other work." Knack bets the other way on the same problem:
+
+- **Plan as living document → plan as disposable.** ExecPlan's durability claim rests on the document being maintained in lockstep with the code. Knack's `QUEUE.md` is consumed then discarded (ADR-0014); the restart surface is the repo's actual durable state (code + `decisions/` + `EVIDENCE.md`), not a maintained document. If the ExecPlan drifts from code you restart from drift; if knack's code drifts from decisions, the decisions still rule (per ADR-0011 and ADR-0012). Different failure modes, different recovery stories.
+- **Decision Log *inside* the spec → decisions *extracted* to ADRs.** ExecPlans keep decisions in the spec "for posterity," conflating work-state and decision-state. Knack follows [decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md): the thing worth keeping from a spec is the decisions, not the spec — so decisions are extracted to durable ADRs and the spec is discarded.
+- **Prose-first forcing planner thoughtfulness → structured work units for parseability and review.** ExecPlan argues prose forces the author to think and reserves checklists for the Progress section, optimizing for a single multi-hour task. Knack's work-unit format (`Read first:` / `Constraints:` / `Done means:` / `Verify:`) is structured because `loop.sh` parses it and the `Done means:`/`Verify:` gap is the review surface, optimizing for many small units across a loop. Different bets for different shapes of work, not a defect on either side.
+
+The shared ground: validation is non-optional, outcomes must be observable, ambiguities get resolved autonomously. These are independent arrivals at the same conclusions knack encodes in the `Verify:` field and ADR-0010's mechanical-contracts-stay-hard-rules.
+
 ## What we're keeping from knack
 
 - Fresh context per tick ([ralph-loop](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/ralph-loop.md), [smart-zone-dumb-zone](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/smart-zone-dumb-zone.md))
