@@ -1,8 +1,12 @@
-# 0011: Ship as a skills collection via skills.sh; delete the Go CLI
+---
+id: 0011
+date: 2026-07-11
+status: accepted
+spine: true
+supersedes: [0001, 0002]
+---
 
-Date: 2026-07-11
-Status: accepted
-Supersedes: ADR-0001, ADR-0002
+# 0011: Ship as a skills collection via skills.sh; delete the Go CLI
 
 ## Context
 

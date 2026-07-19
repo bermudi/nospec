@@ -416,6 +416,135 @@ if [[ $stale_refs -ne 0 ]]; then
   exit 1
 fi
 
+# knack CLI: syntax check, spine derivation, and structural drift check
+bash -n "$root/knack"
+"$root/knack" spine >/tmp/knack-spine.txt
+assert_contains /tmp/knack-spine.txt "ADR-0009"
+assert_contains /tmp/knack-spine.txt "ADR-0016"
+# Spine must not include pre-reframe ADRs (0001-0008)
+if grep -q 'ADR-000[1-8]' /tmp/knack-spine.txt; then
+  echo "spine should not include pre-reframe ADRs" >&2
+  cat /tmp/knack-spine.txt >&2
+  exit 1
+fi
+# Spine must include all of 0009-0016 (8 entries)
+spine_count=$(grep -c '^ADR-' /tmp/knack-spine.txt)
+if [[ "$spine_count" -ne 8 ]]; then
+  echo "expected 8 spine ADRs, got $spine_count" >&2
+  cat /tmp/knack-spine.txt >&2
+  exit 1
+fi
+# adrs should list all 17 ADRs
+"$root/knack" adrs >/tmp/knack-adrs.txt
+adr_count=$(grep -c '^ADR-' /tmp/knack-adrs.txt)
+if [[ "$adr_count" -ne 17 ]]; then
+  echo "expected 17 ADRs, got $adr_count" >&2
+  cat /tmp/knack-adrs.txt >&2
+  exit 1
+fi
+# check must pass on the real repo
+"$root/knack" check >/tmp/knack-check.txt
+assert_contains /tmp/knack-check.txt "all checks passed"
+
+# check must catch all four spine re-enumeration patterns
+# Each test case gets its own mini-repo with the drift file in docs/
+make_drift_repo() {
+  local dir=$1 content=$2
+  mkdir -p "$dir/docs"
+  cat > "$dir/docs/test.md" <<EOF
+$content
+EOF
+}
+
+# Pattern A: markdown links to decision files on one line
+repo_a="$tmp/repo-drift-a"
+make_drift_repo "$repo_a" '---
+role: view
+---
+# Pattern A
+The spine: [0009](decisions/0009.md) (synopsis), [0010](decisions/0010.md) (synopsis).'
+set +e
+"$root/knack" --repo "$repo_a" check >/tmp/drift-a.txt 2>&1
+code_a=$?
+set -e
+if [[ $code_a -eq 0 ]]; then
+  echo "expected pattern A to fail check" >&2
+  cat /tmp/drift-a.txt >&2
+  exit 1
+fi
+
+# Pattern B: em-dash spine entries (3+)
+repo_b="$tmp/repo-drift-b"
+make_drift_repo "$repo_b" '---
+role: view
+---
+# Pattern B
+- ADR-0009 — skills are the product
+- ADR-0010 — concepts not rules
+- ADR-0011 — ship via skills.sh'
+set +e
+"$root/knack" --repo "$repo_b" check >/tmp/drift-b.txt 2>&1
+code_b=$?
+set -e
+if [[ $code_b -eq 0 ]]; then
+  echo "expected pattern B to fail check" >&2
+  cat /tmp/drift-b.txt >&2
+  exit 1
+fi
+
+# Pattern C: comma-separated ADR numbers on one line (3+)
+repo_c="$tmp/repo-drift-c"
+make_drift_repo "$repo_c" '---
+role: view
+---
+# Pattern C
+The spine is ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016.'
+set +e
+"$root/knack" --repo "$repo_c" check >/tmp/drift-c.txt 2>&1
+code_c=$?
+set -e
+if [[ $code_c -eq 0 ]]; then
+  echo "expected pattern C to fail check" >&2
+  cat /tmp/drift-c.txt >&2
+  exit 1
+fi
+
+# Pattern D: bulleted ADR entries without separator (3+)
+repo_d="$tmp/repo-drift-d"
+make_drift_repo "$repo_d" '---
+role: view
+---
+# Pattern D
+- ADR-0009 skills are the product
+- ADR-0010 concepts not rules
+- ADR-0011 ship via skills.sh'
+set +e
+"$root/knack" --repo "$repo_d" check >/tmp/drift-d.txt 2>&1
+code_d=$?
+set -e
+if [[ $code_d -eq 0 ]]; then
+  echo "expected pattern D to fail check" >&2
+  cat /tmp/drift-d.txt >&2
+  exit 1
+fi
+
+# Prose references (2 ADRs in a sentence) must NOT trigger a failure
+repo_prose="$tmp/repo-drift-prose"
+make_drift_repo "$repo_prose" '---
+role: view
+---
+# Prose
+Judgment belongs in skills (ADR-0010), not gate commands (ADR-0011).'
+set +e
+"$root/knack" --repo "$repo_prose" check >/tmp/drift-prose.txt 2>&1
+code_prose=$?
+set -e
+if [[ $code_prose -ne 0 ]]; then
+  echo "expected prose reference to pass check (no false positive)" >&2
+  cat /tmp/drift-prose.txt >&2
+  exit 1
+fi
+
 if command -v skills-ref >/dev/null 2>&1; then
   for skill_dir in "$root/skills"/*; do
     if [[ -d "$skill_dir" ]]; then

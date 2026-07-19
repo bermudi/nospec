@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # Skills guide
 
 Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/SKILL.md`. Any agent that supports agentskills.io can discover them automatically. The loop names the skill explicitly — name and path — in the worker prompt (`prompts/worker.md`); the agent reads the skill file directly. See ADR-0007.

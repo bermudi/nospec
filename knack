@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+# knack — derivation and linting CLI for artifact metadata.
+#
+# A bash-only tool that derives facts from YAML frontmatter in durable artifacts.
+# It does not govern, scaffold, package, or version. It derives and lints.
+#
+# See ADR-0017 for the ruling that established this tool.
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Allow --repo DIR to override the repo root (for testing and external use)
+while [[ "${1:-}" == --repo ]]; do
+    REPO_ROOT="$2"
+    shift 2
+done
+
+# ───────────────────────── Frontmatter parsing ─────────────────────────
+
+# Extract a scalar field from YAML frontmatter.
+# Usage: fm_get <file> <field>
+fm_get() {
+    local file="$1" field="$2"
+    awk -v field="$field" '
+        /^---/ { in_fm = !in_fm; next }
+        in_fm && $0 ~ "^" field ":" {
+            sub("^" field ":[[:space:]]*", "")
+            gsub(/^"|"$/, "")
+            print
+            exit
+        }
+    ' "$file"
+}
+
+# Extract the H1 title from a markdown file (skipping frontmatter).
+# Usage: fm_title <file>
+fm_title() {
+    local file="$1"
+    awk '
+        /^---/ { in_fm = !in_fm; next }
+        !in_fm && /^# / {
+            sub(/^# [0-9]+:[[:space:]]*/, "")
+            sub(/^# /, "")
+            print
+            exit
+        }
+    ' "$file"
+}
+
+# Check whether a file has YAML frontmatter at all.
+# Usage: fm_has <file>
+fm_has() {
+    head -1 "$1" | grep -q '^---'
+}
+
+# ──────────────────────────── Subcommands ────────────────────────────
+
+# knack spine — print the spine ADRs derived from frontmatter.
+cmd_spine() {
+    local f id title
+    for f in "$REPO_ROOT"/decisions/00*.md; do
+        [[ -f "$f" ]] || continue
+        local spine
+        spine=$(fm_get "$f" "spine")
+        if [[ "$spine" == "true" ]]; then
+            id=$(fm_get "$f" "id")
+            title=$(fm_title "$f")
+            printf "ADR-%s — %s\n" "$id" "$title"
+        fi
+    done
+}
+
+# knack adrs — print all ADRs with id, status, title.
+cmd_adrs() {
+    local f id status title
+    for f in "$REPO_ROOT"/decisions/00*.md; do
+        [[ -f "$f" ]] || continue
+        id=$(fm_get "$f" "id")
+        status=$(fm_get "$f" "status")
+        title=$(fm_title "$f")
+        printf "ADR-%s [%s] %s\n" "$id" "$status" "$title"
+    done
+}
+
+# knack check — fail on structural drift.
+cmd_check() {
+    local failures=0
+
+    # ── Check 1: No doc outside decisions/ may re-enumerate the spine ──
+    #
+    # The drift pattern: a doc lists ADR numbers with synopses, duplicating
+    # what `knack spine` already derives from frontmatter. Four shapes:
+    #   Pattern A — 2+ markdown links to decision files on a single line
+    #               (e.g. "[0009](decisions/...) (synopsis), [0010](...) ...")
+    #   Pattern B — 3+ lines matching "ADR-NNNN — synopsis" or "**ADR-NNNN**"
+    #               (the bulleted spine-list entry shape with separators)
+    #   Pattern C — 3+ bare ADR-NNNN references on a single line
+    #               (e.g. "The spine is ADR-0009, ADR-0010, ... ADR-0016.")
+    #   Pattern D — 3+ bulleted lines starting with ADR-NNNN (no separator)
+    #               (e.g. "- ADR-0009 synopsis" / "- ADR-0010 ...")
+    #
+    # Individual ADR references ("see ADR-0010", "in skills (ADR-0010), not
+    # gates (ADR-0011)") are fine — two ADRs cited as evidence in a prose
+    # sentence is not a re-enumeration. The thresholds (3+ for C and D) are
+    # set above the prose-reference level to avoid false positives.
+    local docs
+    docs=$(list_durable_docs)
+    while IFS= read -r doc; do
+        [[ -z "$doc" ]] && continue
+        local body
+        body=$(awk '/^---/{in_fm=!in_fm;next} !in_fm' "$doc")
+
+        # Pattern A: 2+ markdown links to decision files on a single line
+        if echo "$body" | grep -qP '\[00\d{2}\]\(decisions/.*\[00\d{2}\]\(decisions/'; then
+            echo "FAIL: $doc — multiple decision-file links on a single line (spine re-enumeration)"
+            echo "$body" | grep -nP '\[00\d{2}\]\(decisions/.*\[00\d{2}\]\(decisions/' | head -3 | sed 's/^/  /'
+            failures=$((failures + 1))
+        fi
+
+        # Pattern B: 3+ lines matching the spine-entry shape with separators
+        #   "ADR-NNNN — ..." or "**ADR-NNNN**" (bold ADR as list header)
+        local spine_entries
+        spine_entries=$(echo "$body" | grep -cP '(ADR-00\d{2}\s*[—–-]|\*\*ADR-00\d{2}\*\*)' || true)
+        if [[ "$spine_entries" -ge 3 ]]; then
+            echo "FAIL: $doc — $spine_entries spine-list entries with separators (spine re-enumeration)"
+            echo "$body" | grep -nP '(ADR-00\d{2}\s*[—–-]|\*\*ADR-00\d{2}\*\*)' | head -5 | sed 's/^/  /'
+            failures=$((failures + 1))
+        fi
+
+        # Pattern C: 3+ ADR-NNNN references on a single line, with at least
+        #   one comma-separated ADR pair. The comma-separated shape
+        #   ("ADR-0009, ADR-0010, ADR-0011, ...") is the signature of an
+        #   enumerated list; prose references embed ADR refs in sentences
+        #   ("ADR-0015 says X; ADR-0016's pin-check...") and don't have
+        #   comma-separated ADR pairs. The 3+ threshold plus the comma-pair
+        #   requirement avoids false positives on prose that cites 2-3 ADRs
+        #   as evidence.
+        local adr_lines
+        adr_lines=$(echo "$body" | grep 'ADR-00' || true)
+        if [[ -n "$adr_lines" ]]; then
+            while IFS= read -r line; do
+                local count comma_pairs
+                count=$(echo "$line" | grep -oP 'ADR-00\d{2}' | wc -l || true)
+                comma_pairs=$(echo "$line" | grep -oP 'ADR-00\d{2}\s*,\s*(and\s+)?ADR-00\d{2}' | wc -l || true)
+                if [[ "$count" -ge 3 && "$comma_pairs" -ge 1 ]]; then
+                    echo "FAIL: $doc — $count ADR references in comma-separated list on a single line (spine re-enumeration)"
+                    echo "  $line" | head -c 200
+                    echo ""
+                    failures=$((failures + 1))
+                    break  # one failure per doc is enough
+                fi
+            done <<< "$adr_lines"
+        fi
+
+        # Pattern D: 3+ bulleted lines starting with ADR-NNNN (no separator)
+        #   Catches "- ADR-0009 synopsis" / "- ADR-0010 ..." without em-dash
+        local bullet_adr_lines
+        bullet_adr_lines=$(echo "$body" | grep -cP '^\s*[-*]\s+ADR-00\d{2}' || true)
+        if [[ "$bullet_adr_lines" -ge 3 ]]; then
+            echo "FAIL: $doc — $bullet_adr_lines bulleted ADR entries without separator (spine re-enumeration)"
+            echo "$body" | grep -nP '^\s*[-*]\s+ADR-00\d{2}' | head -5 | sed 's/^/  /'
+            failures=$((failures + 1))
+        fi
+    done <<< "$docs"
+
+    # ── Check 2: No two records declare the same owns claim-class ──
+    local owns_map=""
+    local doc owns_value
+    while IFS= read -r doc; do
+        [[ -z "$doc" ]] && continue
+        owns_value=$(fm_get "$doc" "owns")
+        [[ -z "$owns_value" ]] && continue
+        if echo "$owns_map" | grep -qP "^${owns_value}$"; then
+            echo "FAIL: duplicate ownership — '$owns_value' claimed by multiple records"
+            failures=$((failures + 1))
+        fi
+        owns_map="$owns_map$owns_value"$'\n'
+    done < <(list_records)
+
+    # ── Check 3: Durable docs must have required frontmatter ──
+    check_frontmatter "$REPO_ROOT/AGENTS.md" "role" "owns" || failures=$((failures + 1))
+    check_frontmatter "$REPO_ROOT/glossary.md" "role" "owns" || failures=$((failures + 1))
+    check_frontmatter "$REPO_ROOT/LEARNINGS.md" "role" || failures=$((failures + 1))
+    check_frontmatter "$REPO_ROOT/README.md" "role" || failures=$((failures + 1))
+    for f in "$REPO_ROOT"/docs/*.md; do
+        [[ -f "$f" ]] || continue
+        check_frontmatter "$f" "role" || failures=$((failures + 1))
+    done
+    for f in "$REPO_ROOT"/decisions/00*.md; do
+        [[ -f "$f" ]] || continue
+        check_frontmatter "$f" "id" "date" "status" "spine" || failures=$((failures + 1))
+    done
+
+    if [[ "$failures" -gt 0 ]]; then
+        echo ""
+        echo "knack check: $failures failure(s)"
+        return 1
+    fi
+    echo "knack check: all checks passed"
+    return 0
+}
+
+# ──────────────────────────── Helpers ────────────────────────────
+
+list_durable_docs() {
+    # All durable docs outside decisions/ that have frontmatter
+    local f
+    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT/LEARNINGS.md" \
+             "$REPO_ROOT/README.md" "$REPO_ROOT"/docs/*.md; do
+        [[ -f "$f" ]] || continue
+        fm_has "$f" && echo "$f"
+    done
+}
+
+list_records() {
+    # Docs with role: record
+    local f role
+    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT"/docs/*.md "$REPO_ROOT/README.md" "$REPO_ROOT/LEARNINGS.md"; do
+        [[ -f "$f" ]] || continue
+        role=$(fm_get "$f" "role")
+        [[ "$role" == "record" ]] && echo "$f"
+    done
+}
+
+# check_frontmatter <file> <field1> [field2] ...
+check_frontmatter() {
+    local file="$1"
+    shift
+    [[ -f "$file" ]] || return 0  # skip non-existent files
+    local field value missing=""
+    for field in "$@"; do
+        value=$(fm_get "$file" "$field")
+        if [[ -z "$value" ]]; then
+            missing="$missing $field"
+        fi
+    done
+    if [[ -n "$missing" ]]; then
+        echo "FAIL: $file — missing frontmatter field(s):$missing"
+        return 1
+    fi
+    return 0
+}
+
+# ──────────────────────────── Usage ────────────────────────────
+
+usage() {
+    cat <<'EOF'
+knack — derivation and linting CLI for artifact metadata
+
+Usage:
+  knack spine    Print the spine ADRs (derived from frontmatter)
+  knack adrs     Print all ADRs with id, status, title
+  knack check    Fail on structural drift (re-enumerated lists, duplicate ownership, missing frontmatter)
+
+The spine list is derived from decisions/*.md where spine: true.
+Views must not re-enumerate ADR numbers; they point to `knack spine` or decisions/.
+
+See ADR-0017.
+EOF
+}
+
+# ──────────────────────────── Main ────────────────────────────
+
+main() {
+    local cmd="${1:-}"
+    shift || true
+    case "$cmd" in
+        spine)  cmd_spine "$@" ;;
+        adrs)   cmd_adrs "$@" ;;
+        check)  cmd_check "$@" ;;
+        -h|--help|help) usage ;;
+        "") usage; exit 1 ;;
+        *) echo "knack: unknown command '$cmd'" >&2; usage >&2; exit 1 ;;
+    esac
+}
+
+main "$@"

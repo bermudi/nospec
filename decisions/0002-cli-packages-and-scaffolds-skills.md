@@ -1,9 +1,13 @@
-# 0002: CLI packages and scaffolds the default skills
+---
+id: 0002
+date: 2026-07-06
+status: superseded
+spine: false
+superseded_by: [0011]
+grandfathered: "enacted before the evidence-ledger convention (ADR-0006); skills are embedded and scaffolded by the CLI."
+---
 
-Date: 2026-07-06
-Status: superseded
-Superseded by: ADR-0011
-Grandfathered: enacted before the evidence-ledger convention (ADR-0006); skills are embedded and scaffolded by the CLI.
+# 0002: CLI packages and scaffolds the default skills
 
 ## Context
 

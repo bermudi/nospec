@@ -1,3 +1,8 @@
+---
+role: record
+owns: domain-terms
+---
+
 # Glossary
 
 Knack's domain-specific terms. For the underlying concepts — doc-rot, backpressure, tracer bullets, and the rest — see the [AgenticWiki](https://github.com/bermudi/AgenticWiki); this file defines only what's specific to this project. Wiki concepts are linked, not redefined (ADR-0010).

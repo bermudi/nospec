@@ -1,7 +1,11 @@
-# 0009: Skills are the product; the loop is an optional batch companion
+---
+id: 0009
+date: 2026-07-11
+status: accepted
+spine: true
+---
 
-Date: 2026-07-11
-Status: accepted
+# 0009: Skills are the product; the loop is an optional batch companion
 
 ## Context
 

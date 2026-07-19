@@ -1,8 +1,12 @@
-# 0012: Orphan-ADR semantics are relevance, not citation
+---
+id: 0012
+date: 2026-07-12
+status: accepted
+spine: true
+supersedes: [0006]
+---
 
-Date: 2026-07-12
-Status: accepted
-Supersedes: ADR-0006
+# 0012: Orphan-ADR semantics are relevance, not citation
 
 ## Context
 

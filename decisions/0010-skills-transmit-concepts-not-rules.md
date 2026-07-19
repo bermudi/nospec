@@ -1,7 +1,11 @@
-# 0010: Skills transmit concepts and reasoning, not rules
+---
+id: 0010
+date: 2026-07-11
+status: accepted
+spine: true
+---
 
-Date: 2026-07-11
-Status: accepted
+# 0010: Skills transmit concepts and reasoning, not rules
 
 ## Context
 

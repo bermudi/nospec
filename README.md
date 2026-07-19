@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # knack
 
 A composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. Shipped as plain [agentskills.io](https://agentskills.io) skills you install into any agent, with an optional bash loop for unattended batch work.
@@ -55,7 +59,7 @@ Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix
 ## The thinking
 
 - [AgenticWiki](https://github.com/bermudi/AgenticWiki) — the cited theory behind every concept.
-- [decisions/](decisions/) — durable ADRs. The spine: [0009](decisions/0009-skills-are-the-product-loop-is-optional.md) (skills are the product), [0010](decisions/0010-skills-transmit-concepts-not-rules.md) (concepts not rules), [0011](decisions/0011-ship-as-skills-via-skills-sh-delete-cli.md) (ship via skills.sh), [0014](decisions/0014-durability-is-maintenance-not-permanence.md) (durability is maintenance), [0015](decisions/0015-artifact-roles-and-ownership.md) (artifact roles and ownership).
+- [decisions/](decisions/) — durable ADRs. The spine (ADR-0009 onward) is derived from frontmatter; run `./knack spine` to list it.
 - [docs/architecture.md](docs/architecture.md) — conceptual overview, attention modes, and artifact roles.
 
 ## Repo layout
@@ -63,12 +67,13 @@ Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix
 ```
 skills/        the eight skills — the product
 loop.sh        optional AFK batch runner
+knack          bash CLI — derives the spine, checks structural drift (ADR-0017)
 prompts/       worker / reviewer / fixer prompts the loop sends
-decisions/     durable ADRs
+decisions/     durable ADRs (YAML frontmatter: id, date, status, spine, ...)
 glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
 LEARNINGS.md   durable domain/problem insights
 docs/          user and architecture docs
-tests/run.sh   test harness for loop.sh
+tests/run.sh   test harness for loop.sh and knack
 ```
 
 ## Testing

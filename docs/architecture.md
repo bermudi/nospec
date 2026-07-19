@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # Architecture
 
 A composable **skills collection** for agentic development — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory — shipped as plain [agentskills.io](https://agentskills.io) skills, with an optional bash loop for unattended batch work.
@@ -6,13 +10,7 @@ Authoritative rulings live in `decisions/`; this doc is a view that ties them to
 
 ## Spine
 
-- **ADR-0009** — skills are the product; the loop is an optional batch companion.
-- **ADR-0010** — skills transmit concepts and reasoning, not rules.
-- **ADR-0011** — ship via [skills.sh](https://skills.sh); the Go CLI is deleted.
-- **ADR-0012** — orphan-ADR semantics are relevance, not citation.
-- **ADR-0013** — wiki links live in docs, not in skill text.
-- **ADR-0014** — durability is maintenance, not permanence.
-- **ADR-0015** — durable knowledge is organized by artifact role with clear ownership.
+The spine (ADR-0009 onward) is the curated set of load-bearing rulings. It's derived from `decisions/` frontmatter — run `./knack spine` to list it. See `decisions/` for the full set.
 
 ## One sentence
 
@@ -110,6 +108,8 @@ The loop owns the verify gate: it invokes the agent, runs `Verify:` outside the 
 ## Coherence is not compilation
 
 Green tests and valid links do not prove that durable docs agree with rulings, terms, or the current code. Coherence is a separate, judgment-based check: do the records and their projections still tell the same story? The `document` skill exists to surface and route these problems.
+
+Some structural drift is mechanically detectable: `./knack check` catches re-enumerated spine lists, duplicate ownership claims, and missing frontmatter (ADR-0017). It does not catch semantic contradiction — that remains judgment.
 
 ## Grounding
 

@@ -1,8 +1,12 @@
-# 0013: Wiki links live in docs, not in skill text
+---
+id: 0013
+date: 2026-07-13
+status: accepted
+spine: true
+amends: [0010]
+---
 
-Date: 2026-07-13
-Status: accepted
-Amends: ADR-0010 (the "pointer to depth — the wiki link" bullet)
+# 0013: Wiki links live in docs, not in skill text
 
 ## Context
 

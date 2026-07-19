@@ -1,7 +1,11 @@
-# 0014: Durability is maintenance, not permanence
+---
+id: 0014
+date: 2026-07-18
+status: accepted
+spine: true
+---
 
-Date: 2026-07-18
-Status: accepted
+# 0014: Durability is maintenance, not permanence
 
 ## Context
 

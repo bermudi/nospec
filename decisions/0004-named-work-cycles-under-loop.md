@@ -1,8 +1,12 @@
-# 0004: Named work cycles under .loop/
+---
+id: 0004
+date: 2026-07-06
+status: accepted
+spine: false
+grandfathered: "enacted before the ADR-citation convention (ADR-0005); the named-cycles cycle that implemented it predates `Read first:` ADR citations, so its EVIDENCE.md ledger never references this ADR by number. The work is verified in code and the surviving skills/docs."
+---
 
-Date: 2026-07-06
-Status: accepted
-Grandfathered: enacted before the ADR-citation convention (ADR-0005); the named-cycles cycle that implemented it predates `Read first:` ADR citations, so its EVIDENCE.md ledger never references this ADR by number. The work is verified in code and the surviving skills/docs.
+# 0004: Named work cycles under .loop/
 
 ## Context
 

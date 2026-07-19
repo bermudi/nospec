@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # Queue format
 
 `QUEUE.md` is a disposable Markdown file containing a queue of work units. The loop parses it mechanically; the rest is for humans and the worker.

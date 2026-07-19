@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # Theory and lineage
 
 This doc is a view, not a record. It preserves the reasoning that led to knack's current shape and links to the [AgenticWiki](https://github.com/bermudi/AgenticWiki) concepts that ground it. The authoritative rulings live in `decisions/`; the current conceptual shape lives in [`architecture.md`](./architecture.md).

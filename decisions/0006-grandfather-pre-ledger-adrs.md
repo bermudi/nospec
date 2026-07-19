@@ -1,9 +1,13 @@
-# 0006: Grandfather pre-ledger ADRs in decisions check
+---
+id: 0006
+date: 2026-07-06
+status: superseded
+spine: false
+superseded_by: [0012]
+grandfathered: "meta-ruling about the check mechanism itself; implemented and verified directly (go test), not via a loop cycle."
+---
 
-Date: 2026-07-06
-Status: superseded
-Superseded by: ADR-0012
-Grandfathered: meta-ruling about the check mechanism itself; implemented and verified directly (go test), not via a loop cycle.
+# 0006: Grandfather pre-ledger ADRs in decisions check
 
 ## Context
 

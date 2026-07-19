@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # knack documentation
 
 This folder holds the living user documentation for **knack**. Each doc has one job; if you are looking for something specific, use the map below.
@@ -20,6 +24,7 @@ See [`docs/architecture.md`](./architecture.md) for the conceptual shape, human-
 | How do I work on the knack repo? | [`AGENTS.md`](../AGENTS.md) |
 | Where is the historical reasoning and wiki grounding? | [`theory.md`](./theory.md) |
 | Where are durability and documentation concepts? | [`skills/document/`](../skills/document/SKILL.md) and ADR-0015 |
+| How do I check artifact coherence or derive the spine? | `./knack check` / `./knack spine` (ADR-0017) |
 
 ## Editing these docs
 

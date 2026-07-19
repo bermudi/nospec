@@ -24,12 +24,19 @@ Don't write one for implementation details obvious from the code, choices with n
 ## ADR format
 
 ````markdown
-# NNNN: <title — the ruling, not the topic>
+---
+id: NNNN
+date: <YYYY-MM-DD>
+status: accepted | superseded
+spine: false
+supersedes: [NNNN]          # only if this replaces an earlier ADR
+superseded_by: [NNNN]       # only if a later ADR replaces this one
+amends: [NNNN]              # only if this narrows or extends an earlier ADR
+builds_on: [NNNN]           # only if this derives from but doesn't change an earlier ADR
+grandfathered: "<reason>"   # only for pre-ledger ADRs (rare)
+---
 
-Date: <YYYY-MM-DD>
-Status: accepted | superseded
-Supersedes: ADR-NNNN      # only if this replaces an earlier ADR
-Superseded by: ADR-NNNN   # only if a later ADR replaces this one
+# NNNN: <title — the ruling, not the topic>
 
 ## Context
 
@@ -46,7 +53,9 @@ Superseded by: ADR-NNNN   # only if a later ADR replaces this one
 
 NNNN is a zero-padded sequence number — look at `decisions/` for the next available one; if the directory doesn't exist, create it and start at `0001`.
 
-An ADR is *active* unless its `Status` is `superseded`. Superseding is a two-step mutual link: mark the old ADR `Status: superseded` and add `Superseded by: ADR-NNNN`; write the new ADR with `Supersedes: ADR-NNNN` pointing back. Both sides must reference each other — a one-sided link is a broken chain; fix it before moving on.
+The `spine` field marks whether this ADR is load-bearing — part of the curated spine that defines what the project is and how it works. Most ADRs are `spine: false`; only rulings that reshape the project's thesis get `spine: true`. The spine is derived from this field by `./knack spine`; never re-list the spine in prose (ADR-0017).
+
+An ADR is *active* unless its `status` is `superseded`. Superseding is a two-step mutual link: mark the old ADR `status: superseded` and add `superseded_by: [NNNN]`; write the new ADR with `supersedes: [NNNN]` pointing back. Both sides must reference each other — a one-sided link is a broken chain; fix it before moving on. The bilateral-link rule applies to `supersedes`/`superseded_by` only; `amends` and `builds_on` are one-directional (the amended ADR's status stays `accepted` and needs no back-reference).
 
 ## Orphan-ADR hygiene
 

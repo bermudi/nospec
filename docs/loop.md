@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # Loop reference
 
 `loop.sh` is the agent-agnostic runner. It reads `QUEUE.md` and executes one work unit per tick, running the verification command outside the worker.

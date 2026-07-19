@@ -1,8 +1,12 @@
-# 0003: The tool is named knack
+---
+id: 0003
+date: 2026-07-06
+status: accepted
+spine: false
+grandfathered: "enacted before the evidence-ledger convention (ADR-0006); the rename is done across code and docs."
+---
 
-Date: 2026-07-06
-Status: accepted
-Grandfathered: enacted before the evidence-ledger convention (ADR-0006); the rename is done across code and docs.
+# 0003: The tool is named knack
 
 ## Context
 

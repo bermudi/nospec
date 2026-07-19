@@ -1,7 +1,11 @@
-# 0008: The loop orchestrates the review-fix subloop; skills keep the judgment
+---
+id: 0008
+date: 2026-07-10
+status: accepted
+spine: false
+---
 
-Date: 2026-07-10
-Status: accepted
+# 0008: The loop orchestrates the review-fix subloop; skills keep the judgment
 
 ## Context
 

@@ -1,3 +1,7 @@
+---
+role: view
+---
+
 # Getting started
 
 knack is a skills collection plus an optional bash loop for unattended batch work. Most work is interactive; reach for the loop when you want to leave.

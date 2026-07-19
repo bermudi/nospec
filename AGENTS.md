@@ -1,3 +1,8 @@
+---
+role: record
+owns: operational-context
+---
+
 # AGENTS.md
 
 ## Project
@@ -8,16 +13,7 @@ It replaces litespec. Specs are disposable; code is the source of truth; decisio
 
 `docs/architecture.md` and `docs/theory.md` carry the conceptual shape and lineage; `decisions/` carries the rulings. When they disagree, the ADR wins.
 
-The spine:
-
-- **ADR-0009** — skills are the product; the loop is an optional batch companion.
-- **ADR-0010** — skills transmit concepts and reasoning, not rules.
-- **ADR-0011** — ship via skills.sh; the Go CLI is deleted.
-- **ADR-0012** — orphan-ADR semantics are relevance, not citation.
-- **ADR-0013** — wiki links live in docs, not in skill text.
-- **ADR-0014** — durability is maintenance, not permanence.
-- **ADR-0015** — durable knowledge is organized by artifact role with clear ownership.
-- **ADR-0016** — proof-boundary is mechanical; pin-state is provenance, not coherence.
+The spine (ADR-0009 onward) is derived from `decisions/` frontmatter — run `./knack spine` to list it. The spine marks the load-bearing rulings that define what knack is and how it works; everything before 0009 is pre-reframe history.
 
 ## Thesis
 
@@ -38,8 +34,8 @@ Two layers live in this repo. **`skills/` is the product** — what `npx skills 
 - `skills/` — eight skills (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. All eight reworked to ADR-0010 (mode-independent, concept-forward); no external links.
 - `loop.sh` — optional AFK batch runner. Agent-agnostic via `LOOP_AGENT_CMD`. Owns the verify gate. Supports per-unit `Agent:` overrides and opt-in review/fix via `--review`. `./loop.sh view [--repo DIR]` prints a read-only dashboard of all cycles, work units, and decisions.
 - `prompts/` — worker / reviewer / fixer prompts the loop sends.
-- `decisions/` — durable ADRs. `glossary.md` — ubiquitous language: knack-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
-- No CLI, no compile step. Distribution is skills.sh's job.
+- `decisions/` — durable ADRs with YAML frontmatter (`id`, `date`, `status`, `spine`, optional `supersedes`/`superseded_by`/`amends`/`grandfathered`). `glossary.md` — ubiquitous language: knack-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
+- `knack` — bash-only derivation and linting CLI (ADR-0017). `./knack spine` derives the spine from ADR frontmatter; `./knack check` fails on structural drift (re-enumerated spine lists, duplicate ownership claims, missing frontmatter). No Go, no compile step. Distribution of skills is skills.sh's job.
 
 ## Core artifacts
 
@@ -59,7 +55,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic). `LOOP_REVIEW_CMD` / `LOOP_FIX_CMD` override review/fix. Per-unit `Agent:` overrides for one unit.
 - Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
-- Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment — transmitted as concepts in the `decide`, `domain-modeling`, and `document` skills, not enforced by gate commands.
+- Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment — transmitted as concepts in the `decide`, `domain-modeling`, and `document` skills, not enforced by gate commands. Structural drift (re-enumerated spine lists, duplicate ownership, missing frontmatter) is mechanical — `./knack check` catches it (ADR-0017).
 - The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary (mechanical: `loop.sh` derives it from the verify command) and a pin-state record (mechanical: `loop.sh` records which durable docs were touched and alerts when a prior pin moves). Pin alerts are triage triggers for `review` → `document`, not coherence gates (ADR-0016).
 - Operational gotchas go here; domain/problem insights go in `LEARNINGS.md`.
 
@@ -69,7 +65,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 ./tests/run.sh
 ```
 
-Exercises `loop.sh` (parsing, verify gate, handoff, review-fix) and validates skill frontmatter via `skills-ref` when available. There is no Go CLI; `go test` is gone.
+Exercises `loop.sh` (parsing, verify gate, handoff, review-fix), validates skill frontmatter via `skills-ref` when available, and runs `knack check` (spine derivation, structural drift, frontmatter validity). There is no Go CLI; `go test` is gone.
 
 ## Lessons learned
 
@@ -78,6 +74,7 @@ Exercises `loop.sh` (parsing, verify gate, handoff, review-fix) and validates sk
 - **A verify command run across units compounds.** Each unit's verify runs prior units' tests too, so regressions surface at the next gate.
 - **Review catches what verify can't.** The queue-parser regex `^##\s*(.*)$` once matched `###` subheadings as work units — a real bug tests missed because no fixture used `###`. Adversarial review against the actual codebase found it. Fix: exclude `###` in the unit-header check.
 - **The verify gate proves the mechanical contract, not the coherence contract.** Tests-green + no-dead-refs-in-code can coexist with a durable doc that contradicts the ADRs: `AGENTS.md` once claimed `glossary.md` held "knack-domain terms only" while the file was 21 wiki-concept redefinitions, and the `README` linked the AgenticWiki as a public backbone while it was a private repo. After changing rulings, separately check that durable docs (`AGENTS.md`, `glossary.md`, `README`, `docs/`) still cohere with them — the grep that proves "no dead CLI refs in code" deliberately excludes docs and will not catch this. Coherence is a separate gate from compilation, handled by the `document` skill. The pin-state record (ADR-0016) catches *direct* drift — a durable doc that a prior cycle pinned has since changed — and routes it to `review` → `document`. It does not catch *indirect* coherence failure (A changed in a way that contradicts unpinned B); that remains judgment.
+- **Hand-maintained lists of derivable facts drift; make them derivable.** The "spine" — the curated set of load-bearing ADRs — was listed in three docs (`AGENTS.md`, `docs/architecture.md`, `README.md`) with three different answers (seven, six, and five entries respectively). ADR-0015 says each fact has one owner; the spine-list had three owners and no record. ADR-0016's pin-check couldn't catch it because no pin was set on the list itself — it was indirect coherence failure on an unpinned fact, exactly the case the project's own lessons-learned called out. Fix (ADR-0017): the spine is now a `spine: true` field in ADR frontmatter; `./knack spine` derives it; `./knack check` fails on any doc that re-enumerates it. The lesson generalizes: if a fact is already in the artifacts, derive it — don't re-state it in prose that will drift.
 - **Verify commands must be path-correct.** A unit once had `cd subproj && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `subproj/` after the `cd`, not the repo root. The loop correctly caught the failure; the verify command was wrong. Always test verify commands manually before writing them into a queue.
 - **Workers scope to the outcome plus constraints, not a file list (ADR-0005).** A constraint states what must stay true or what is out of bounds — never what to edit. Naming files in constraints smuggles scope the same way the old `Work:` field did.
 - **Orphan-ADR semantics.** An ADR is orphaned when it no longer explains or constrains the system — references (`QUEUE.md`, `EVIDENCE.md`, code, docs) are evidence of relevance, not the definition; a negative ruling can be alive with no citing work. (Established by ADR-0012, which supersedes the deleted checker's citation model from ADR-0006; transmitted as a concept by the `decide` skill, not a gate — ADR-0011.)

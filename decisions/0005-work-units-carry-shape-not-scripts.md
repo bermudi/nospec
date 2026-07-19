@@ -1,7 +1,11 @@
-# 0005: Work units carry shape, not scripts
+---
+id: 0005
+date: 2026-07-06
+status: accepted
+spine: false
+---
 
-Date: 2026-07-06
-Status: accepted
+# 0005: Work units carry shape, not scripts
 
 ## Context
 

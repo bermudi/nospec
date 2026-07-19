@@ -1,7 +1,11 @@
-# 0016: Proof-boundary is mechanical; pin-state is provenance, not coherence
+---
+id: 0016
+date: 2026-07-18
+status: accepted
+spine: true
+---
 
-Date: 2026-07-18
-Status: accepted
+# 0016: Proof-boundary is mechanical; pin-state is provenance, not coherence
 
 ## Context
 

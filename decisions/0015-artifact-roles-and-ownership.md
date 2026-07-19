@@ -1,7 +1,11 @@
-# 0015: Artifact roles and ownership for durable knowledge
+---
+id: 0015
+date: 2026-07-18
+status: accepted
+spine: true
+---
 
-Date: 2026-07-18
-Status: accepted
+# 0015: Artifact roles and ownership for durable knowledge
 
 ## Context
 

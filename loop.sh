@@ -548,7 +548,7 @@ dec_dir = repo / "decisions"
 if dec_dir.is_dir():
     for f in sorted(dec_dir.glob("*.md")):
         text = f.read_text()
-        sm = re.search(r'^Status:\s*(\S+)', text, re.MULTILINE)
+        sm = re.search(r'^[Ss]tatus:\s*(\S+)', text, re.MULTILINE)
         status = sm.group(1) if sm else "unknown"
         m = re.match(r'(\d+)-(.+)', f.stem)
         num = m.group(1) if m else "?"

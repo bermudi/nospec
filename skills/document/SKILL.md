@@ -63,6 +63,8 @@ A view is useful only if it points to the right record and stays aligned.
 
 Coherence is the relationship between durable artifacts. It is not the same as compilation or passing tests. A repo can verify green while its durable docs contradict its rulings.
 
+Some structural drift is mechanically detectable. If the project has a `knack` CLI (ADR-0017), `./knack check` catches re-enumerated spine lists, duplicate ownership claims across records, and missing frontmatter — the shapes that drift most reliably. Run it first to surface what's mechanically provable, then apply judgment for the rest.
+
 Look for:
 
 - A view describing a behavior the code no longer has

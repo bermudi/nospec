@@ -1,3 +1,7 @@
+---
+role: ledger
+---
+
 # Learnings
 
 Durable insights that don't fit in an ADR (not a ruling) or AGENTS.md (not operational). Append-only. Each entry: date, what was learned, where it bites.

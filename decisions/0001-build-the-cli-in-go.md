@@ -1,9 +1,13 @@
-# 0001: Build the CLI in Go
+---
+id: 0001
+date: 2026-07-06
+status: superseded
+spine: false
+superseded_by: [0011]
+grandfathered: "enacted before the evidence-ledger convention (ADR-0006); the CLI is built and verified in code."
+---
 
-Date: 2026-07-06
-Status: superseded
-Superseded by: ADR-0011
-Grandfathered: enacted before the evidence-ledger convention (ADR-0006); the CLI is built and verified in code.
+# 0001: Build the CLI in Go
 
 ## Context
 

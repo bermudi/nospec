@@ -1,7 +1,11 @@
-# 0007: Name the skill explicitly in the worker prompt
+---
+id: 0007
+date: 2026-07-09
+status: accepted
+spine: false
+---
 
-Date: 2026-07-09
-Status: accepted
+# 0007: Name the skill explicitly in the worker prompt
 
 ## Context
 
