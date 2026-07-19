@@ -38,7 +38,7 @@ Two layers live in this repo. **`skills/` is the product** — what `npx skills 
 
 ## Core artifacts
 
-**Durable** (maintained records whose value survives the work cycle): `skills/`, `decisions/`, `glossary.md`, `LEARNINGS.md`, this file, and `.loop/<name>/EVIDENCE.md` (the append-only ledger kept after a cycle's `QUEUE.md` is deleted).
+**Durable** (maintained records whose value survives the work cycle): `skills/`, `decisions/`, `glossary.md`, this file, and `.loop/<name>/EVIDENCE.md` (the append-only ledger kept after a cycle's `QUEUE.md` is deleted).
 
 **Disposable** (consumed then discarded): `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`.
 
@@ -56,7 +56,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - Specs are disposable. Decisions are durable. Code is the source of truth.
 - Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment — transmitted as concepts in the `decide`, `domain-modeling`, and `document` skills, not enforced by gate commands. Structural drift (re-enumerated spine lists, duplicate ownership, missing frontmatter) is mechanical — `./knack check` catches it (ADR-0017).
 - The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary (mechanical: `knack run` derives it from the verify command) and a pin-state record (mechanical: `knack run` records which durable docs were touched and alerts when a prior pin moves). Pin alerts are triage triggers for `review` → `document`, not coherence gates (ADR-0016).
-- Operational gotchas go here; domain/problem insights go in `LEARNINGS.md`.
+- Operational gotchas go here; domain or problem insights that do not fit an ADR are added as a new durable record when one actually appears.
 
 ## Verification
 

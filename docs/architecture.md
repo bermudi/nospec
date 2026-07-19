@@ -51,7 +51,7 @@ Durable knowledge is organized by role. Each fact has one owner; other documents
 |---|---|---|
 | **Record** | `skills/`, `decisions/`, `glossary.md`, `AGENTS.md`, code/tests | Owns a class of claim |
 | **View** | `README.md`, `docs/architecture.md`, `docs/getting-started.md`, `docs/skills.md`, `docs/loop.md` | Helps readers understand records together |
-| **Ledger** | `.loop/<name>/EVIDENCE.md`, `LEARNINGS.md` | Append-only record of what happened |
+| **Ledger** | `.loop/<name>/EVIDENCE.md` | Append-only record of what happened |
 | **Work state** | `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/` | Coordination state consumed then discarded |
 
 Views summarize and link; they do not independently redefine what they project. When a record changes, its projections are reconciled. When a view contradicts its record, the record wins.
@@ -64,7 +64,6 @@ Durable artifacts survive the work cycle because they are maintained records:
 - `skills/` — procedural knowledge
 - `decisions/` — architectural rulings
 - `glossary.md` — domain terms
-- `LEARNINGS.md` — domain/problem insights
 - `AGENTS.md` — operational context
 - `.loop/<name>/EVIDENCE.md` — what each tick proved (registry-derived proof boundary + durable-doc pin state; ADR-0016)
 

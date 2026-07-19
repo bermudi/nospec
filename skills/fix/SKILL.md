@@ -26,7 +26,7 @@ Not every finding warrants a fix:
 - **Actionable** — a real issue with a clear fix. Resolve it (interactively) or create a work unit (batch).
 - **Trivial** — one-line, no risk. Fix inline; note it in the summary.
 - **Disputed** — the finding is wrong or overcautious. Note the disagreement; don't act. Move on.
-- **Deferred** — valid but not now. Note it in the summary or `LEARNINGS.md`.
+- **Deferred** — valid but not now. Note it in the summary.
 
 Treat speculative findings as notes for future work unless review explicitly classified one as actionable.
 

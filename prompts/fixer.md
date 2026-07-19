@@ -11,7 +11,7 @@ Do not implement fixes yourself. For each finding, classify it before queueing:
 - `actionable` — a clear issue with a deterministic fix. Create a work unit.
 - `trivial` — one-line fix, no risk. Note it, do not create a unit.
 - `disputed` — the finding is wrong or overly cautious. Note the disagreement, do not create a unit.
-- `deferred` — valid but not now. Note it in `LEARNINGS.md` or the summary, do not create a unit.
+- `deferred` — valid but not now. Note it in the summary, do not create a unit.
 
 ## Rules
 

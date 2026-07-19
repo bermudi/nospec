@@ -199,7 +199,6 @@ cmd_check() {
     # ── Check 3: Durable docs must have required frontmatter ──
     check_frontmatter "$REPO_ROOT/AGENTS.md" "role" "owns" || failures=$((failures + 1))
     check_frontmatter "$REPO_ROOT/glossary.md" "role" "owns" || failures=$((failures + 1))
-    check_frontmatter "$REPO_ROOT/LEARNINGS.md" "role" || failures=$((failures + 1))
     check_frontmatter "$REPO_ROOT/README.md" "role" || failures=$((failures + 1))
     for f in "$REPO_ROOT"/docs/*.md; do
         [[ -f "$f" ]] || continue
@@ -224,8 +223,8 @@ cmd_check() {
 list_durable_docs() {
     # All durable docs outside decisions/ that have frontmatter
     local f
-    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT/LEARNINGS.md" \
-             "$REPO_ROOT/README.md" "$REPO_ROOT"/docs/*.md; do
+    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT/README.md" \
+             "$REPO_ROOT"/docs/*.md; do
         [[ -f "$f" ]] || continue
         fm_has "$f" && echo "$f"
     done
@@ -234,7 +233,7 @@ list_durable_docs() {
 list_records() {
     # Docs with role: record
     local f role
-    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT"/docs/*.md "$REPO_ROOT/README.md" "$REPO_ROOT/LEARNINGS.md"; do
+    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT"/docs/*.md "$REPO_ROOT/README.md"; do
         [[ -f "$f" ]] || continue
         role=$(fm_get "$f" "role")
         [[ "$role" == "record" ]] && echo "$f"
@@ -359,14 +358,6 @@ if glossary.is_file():
         if re.match(r'^##\s+', line) and not re.match(r'^###', line):
             glossary_terms += 1
 
-# --- Learnings ---
-learnings = 0
-learn = repo / "LEARNINGS.md"
-if learn.is_file():
-    for line in learn.read_text().splitlines():
-        if re.match(r'^##\s+', line) and not re.match(r'^###', line):
-            learnings += 1
-
 # --- Render ---
 print()
 print("Knack Dashboard")
@@ -391,8 +382,6 @@ if decisions:
     print(f"  * Decisions: {len(decisions)} total ({', '.join(parts)})")
 if glossary_terms:
     print(f"  * Glossary: {glossary_terms} terms")
-if learnings:
-    print(f"  * Learnings: {learnings} entries")
 
 if cycle_data:
     print()
@@ -625,7 +614,6 @@ DURABLE_PATTERNS = [
     re.compile(r'^glossary\.md$'),
     re.compile(r'^AGENTS\.md$'),
     re.compile(r'^README\.md$'),
-    re.compile(r'^LEARNINGS\.md$'),
     re.compile(r'^docs/.*\.md$'),
     re.compile(r'^skills/.*SKILL\.md$'),
 ]

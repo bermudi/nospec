@@ -45,7 +45,7 @@ Implementation surfaces decisions the spec missed — the code pushes back, and 
 If you learn how the project works, capture it in the right durable file:
 
 - **Operational gotchas** — build commands, test conventions, how to verify — go in `AGENTS.md`.
-- **Domain or problem insights** — "X doesn't work because Y", "the parser has this surprising property" — go in `LEARNINGS.md`.
+- **Domain or problem insights** — "X doesn't work because Y", "the parser has this surprising property" — become a durable record (ADR, `glossary.md`, or a new artifact) when one actually appears. Do not pre-allocate an empty insights ledger.
 
 If you discover that a durable doc contradicts a ruling, a term, or the current code, invoke the `document` skill to route the correction to the owning record and update its projections. Don't patch the contradiction in place without checking whether the same claim lives elsewhere.
 

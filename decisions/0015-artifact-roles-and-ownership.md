@@ -9,7 +9,7 @@ spine: true
 
 ## Context
 
-ADRs 0009, 0010, 0011, 0013, and 0014 established that knack's durable knowledge is partitioned: code owns behavior, ADRs own rulings, glossary owns terms, `AGENTS.md` owns operational context, `LEARNINGS.md` owns domain insights, and skills own procedural knowledge. The repo did not have a corresponding structure for organizing that knowledge, so durable documents kept accumulating overlapping responsibilities.
+ADRs 0009, 0010, 0011, 0013, and 0014 established that knack's durable knowledge is partitioned: code owns behavior, ADRs own rulings, glossary owns terms, `AGENTS.md` owns operational context, and skills own procedural knowledge. The repo did not have a corresponding structure for organizing that knowledge, so durable documents kept accumulating overlapping responsibilities.
 
 `DESIGN.md` tried to be thesis, architecture, interface reference, file-format spec, migration history, and wiki index at once. It became stale in places while remaining too large to maintain. `docs/README.md`, `docs/getting-started.md`, `docs/faq.md`, `docs/skills.md`, `docs/loop.md`, and `docs/queue-format.md` duplicated `DESIGN.md` sections and, after ADR-0011 deleted the Go CLI, still referenced the removed CLI in many places. The README declared `DESIGN.md` partially stale even after `DESIGN.md` had been reworked, because ownership of the "is this still accurate?" check was unclear.
 
@@ -34,7 +34,6 @@ Durable knowledge is organized by **artifact role**, not by topic or length:
   - `docs/README.md` — documentation ownership map
 - **Ledger** — append-only record of what happened.
   - `.loop/<name>/EVIDENCE.md` — cycle evidence
-  - `LEARNINGS.md` — domain/problem insights
 - **Work state** — coordination state consumed then discarded.
   - `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`
 

@@ -70,7 +70,6 @@ knack          bash CLI — derives spine, lints drift, inspects state, runs the
 prompts/       worker / reviewer / fixer prompts the loop sends
 decisions/     durable ADRs (YAML frontmatter: id, date, status, spine, ...)
 glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
-LEARNINGS.md   durable domain/problem insights
 docs/          user and architecture docs
 tests/run.sh   test harness for knack
 ```

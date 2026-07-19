@@ -26,7 +26,6 @@ Every durable artifact plays one of these roles. The specific files below are ex
   - reference pages (e.g., `docs/<topic>.md`)
 - **Ledger** — append-only record of what happened.
   - cycle evidence (e.g., `.loop/<name>/EVIDENCE.md`)
-  - domain/problem insights (e.g., `LEARNINGS.md`)
 - **Work state** — coordination state consumed then discarded.
   - queues, handoffs, review artifacts, scratch specs (e.g., `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`)
 
@@ -43,7 +42,7 @@ When new knowledge appears, ask: what question will a future reader ask, and whi
 - A new convention → operational-context record (e.g., `AGENTS.md`)
 - A new architectural ruling → rulings record (e.g., `decisions/`)
 - A new domain term or refined meaning → domain-vocabulary record (e.g., `glossary.md`)
-- A lesson the codebase taught about the problem → insights ledger (e.g., `LEARNINGS.md`)
+- A lesson the codebase taught about the problem → a durable record (ADR, `glossary.md`, or a new artifact) when one actually appears
 - A new workflow concept → the relevant procedural-knowledge file (e.g., `skills/<name>/SKILL.md`)
 - A user-facing protocol or interface → a reference page (e.g., `docs/<reference>.md`)
 - The current behavior of the code → code/tests

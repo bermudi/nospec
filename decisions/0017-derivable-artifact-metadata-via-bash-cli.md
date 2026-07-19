@@ -55,7 +55,7 @@ The existing prose fields (`Date:`, `Status:`, etc.) are removed; their content 
 
 **Skills** (`skills/<name>/SKILL.md`): keep existing `name` and `description` frontmatter. No changes required; skills are implicitly records (ADR-0015).
 
-**Other durable docs** (`AGENTS.md`, `glossary.md`, `LEARNINGS.md`, `README.md`, `docs/*.md`):
+**Other durable docs** (`AGENTS.md`, `glossary.md`, `README.md`, `docs/*.md`):
 
 ```yaml
 ---
@@ -96,7 +96,7 @@ The CLI is agent-agnostic and has no opinions about process. It is a derivation 
 
 - ADR-0011 is amended: "no CLI" becomes "no Go CLI; a bash derivation CLI is in scope." The amendment is narrow — the CLI derives and lints, it does not govern.
 - All 16 existing ADRs get YAML frontmatter; their prose `Date:`/`Status:`/`Supersedes:`/`Grandfathered:` lines are removed.
-- `AGENTS.md`, `glossary.md`, `LEARNINGS.md`, `README.md`, and `docs/*.md` get `role` (+ `owns` for records) frontmatter.
+- `AGENTS.md`, `glossary.md`, `README.md`, and `docs/*.md` get `role` (+ `owns` for records) frontmatter.
 - The three drifting spine lists are consolidated: one source (`knack spine` / `decisions/` frontmatter), zero re-enumerations.
 - `knack check` is added to `tests/run.sh`.
 - Future ADRs must include `spine: true|false` in frontmatter. The `decide` skill is updated to reflect this.

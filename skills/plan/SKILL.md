@@ -109,4 +109,4 @@ Status: pending
 
 ## Disposability
 
-`.loop/<name>/` is scratchpad, not artifact. When the work is done and verified, delete `QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, and `specs/`; keep `EVIDENCE.md` as the durable ledger. What persists beyond the cycle: code, tests, `decisions/`, `glossary.md`, `AGENTS.md`, `LEARNINGS.md`.
+`.loop/<name>/` is scratchpad, not artifact. When the work is done and verified, delete `QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, and `specs/`; keep `EVIDENCE.md` as the durable ledger. What persists beyond the cycle: code, tests, `decisions/`, `glossary.md`, `AGENTS.md`.

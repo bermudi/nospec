@@ -33,7 +33,7 @@ Alternatives considered:
 
 **The loop is an optional companion for batch mode only.** It is demoted from "the engine" to "the unattended runner." It is reached for only when work is AFK and benefits from fresh-context-per-tick plus an external verify gate. Interactive and plan-then-leave modes do not require it; direct edits with a durable-trace capture are first-class, not the degenerate case.
 
-**Durable traces stay thin and are written only when something crystallizes** — never per change, never as ceremony. `decisions/` when a ruling crystallizes. Glossary and LEARNINGS are optional and written-when-needed. The gate-style CLI checks (`decisions check`, `glossary check`) become occasional lints, not per-unit gates — the moment a durable-artifact check becomes a per-unit gate, it recreates litespec's archive ceremony.
+**Durable traces stay thin and are written only when something crystallizes** — never per change, never as ceremony. `decisions/` when a ruling crystallizes. Glossary is optional and written-when-needed. Do not pre-allocate an empty insights ledger; create a durable record only when a lesson actually crystallizes. The gate-style CLI checks (`decisions check`, `glossary check`) become occasional lints, not per-unit gates — the moment a durable-artifact check becomes a per-unit gate, it recreates litespec's archive ceremony.
 
 The CLI's role narrows: skill scaffolding plus optional linting. Its package-manager-style versioning semantics are now questioned, not assumed.
 

@@ -33,7 +33,7 @@ This is a mechanical contract (`loop.sh` derives it deterministically), not a pr
 
 litespec-v2 called this "Promotion Applied"; we call it **pin-state** because the implementation records git blob SHAs (pins) for durable docs touched in the cycle, not a boolean "was this promoted." The vocabulary change is deliberate: "promotion" suggests a one-time act, while "pin" captures the ongoing comparison (has this doc moved since the last cycle pinned it?) that makes the alert mechanism work.
 
-Add a `Pinned durable docs:` section to each `EVIDENCE.md` entry. For each file in the cycle's `changed_files` that matches the durable-doc set (`decisions/*.md`, `glossary.md`, `AGENTS.md`, `README.md`, `LEARNINGS.md`, `docs/**/*.md`, `skills/**/SKILL.md`), record its git blob SHA at evidence-write time. This is **provenance** — the state of the durable doc when the claim was made — not coherence validation.
+Add a `Pinned durable docs:` section to each `EVIDENCE.md` entry. For each file in the cycle's `changed_files` that matches the durable-doc set (`decisions/*.md`, `glossary.md`, `AGENTS.md`, `README.md`, `docs/**/*.md`, `skills/**/SKILL.md`), record its git blob SHA at evidence-write time. This is **provenance** — the state of the durable doc when the claim was made — not coherence validation.
 
 A `Pin alerts:` section follows when a prior cycle pinned the same path and its SHA has since changed. This is a **triage trigger**, not a coherence gate. It converts silent drift into a flagged signal for the next review pass; it does not close indirect coherence failure (A changed in a way that contradicts unpinned B — the `AGENTS.md` ↔ `glossary.md` description-drift case). That remains judgment territory, handled by the `document` skill.
 
