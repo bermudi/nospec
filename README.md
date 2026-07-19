@@ -16,7 +16,7 @@ Work happens across three levels of human attention, and the same skills serve a
 
 - **Interactive** — you're present, edits land directly.
 - **Plan-then-leave** — you do the hard thinking, then walk away.
-- **Batch (AFK)** — the optional `loop.sh` runs a queue of units behind a verify gate while you're gone.
+- **Batch (AFK)** — `./knack run` drives a queue of units behind a verify gate while you're gone.
 
 ([ADR-0009](decisions/0009-skills-are-the-product-loop-is-optional.md): skills are the product; the loop is optional.)
 
@@ -47,11 +47,11 @@ npx skills add <owner>/<repo>
 
 ## Optional: unattended batch mode
 
-`loop.sh` is for AFK work — run a queue of units behind a deterministic verify gate while you walk away. Agent-agnostic:
+`./knack run` is for AFK work — drive a queue of units behind a deterministic verify gate while you walk away. Agent-agnostic:
 
 ```bash
 LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' \
-  ./loop.sh run .loop/<name>/QUEUE.md
+  ./knack run .loop/<name>/QUEUE.md
 ```
 
 Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix (`--review`) are covered in [docs/loop.md](docs/loop.md). Most work is interactive; reach for the loop when you actually want to leave.
@@ -66,14 +66,13 @@ Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix
 
 ```
 skills/        the eight skills — the product
-loop.sh        optional AFK batch runner
-knack          bash CLI — derives the spine, checks structural drift (ADR-0017)
+knack          bash CLI — derives spine, lints drift, inspects state, runs the batch loop (ADR-0017, ADR-0018)
 prompts/       worker / reviewer / fixer prompts the loop sends
 decisions/     durable ADRs (YAML frontmatter: id, date, status, spine, ...)
 glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
 LEARNINGS.md   durable domain/problem insights
 docs/          user and architecture docs
-tests/run.sh   test harness for loop.sh and knack
+tests/run.sh   test harness for knack
 ```
 
 ## Testing

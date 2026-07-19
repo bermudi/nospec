@@ -68,15 +68,15 @@ Stop condition:
 ## queue parser ignores `###` subheadings
 
 Read first:
-- `loop.sh` queue parser
+- `knack run` queue parser
 - `tests/run.sh` parser tests
 
 Constraints:
-- `loop.sh` behavior remains the source of truth for the parser.
+- `knack run` behavior remains the source of truth for the parser.
 - No other headings are affected.
 
 Done means:
-- `loop.sh` does not treat `###` lines as unit boundaries.
+- `knack run` does not treat `###` lines as unit boundaries.
 - Existing tests still pass.
 
 Verify:

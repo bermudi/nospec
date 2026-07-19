@@ -18,7 +18,7 @@ See [`docs/architecture.md`](./architecture.md) for the conceptual shape, human-
 | Why was an architectural choice made? | [`decisions/`](../decisions/) |
 | How do I install and use the skills? | [`getting-started.md`](./getting-started.md) |
 | How do the skills compose? | [`skills.md`](./skills.md) |
-| How does `loop.sh` work? | [`loop.md`](./loop.md) |
+| How does the batch loop work? | [`loop.md`](./loop.md) |
 | What is the `QUEUE.md` format? | [`queue-format.md`](./queue-format.md) |
 | What does a knack term mean? | [`glossary.md`](../glossary.md) |
 | How do I work on the knack repo? | [`AGENTS.md`](../AGENTS.md) |

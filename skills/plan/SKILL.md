@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Use when decomposing a software task, bug, cleanup, or vague human intent into bounded, observable, independently-verifiable outcomes. When execution will use loop.sh, serialize them as a `.loop/<name>/QUEUE.md`; the planner picks a short name for the cycle (e.g., `parser-bug`).
+description: Use when decomposing a software task, bug, cleanup, or vague human intent into bounded, observable, independently-verifiable outcomes. When execution will use a batch runner, serialize them as a `.loop/<name>/QUEUE.md`; the planner picks a short name for the cycle (e.g., `parser-bug`).
 ---
 
 # Plan
@@ -48,7 +48,7 @@ Non-negotiable because they're mechanisms, not judgment:
 
 - **Every outcome needs credible verification** — name how it will be checked: a test, a type-check, running the thing, a manual check. This is universal.
 - **For batch execution specifically, `Verify:` must be deterministic and runnable by the runner, not an LLM-as-judge.** That is the backpressure — the loop mechanically rejecting wrong output, outside the agent. Tests, type checks, builds; not "ask the model if it looks right." Interactive outcomes have no runner; they name their check but need not use a `Verify:` field or reduce it to a shell command.
-- **Batch serialization format** (only when execution uses loop.sh): `.loop/<name>/QUEUE.md`, one unit per `## <outcome>` header (no "Slice" prefix, no numbering), each with a `Status:` line starting at `pending`. The loop's parser requires this; interactive planning has no such constraint.
+- **Batch serialization format** (only when execution uses a batch runner): `.loop/<name>/QUEUE.md`, one unit per `## <outcome>` header (no "Slice" prefix, no numbering), each with a `Status:` line starting at `pending`. The runner's parser requires this; interactive planning has no such constraint.
 
 ## Reasoned defaults
 
@@ -72,7 +72,7 @@ If a ruling crystallizes while you plan, write the ADR now via the `decide` skil
 
 ## Batch queue format
 
-When execution will use loop.sh, serialize the outcomes as:
+When execution will use a batch runner, serialize the outcomes as:
 
 ````markdown
 # Loop Queue: <short name>

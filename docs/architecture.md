@@ -29,7 +29,7 @@ Skills serve all three. The loop serves only batch. Skills are the product; the 
 ## Two layers
 
 ```
-skills/                       loop.sh
+skills/                       knack run
 product                     optional companion
 procedural knowledge        mechanical execution
 agent-agnostic              agent-agnostic
@@ -100,7 +100,7 @@ The queue is a shared to-do list. Verification discipline is still the agent's.
 ### Batch (AFK)
 
 ```
-plan (writes QUEUE.md) → loop.sh runs ticks → optional --review subloop → done
+plan (writes QUEUE.md) → knack run runs ticks → optional --review subloop → done
 ```
 
 The loop owns the verify gate: it invokes the agent, runs `Verify:` outside the agent, and appends evidence.

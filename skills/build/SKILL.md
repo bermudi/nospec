@@ -32,7 +32,7 @@ These are judgment, not gates. The verify gate below is the mechanical contract;
 Verify-first: read the `Verify:` command before you change code, so you know what state the repo must reach. Then make it pass.
 
 - **Interactive** — run the verify yourself before you stop. If it fails, fix the cause if it belongs to this outcome; otherwise report the blocker. Don't claim success the command didn't confirm.
-- **Batch (under loop.sh)** — the runner runs `Verify:` after you exit. You don't self-certify and you don't mark the unit done; you make the repository state satisfy the command. Don't edit `.loop/<name>/EVIDENCE.md` — the runner writes the evidence ledger after verification.
+- **Batch (under a runner)** — the runner runs `Verify:` after you exit. You don't self-certify and you don't mark the unit done; you make the repository state satisfy the command. Don't edit `.loop/<name>/EVIDENCE.md` — the runner writes the evidence ledger after verification.
 
 The verify gate is the backpressure — the mechanism that mechanically rejects wrong output, outside the agent. Your relationship to it is to aim the work at making it pass, not to assert that it would.
 
@@ -59,6 +59,6 @@ Do as much as keeps the repo in a working state, then hand off what remains — 
 
 State the blocker clearly, note what would unblock you (a decision, a dependency, a missing file), and stop. Don't thrash — and recognize thrashing's signature: if verify keeps failing on the same spot, you're almost certainly treating a symptom, not the cause. Stop patching and re-read the code to isolate the invariant actually being violated; a fix that needs many attempts is a diagnosis problem, not an attempt-count problem. Interactively that's a message to the human; in a batch cycle the runner marks the unit `blocked` and writes a handoff the next session picks up.
 
-## Batch behavior (under loop.sh)
+## Batch behavior (under a runner)
 
 When the loop invokes you for a tick, `prompts/worker.md` governs the tick — one unit only, the handoff output format, the don't-self-certify posture. The sections above are the skill's core; the worker prompt is the batch-tick protocol. If it's in your context, follow it.

@@ -29,7 +29,7 @@ This is a default path, not a gate. `bug → plan → build → done` is equally
 The loop runs a `QUEUE.md` one work unit at a time while you are away:
 
 ```bash
-LOOP_AGENT_CMD='pi -p --no-session' ./loop.sh run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session' ./knack run .loop/<name>/QUEUE.md
 ```
 
 See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix subloop.

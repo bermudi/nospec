@@ -7,7 +7,7 @@ owns: operational-context
 
 ## Project
 
-**knack** (name pending) is a composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. It ships as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional bash loop (`loop.sh`) provides unattended batch ("AFK") execution; everything else is interactive.
+**knack** (name pending) is a composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. It ships as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional bash batch runner (`./knack run`) provides unattended ("AFK") execution; everything else is interactive.
 
 It replaces litespec. Specs are disposable; code is the source of truth; decisions and skills are durable.
 
@@ -32,10 +32,9 @@ Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (deco
 Two layers live in this repo. **`skills/` is the product** — what `npx skills add` installs into *other* projects, so it must be self-contained: no external links, which would be dead weight in a foreign project's context (ADR-0013). **Everything else here is knack's own development context** — `AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `docs/` — which guides working *on* knack, is never installed, and links freely.
 
 - `skills/` — eight skills (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. All eight reworked to ADR-0010 (mode-independent, concept-forward); no external links.
-- `loop.sh` — optional AFK batch runner. Agent-agnostic via `LOOP_AGENT_CMD`. Owns the verify gate. Supports per-unit `Agent:` overrides and opt-in review/fix via `--review`. `./loop.sh view [--repo DIR]` prints a read-only dashboard of all cycles, work units, and decisions.
-- `prompts/` — worker / reviewer / fixer prompts the loop sends.
+- `prompts/` — worker / reviewer / fixer prompts the batch runner sends.
 - `decisions/` — durable ADRs with YAML frontmatter (`id`, `date`, `status`, `spine`, optional `supersedes`/`superseded_by`/`amends`/`grandfathered`). `glossary.md` — ubiquitous language: knack-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
-- `knack` — bash-only derivation and linting CLI (ADR-0017). `./knack spine` derives the spine from ADR frontmatter; `./knack check` fails on structural drift (re-enumerated spine lists, duplicate ownership claims, missing frontmatter). No Go, no compile step. Distribution of skills is skills.sh's job.
+- `knack` — the project's single bash entry point (ADR-0017, ADR-0018). Verbs: `spine` (derive the spine from ADR frontmatter), `adrs` (list all ADRs), `check` (fail on structural drift — re-enumerated spine lists, duplicate ownership, missing frontmatter), `view` (read-only dashboard of cycles, work units, decisions), `run` (the optional AFK batch runner — agent-agnostic via `LOOP_AGENT_CMD`, owns the verify gate, per-unit `Agent:` overrides, opt-in review/fix via `--review`). No Go, no compile step. Distribution of skills is skills.sh's job.
 
 ## Core artifacts
 
@@ -56,7 +55,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
 - Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment — transmitted as concepts in the `decide`, `domain-modeling`, and `document` skills, not enforced by gate commands. Structural drift (re-enumerated spine lists, duplicate ownership, missing frontmatter) is mechanical — `./knack check` catches it (ADR-0017).
-- The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary (mechanical: `loop.sh` derives it from the verify command) and a pin-state record (mechanical: `loop.sh` records which durable docs were touched and alerts when a prior pin moves). Pin alerts are triage triggers for `review` → `document`, not coherence gates (ADR-0016).
+- The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary (mechanical: `knack run` derives it from the verify command) and a pin-state record (mechanical: `knack run` records which durable docs were touched and alerts when a prior pin moves). Pin alerts are triage triggers for `review` → `document`, not coherence gates (ADR-0016).
 - Operational gotchas go here; domain/problem insights go in `LEARNINGS.md`.
 
 ## Verification
@@ -65,7 +64,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 ./tests/run.sh
 ```
 
-Exercises `loop.sh` (parsing, verify gate, handoff, review-fix), validates skill frontmatter via `skills-ref` when available, and runs `knack check` (spine derivation, structural drift, frontmatter validity). There is no Go CLI; `go test` is gone.
+Exercises `knack run` (parsing, verify gate, handoff, review-fix) and `knack view`, validates skill frontmatter via `skills-ref` when available, and runs `knack check` (spine derivation, structural drift, frontmatter validity). There is no Go CLI; `go test` is gone.
 
 ## Lessons learned
 
@@ -78,6 +77,6 @@ Exercises `loop.sh` (parsing, verify gate, handoff, review-fix), validates skill
 - **Verify commands must be path-correct.** A unit once had `cd subproj && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `subproj/` after the `cd`, not the repo root. The loop correctly caught the failure; the verify command was wrong. Always test verify commands manually before writing them into a queue.
 - **Workers scope to the outcome plus constraints, not a file list (ADR-0005).** A constraint states what must stay true or what is out of bounds — never what to edit. Naming files in constraints smuggles scope the same way the old `Work:` field did.
 - **Orphan-ADR semantics.** An ADR is orphaned when it no longer explains or constrains the system — references (`QUEUE.md`, `EVIDENCE.md`, code, docs) are evidence of relevance, not the definition; a negative ruling can be alive with no citing work. (Established by ADR-0012, which supersedes the deleted checker's citation model from ADR-0006; transmitted as a concept by the `decide` skill, not a gate — ADR-0011.)
-- **Named work cycles enable concurrent work (ADR-0004).** Each cycle gets `.loop/<name>/`; `./loop.sh run .loop/<name>/QUEUE.md` is independent of others.
+- **Named work cycles enable concurrent work (ADR-0004).** Each cycle gets `.loop/<name>/`; `./knack run .loop/<name>/QUEUE.md` is independent of others.
 - **Negative-grep verifies must anchor on field syntax, not bare mentions.** A verify `! grep -rn 'Work:' ...` rotted the moment history documented "ADR-0005 replaced `Work:`." Anchor to the field shape (`^Work:`), not any mention of the word.
 - **Design notes prevent fix-direction oscillation.** The work-unit format carries *what* but not *why*, so a fixer once picked the wrong branch of an ambiguous fix direction and reverted a manual fix. `.loop/<name>/DESIGN.md` carries cycle-level reasoning; the review skill's `fix direction` must be a single unambiguous instruction, never a conditional.
