@@ -89,6 +89,16 @@ assert_contains "$repo3/worker.pwd" "$repo3"
 assert_contains "$repo2/.loop/HANDOFF.md" "## Remaining"
 assert_contains "$repo2/.loop/HANDOFF.md" "the test fixture reaches its verify condition"
 
+# A successful resume removes the now-false handoff instead of leaving stale
+# coordination state that still claims the completed unit is pending.
+LOOP_AGENT_CMD='touch never-created' "$root/skills/nospec/scripts/nospec" run "$repo2/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-resume.txt
+assert_contains "$repo2/.loop/QUEUE.md" "Status: done"
+if [[ -e "$repo2/.loop/HANDOFF.md" ]]; then
+  echo "expected successful resume to remove stale handoff" >&2
+  cat "$repo2/.loop/HANDOFF.md" >&2
+  exit 1
+fi
+
 # Handoff shows blocked unit in In progress when worker exits nonzero
 repo5="$tmp/repo-blocked"
 mkdir -p "$repo5/.loop"
@@ -322,8 +332,70 @@ assert_contains "$repo_review/.loop/QUEUE.md" "Status: done"
 assert_contains "$repo_review/.loop/REVIEW.md" "- actionable: 0"
 assert_contains "$repo_review/review-count.txt" "2"
 assert_contains "$repo_review/app.txt" "fixed"
+test ! -e "$repo_review/.loop/HANDOFF.md"
 
-# view: read-only dashboard of cycles, work units, and decisions
+# Actionable review with no generated fix units is blocked, not clean. The
+# handoff projects REVIEW.md even though every build unit is already done.
+repo_review_stalled="$tmp/repo-review-stalled"
+mkdir -p "$repo_review_stalled"
+make_queue "$repo_review_stalled" "test -f smoke.done"
+cat > "$repo_review_stalled/review-worker.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+cat > "$LOOP_REVIEW_FILE" <<'EOF_REVIEW'
+## Standards
+No issues found.
+
+## Intent
+- I1 | actionable | high — unresolved fixture finding
+
+## Speculative
+No issues found.
+
+## Summary
+- actionable: 1
+- trivial: 0
+- disputed: 0
+- deferred: 0
+EOF_REVIEW
+EOF
+chmod +x "$repo_review_stalled/review-worker.sh"
+cat > "$repo_review_stalled/fix-worker.sh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+echo "no units appended"
+EOF
+chmod +x "$repo_review_stalled/fix-worker.sh"
+set +e
+LOOP_AGENT_CMD='touch smoke.done' \
+  LOOP_REVIEW_CMD="$repo_review_stalled/review-worker.sh" \
+  LOOP_FIX_CMD="$repo_review_stalled/fix-worker.sh" \
+  "$root/skills/nospec/scripts/nospec" run "$repo_review_stalled/.loop/QUEUE.md" --review --max-ticks 1 --max-review-rounds 2 >/tmp/loop-review-stalled.txt 2>&1
+code=$?
+set -e
+if [[ $code -eq 0 ]]; then
+  echo "expected unresolved review with no fix units to exit nonzero" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-review-stalled.txt "fix produced no new units while review still has 1 actionable issue(s)"
+assert_contains "$repo_review_stalled/.loop/HANDOFF.md" "## Review findings"
+assert_contains "$repo_review_stalled/.loop/HANDOFF.md" "1 actionable finding(s) remain in REVIEW.md"
+assert_contains "$repo_review_stalled/.loop/HANDOFF.md" "Resolve the actionable findings in REVIEW.md, then rerun review."
+
+# Omitting --review later must not turn the same blocked cycle into a false
+# success merely because its build queue is empty.
+set +e
+"$root/skills/nospec/scripts/nospec" run "$repo_review_stalled/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-review-still-blocked.txt 2>&1
+code=$?
+set -e
+if [[ $code -eq 0 ]]; then
+  echo "expected unresolved review to remain nonzero without --review" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-review-still-blocked.txt "queue drained but review still has 1 actionable issue(s)"
+assert_contains "$repo_review_stalled/.loop/HANDOFF.md" "## Review findings"
+
+# view: read-only dashboard of cycles, work units, review debt, and decisions
 repo_view="$tmp/repo-view"
 mkdir -p "$repo_view/.loop/feature-a" "$repo_view/decisions"
 cat > "$repo_view/.loop/feature-a/QUEUE.md" <<'EOF'
@@ -363,6 +435,24 @@ true
 Status: in_progress
 EOF
 
+cat > "$repo_view/.loop/feature-a/REVIEW.md" <<'EOF'
+## Standards
+No issues found.
+
+## Intent
+- I1 | actionable | high — first unresolved fixture finding
+- I2 | actionable | high — second unresolved fixture finding
+
+## Speculative
+No issues found.
+
+## Summary
+- actionable: 2
+- trivial: 0
+- disputed: 0
+- deferred: 0
+EOF
+
 cat > "$repo_view/decisions/0001-first-ruling.md" <<'EOF'
 # 0001: First ruling
 
@@ -388,6 +478,8 @@ assert_contains /tmp/loop-view.txt "Nospec Dashboard"
 assert_contains /tmp/loop-view.txt "Active Cycles: 1"
 assert_contains /tmp/loop-view.txt "feature-a"
 assert_contains /tmp/loop-view.txt "1/3 done"
+assert_contains /tmp/loop-view.txt "Review: 2 actionable across 1 cycle"
+assert_contains /tmp/loop-view.txt "REVIEW BLOCKED: 2 actionable"
 assert_contains /tmp/loop-view.txt "Decisions"
 assert_contains /tmp/loop-view.txt "0001"
 assert_contains /tmp/loop-view.txt "accepted"

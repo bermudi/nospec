@@ -303,6 +303,16 @@ def parse_queue(path):
         units.append(current)
     return units
 
+def parse_review_actionable(path):
+    if not path.is_file():
+        return 0
+    match = re.search(
+        r'^\s*-\s*actionable:\s*(\d+)\s*$',
+        path.read_text(),
+        re.MULTILINE,
+    )
+    return int(match.group(1)) if match else 0
+
 def progress_bar(done, total, width=20):
     filled = 0 if total == 0 else int(round(done / total * width))
     bar = "#" * filled + "." * (width - filled)
@@ -329,16 +339,23 @@ if loop_dir.is_dir():
 
 cycle_data = []
 t_pending = t_inprog = t_done = 0
+t_review_actionable = review_blocked_cycles = 0
 for cycle in cycles:
     units = parse_queue(cycle / "QUEUE.md")
     done = sum(1 for u in units if u["status"] == "done")
     pending = sum(1 for u in units if u["status"] == "pending")
     in_prog = len(units) - done - pending
-    mtime = (cycle / "QUEUE.md").stat().st_mtime
-    cycle_data.append((cycle.name, done, pending, in_prog, len(units), mtime))
+    review_actionable = parse_review_actionable(cycle / "REVIEW.md")
+    mtime = max(
+        (cycle / "QUEUE.md").stat().st_mtime,
+        (cycle / "REVIEW.md").stat().st_mtime if (cycle / "REVIEW.md").is_file() else 0,
+    )
+    cycle_data.append((cycle.name, done, pending, in_prog, len(units), review_actionable, mtime))
     t_done += done
     t_pending += pending
     t_inprog += in_prog
+    t_review_actionable += review_actionable
+    review_blocked_cycles += int(review_actionable > 0)
 
 # --- Decisions ---
 decisions = []
@@ -370,6 +387,9 @@ print("Summary:")
 print(f"  * Active Cycles: {len(cycles)}")
 if cycles:
     print(f"  * Work Units: {t_pending} pending, {t_inprog} in progress, {t_done} done")
+if t_review_actionable:
+    label = "cycle" if review_blocked_cycles == 1 else "cycles"
+    print(f"  ! Review: {t_review_actionable} actionable across {review_blocked_cycles} {label}")
 if decisions:
     accepted = sum(1 for d in decisions if d[2] == "accepted")
     proposed = sum(1 for d in decisions if d[2] == "proposed")
@@ -390,9 +410,10 @@ if cycle_data:
     print()
     print("Active Cycles")
     print(D)
-    for name, done, pending, inprog, total, mtime in cycle_data:
+    for name, done, pending, inprog, total, review_actionable, mtime in cycle_data:
         bar = progress_bar(done, total)
-        print(f"  o {name:<30} {bar}  {done}/{total} done  (touched {time_ago(mtime)})")
+        review_state = f"  REVIEW BLOCKED: {review_actionable} actionable" if review_actionable else ""
+        print(f"  o {name:<30} {bar}  {done}/{total} done{review_state}  (touched {time_ago(mtime)})")
 
 if decisions:
     print()
@@ -544,7 +565,19 @@ from pathlib import Path
 from datetime import datetime
 
 queue, evidence, handoff = sys.argv[1:]
-lines = Path(queue).read_text().splitlines()
+queue_path = Path(queue)
+review_path = queue_path.with_name("REVIEW.md")
+lines = queue_path.read_text().splitlines()
+
+review_actionable = 0
+if review_path.is_file():
+    match = re.search(
+        r'^\s*-\s*actionable:\s*(\d+)\s*$',
+        review_path.read_text(),
+        re.MULTILINE,
+    )
+    if match:
+        review_actionable = int(match.group(1))
 
 units = []
 current = None
@@ -561,7 +594,10 @@ if current:
     units.append(current)
 
 pending = [u for u in units if u["status"] != "done"]
-if not pending:
+if not pending and review_actionable == 0:
+    # A prior failed run may have left a handoff behind. Once both build and
+    # review drain, that coordination state is false and must not survive.
+    Path(handoff).unlink(missing_ok=True)
     sys.exit(0)
 
 completed = [u for u in units if u["status"] == "done"]
@@ -579,11 +615,19 @@ out += ["", "## In progress"]
 out += [f"- {u['title']} (status: {u['status']})" for u in in_progress] or ["- (none)"]
 out += ["", "## Remaining"]
 out += [f"- {u['title']}" for u in remaining] or ["- (none)"]
+if review_actionable:
+    out += [
+        "",
+        "## Review findings",
+        f"- {review_actionable} actionable finding(s) remain in REVIEW.md.",
+    ]
 out += ["", "## Next action"]
 if in_progress:
     out.append(f"Re-run loop after addressing the {in_progress[0]['status']} state of: {in_progress[0]['title']}.")
 elif remaining:
     out.append(f"Re-run loop to continue with: {remaining[0]['title']}.")
+elif review_actionable:
+    out.append("Resolve the actionable findings in REVIEW.md, then rerun review.")
 else:
     out.append("Queue is complete.")
 
@@ -1042,6 +1086,14 @@ run_build_phase() {
 # and the outer loop should run another build pass.
 run_review_fix_phase() {
     if [[ "$review_enabled" == 0 ]]; then
+        if [[ -f "$review_file" ]]; then
+            local existing_actionable
+            existing_actionable=$(extract_actionable_count "$review_file") \
+                || die "review file has no actionable summary: $review_file"
+            if (( existing_actionable > 0 )); then
+                die "queue drained but review still has $existing_actionable actionable issue(s)"
+            fi
+        fi
         if (( tick > max_ticks )); then
             echo "nospec: reached max ticks ($max_ticks)"
             exit 0
@@ -1105,8 +1157,7 @@ run_review_fix_phase() {
 
     if [[ -z "$(first_pending_unit "$queue_abs")" ]]; then
         cat "$fix_out"
-        echo "nospec: fix produced no new units — review findings overturned or triaged out; stopping clean"
-        exit 0
+        die "fix produced no new units while review still has $actionable actionable issue(s)"
     fi
 }
 

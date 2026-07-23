@@ -93,4 +93,4 @@ See [loop.md](./loop.md#work-unit-statuses) for the list and meanings.
 
 ## Disposability
 
-When a cycle is complete and verified, `QUEUE.md` and `HANDOFF.md` are disposable. Delete them. Keep `EVIDENCE.md` if you want to trace which ADRs the cycle referenced.
+When every unit is verified and any review state is clean, `QUEUE.md` and `HANDOFF.md` are disposable. A drained queue with actionable findings in `REVIEW.md` is still review-blocked. Keep `EVIDENCE.md` if you want to trace which ADRs the cycle referenced.

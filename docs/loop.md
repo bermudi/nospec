@@ -55,7 +55,7 @@ Agent: claude --print --no-session-persistence --dangerously-skip-permissions "$
 
 ## Optional review/fix subloop
 
-By default, `nospec run` stops when the build queue has no pending work. With `--review`, it then runs a bounded review/fix subloop:
+By default, `nospec run` stops when the build queue has no pending work, unless an existing `REVIEW.md` still records actionable findings. With `--review`, it runs a bounded review/fix subloop after the build queue drains:
 
 1. Invoke a review worker with the review prompt and the completed queue/evidence.
 2. Require the review worker to write `.loop/<name>/REVIEW.md`.
@@ -65,7 +65,7 @@ By default, `nospec run` stops when the build queue has no pending work. With `-
 6. Require the fix worker to append new `Status: pending` work units to the same `QUEUE.md`.
 7. Run the build pass again, then review again.
 
-The subloop stops when review is clean, `--max-review-rounds` is reached, `--max-ticks` is exhausted, or fix produces no pending work. The loop owns orchestration and stop conditions only; the `nospec-trial` and `nospec-mend` skills own judgment and work-unit generation.
+The subloop stops cleanly only when review reports zero actionable findings. Reaching `--max-review-rounds`, exhausting `--max-ticks`, or producing no fix units while actionable findings remain is a non-clean stop. The actionable count remains cycle state until a later clean review replaces it; rerunning without `--review` does not turn an empty build queue into false success. The loop owns orchestration and stop conditions only; the `nospec-trial` and `nospec-mend` skills own judgment and work-unit generation.
 
 ## Work unit statuses
 
@@ -81,8 +81,8 @@ The subloop stops when review is clean, `--max-review-rounds` is reached, `--max
 `nospec run` writes next to the queue:
 
 - `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary (what this verify mechanically proves, derived from the command), and a pin-state record (which durable docs were touched and whether any prior pins have moved). It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references. Pin alerts in the ledger are triage triggers for the `nospec-trial` skill, not coherence gates (ADR-0016).
-- `HANDOFF.md` — written on non-clean exit. Sections: completed, in progress, remaining, next action. Delete when the work resumes.
-- `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line.
+- `HANDOFF.md` — written on non-clean exit. Sections cover completed, in-progress, and remaining units plus unresolved actionable review findings and the next action. It is removed automatically only when both the build queue and review state are clean.
+- `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line. `nospec view` projects a non-zero count as `REVIEW BLOCKED` even when every build unit is done.
 
 ## Agent invocation examples
 
@@ -108,5 +108,5 @@ nospec run .loop/<name>/QUEUE.md --review
 ## Verification notes
 
 - `nospec run` does **not** validate `QUEUE.md` structure. The loop trusts the format; use the `nospec-shape` skill or inspect the file directly before running.
-- `nospec run` runs review and fix only when `--review` is set. It invokes the skills and reads the actionable count from `REVIEW.md`; it does not judge findings or manage ADRs/glossary.
+- `nospec run` invokes review and fix workers only when `--review` is set. Without that flag it still reads an existing `REVIEW.md` summary so unresolved review cannot become false success; it does not judge findings or manage ADRs/glossary.
 - The `Verify:` command must be deterministic and executable by the runner — tests, builds, type checks, not an LLM-as-judge.

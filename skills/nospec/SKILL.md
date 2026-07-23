@@ -67,11 +67,11 @@ The runner drives a worker agent (set via `LOOP_AGENT_CMD`) which loads the `nos
 6. On success: marks `done`, appends evidence, continues.
 7. On failure: if the repo didn't change, retries once; after two no-progress failures, stops. If the repo changed but verify failed, stops.
 
-The runner stops on: max ticks reached (default 3), a blocked worker, verify failure with progress, or no progress after two attempts. On a non-clean exit it writes `HANDOFF.md` so the next session resumes.
+The runner stops on: max ticks reached (default 3), a blocked worker, verify failure with progress, no progress after two attempts, or unresolved actionable review state. On a non-clean exit it writes `HANDOFF.md` so the next session resumes. The handoff is removed only after both the build queue and review state are clean.
 
 ## Optional review/fix subloop
 
-With `--review`, after the build queue drains, the runner invokes the `nospec-trial` skill, reads the actionable-finding count from `REVIEW.md`, and if non-zero invokes the `nospec-mend` skill (which appends new pending units), then runs another build pass. Bounded by `--max-review-rounds` (default 2). The runner orchestrates stop conditions only; the `nospec-trial` and `nospec-mend` skills own judgment — what the findings are, which become units.
+With `--review`, after the build queue drains, the runner invokes the `nospec-trial` skill, reads the actionable-finding count from `REVIEW.md`, and if non-zero invokes the `nospec-mend` skill (which appends new pending units), then runs another build pass. Bounded by `--max-review-rounds` (default 2). A non-zero actionable count remains blocking until a later clean review replaces it; max-round exhaustion or a fixer that produces no units exits non-zero rather than laundering an empty queue into success. `nospec view` projects this state as `REVIEW BLOCKED`. The runner orchestrates stop conditions only; the `nospec-trial` and `nospec-mend` skills own judgment — what the findings are, which become units.
 
 ## Agent-agnostic
 
