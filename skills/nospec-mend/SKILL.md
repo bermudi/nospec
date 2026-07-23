@@ -1,6 +1,10 @@
 ---
 name: nospec-mend
 description: Use when resolving review findings — directly when interactive, or as new verifiable work units appended to a `.loop/<name>/QUEUE.md` when running batch. Triggers on "fix the review findings", "address the feedback", "rework based on review", "fix what review found", or when review produced findings that need resolving.
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Fix

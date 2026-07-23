@@ -1,6 +1,10 @@
 ---
 name: nospec-shape
 description: Use when decomposing a software task, bug, cleanup, or vague human intent into bounded, observable, independently-verifiable outcomes. When execution will use a batch runner, serialize them as a `.loop/<name>/QUEUE.md`; the planner picks a short name for the cycle (e.g., `parser-bug`).
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Plan

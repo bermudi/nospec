@@ -1,6 +1,10 @@
 ---
 name: nospec-hew
 description: Use when implementing a bounded, observable outcome — whether supplied conversationally or as a work unit from a `.loop/<name>/QUEUE.md`. Verify-first — read the verify before changing code, and don't declare done until it actually passes. Triggers on "build", "implement", "apply this unit", "do the work", "run the loop", or when work needs executing. Also used when the loop invokes the worker for a tick.
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Build

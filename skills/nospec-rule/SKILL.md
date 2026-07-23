@@ -1,6 +1,10 @@
 ---
 name: nospec-rule
 description: Use when an architectural ruling crystallizes — during exploration, planning, building, or review. Captures decisions as ADRs in `decisions/` so they persist after specs are deleted and code moves on. Triggers on "we decided to", "let's go with", "the ruling is", "why did we choose", "record this decision", or when a design choice with lasting consequences is made.
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Decide

@@ -1,6 +1,10 @@
 ---
 name: nospec-scout
 description: Use when investigating a codebase, grilling intent, or stress-testing ideas before planning or building work. Read code, challenge assumptions, surface the real problem, and capture decisions as they crystallize. Triggers on "explore", "investigate", "let me understand", "what's going on with", "grill this", "stress-test", "help me decide", "what should I do next", or when the real problem isn't clear yet.
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Explore

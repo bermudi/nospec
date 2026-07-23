@@ -1,6 +1,10 @@
 ---
 name: nospec-curator
 description: Use when deciding where durable knowledge belongs, detecting contradictions across durable artifacts, or maintaining the views that project authoritative records. Triggers on "where does this go", "document this", "are these docs consistent", "this is stale", "update the docs", or when a ruling or interface change may invalidate existing documentation.
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Document

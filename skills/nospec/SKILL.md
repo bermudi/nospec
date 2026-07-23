@@ -2,6 +2,10 @@
 name: nospec
 description: Use when reaching for unattended batch execution — driving a queue of verifiable work units behind a deterministic verify gate while the human is away. Carries the `nospec` runner as `scripts/nospec`. Triggers on "run the loop", "batch mode", "AFK", "run the queue", "nospec run", "install nospec", "set up nospec", or when the human wants to walk away from a planned queue and have the agent work through it.
 compatibility: Requires bash and python 3. The runner is invoked as `scripts/nospec` from this skill directory (or via `nospec` on PATH after `nospec install`).
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Nospec

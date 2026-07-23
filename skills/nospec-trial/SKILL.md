@@ -1,6 +1,10 @@
 ---
 name: nospec-trial
 description: Use when reviewing a change against intent and standards — adversarial scrutiny before accepting work. Two axes — standards (does the change follow the codebase's own conventions?) and intent (does it do what it was supposed to?). Reviews against the actual codebase, not specs. Triggers on "review", "check this", "is this right", "what did we miss", "stress-test the implementation", or when work needs adversarial scrutiny before being accepted.
+license: MIT
+metadata:
+  author: bermudi
+  version: "1.0.0"
 ---
 
 # Review
