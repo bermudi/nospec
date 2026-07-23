@@ -23,7 +23,7 @@ Work happens across three levels of human attention, and the same skills serve a
 ## Install
 
 ```bash
-npx skills add <owner>/<repo>
+npx skills add bermudi/nospec
 ```
 
 [`npx skills`](https://github.com/vercel-labs/skills) auto-detects your agent(s) — Claude Code, Codex, Cursor, Pi, Gemini, Copilot, opencode, and [70+ more](https://skills.sh) — and installs into each one's native skills path. Update with `npx skills update`; remove with `npx skills remove`.
@@ -37,7 +37,7 @@ The runner ships as the `nospec` skill's `scripts/nospec`. skills.sh installs sk
 
 That symlinks the runner onto PATH. Then `nospec run ...` works from any directory.
 
-> **Not on skills.sh yet.** This repo has no GitHub remote, so `<owner>/<repo>` is a placeholder. Once pushed, it resolves to the real location.
+> **On skills.sh.** Install with `npx skills add bermudi/nospec`. Update with `npx skills update`; remove with `npx skills remove`.
 
 ## The skills
 
