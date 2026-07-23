@@ -29,7 +29,7 @@ This is a default path, not a gate. `bug → nospec-shape → nospec-hew → don
 The loop runs a `QUEUE.md` one work unit at a time while you are away:
 
 ```bash
-LOOP_AGENT_CMD='pi -p --no-session' nospec run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' nospec run .loop/<name>/QUEUE.md
 ```
 
 See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix subloop.

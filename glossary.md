@@ -5,7 +5,7 @@ owns: domain-terms
 
 # Glossary
 
-Knack's domain-specific terms. For the underlying concepts — doc-rot, backpressure, tracer bullets, and the rest — see the [AgenticWiki](https://github.com/bermudi/AgenticWiki); this file defines only what's specific to this project. Wiki concepts are linked, not redefined (ADR-0010).
+nospec's domain-specific terms. For the underlying concepts — doc-rot, backpressure, tracer bullets, and the rest — see the [AgenticWiki](https://github.com/bermudi/AgenticWiki); this file defines only what's specific to this project. Wiki concepts are linked, not redefined (ADR-0010).
 
 ## work unit
 
@@ -41,7 +41,7 @@ A durable architectural ruling in `decisions/`. Records *why* the code is the wa
 
 ## loop
 
-The optional AFK runner (`loop.sh`): runs a cycle's queue one tick at a time behind the verify gate, agent-agnostic via `LOOP_AGENT_CMD`. Skills serve interactive and plan-then-leave modes; the loop serves batch.
+The optional AFK runner (`nospec run`, shipped as `scripts/nospec` inside the `nospec` skill): runs a cycle's queue one tick at a time behind the verify gate, agent-agnostic via `LOOP_AGENT_CMD`. Skills serve interactive and plan-then-leave modes; the loop serves batch.
 
 ## Concepts (external)
 
