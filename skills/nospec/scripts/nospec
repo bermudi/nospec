@@ -1,21 +1,24 @@
 #!/usr/bin/env bash
-# knack — the project's single bash entry point.
+# nospec — the batch runner and derivation/lint CLI, shipped as a skill.
 #
 # Derives artifact metadata, lints structural drift, inspects loop state, and
 # optionally runs the batch loop behind a verify gate. It does not scaffold,
 # package, or version — those are skills.sh's job (ADR-0011).
 #
-# See ADR-0017 for the derivation/lint surface and ADR-0018 for the fold of
-# loop.sh into this binary.
+# See ADR-0017 for the derivation/lint surface, ADR-0018 for the fold of
+# loop.sh into this binary, and ADR-0019 for the bundle-as-skill ruling.
 
 set -euo pipefail
 
-# SCRIPT_DIR is where knack lives — prompts/ and skills/ are found here. It is
-# fixed and never overridden. REPO_ROOT is the repo to operate on (derive, lint,
-# inspect, or run work in); it defaults to SCRIPT_DIR and can be overridden by a
-# leading `--repo DIR` (for spine/adrs/check/view against an external repo).
+# SCRIPT_DIR is where this script lives — .../nospec/scripts/. The sibling
+# skills (build, review, fix, ...) and the prompts/ directory install alongside
+# it, so the runner finds them relative to SCRIPT_DIR:
+#   - Installed: $SCRIPT_DIR/..        = .agents/skills/  (or ~/.agents/skills/)
+#   - Dev:        $SCRIPT_DIR/../..    = skills/          (nospec's own repo)
+# REPO_ROOT is the repo to operate on (derive, lint, inspect); it defaults to
+# the current working directory and can be overridden by a leading `--repo DIR`.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$SCRIPT_DIR"
+REPO_ROOT="$(pwd)"
 
 # Allow --repo DIR to override the repo root (for testing and external use)
 while [[ "${1:-}" == --repo ]]; do
@@ -64,7 +67,7 @@ fm_has() {
 # ─────────────────────────── Shared helpers ────────────────────────────
 
 die() {
-    echo "knack: $*" >&2
+    echo "nospec: $*" >&2
     exit 1
 }
 
@@ -74,7 +77,7 @@ abs_path() {
 
 # ──────────────────────────── Subcommands ────────────────────────────
 
-# knack spine — print the spine ADRs derived from frontmatter.
+# nospec spine — print the spine ADRs derived from frontmatter.
 cmd_spine() {
     local f id title
     for f in "$REPO_ROOT"/decisions/00*.md; do
@@ -89,7 +92,7 @@ cmd_spine() {
     done
 }
 
-# knack adrs — print all ADRs with id, status, title.
+# nospec adrs — print all ADRs with id, status, title.
 cmd_adrs() {
     local f id status title
     for f in "$REPO_ROOT"/decisions/00*.md; do
@@ -101,14 +104,14 @@ cmd_adrs() {
     done
 }
 
-# knack check — fail on structural drift.
+# nospec check — fail on structural drift.
 cmd_check() {
     local failures=0
 
     # ── Check 1: No doc outside decisions/ may re-enumerate the spine ──
     #
     # The drift pattern: a doc lists ADR numbers with synopses, duplicating
-    # what `knack spine` already derives from frontmatter. Four shapes:
+    # what `nospec spine` already derives from frontmatter. Four shapes:
     #   Pattern A — 2+ markdown links to decision files on a single line
     #               (e.g. "[0009](decisions/...) (synopsis), [0010](...) ...")
     #   Pattern B — 3+ lines matching "ADR-NNNN — synopsis" or "**ADR-NNNN**"
@@ -211,10 +214,10 @@ cmd_check() {
 
     if [[ "$failures" -gt 0 ]]; then
         echo ""
-        echo "knack check: $failures failure(s)"
+        echo "nospec check: $failures failure(s)"
         return 1
     fi
-    echo "knack check: all checks passed"
+    echo "nospec check: all checks passed"
     return 0
 }
 
@@ -261,7 +264,7 @@ check_frontmatter() {
 
 # ──────────────────────────── Loop: view ────────────────────────────
 
-# knack view — read-only dashboard of cycles, work units, and decisions.
+# nospec view — read-only dashboard of cycles, work units, and decisions.
 cmd_view() {
     local repo_dir
     repo_dir=$(pwd)
@@ -360,7 +363,7 @@ if glossary.is_file():
 
 # --- Render ---
 print()
-print("Knack Dashboard")
+print("Nospec Dashboard")
 print()
 print(W)
 print("Summary:")
@@ -403,6 +406,70 @@ print()
 print(W)
 print()
 PY
+}
+
+# ──────────────────────────── Install ────────────────────────────
+
+# nospec install — symlink this runner onto PATH so `nospec` works from anywhere.
+#
+# Skills.sh installs skill files but does not touch PATH. The runner ships as
+# scripts/nospec inside the nospec skill; without this step it's only callable
+# by its full path. The agent invokes this once (the user doesn't type the
+# long path) — see ADR-0019.
+#
+# Picks the first writable directory from a candidate list that's already on
+# PATH. Falls back to ~/.local/bin (creating it if needed) and prints the
+# PATH-export line if it's not on PATH.
+cmd_install() {
+    local target="${1:-}"
+    local self="$SCRIPT_DIR/nospec"
+
+    [[ -f "$self" ]] || die "could not locate self: $self"
+    chmod +x "$self" 2>/dev/null || true
+
+    # Candidate directories: explicit arg > dirs on PATH that are writable.
+    local candidates=()
+    if [[ -n "$target" ]]; then
+        candidates+=("$target")
+    else
+        local dir
+        while IFS= read -r dir; do
+            [[ -z "$dir" ]] && continue
+            [[ -w "$dir" ]] && candidates+=("$dir")
+        done < <(echo "$PATH" | tr ':' '\n' | grep -v '^$')
+        # Common user-local fallbacks if nothing on PATH is writable.
+        candidates+=("$HOME/.local/bin" "$HOME/bin")
+    fi
+
+    local chosen=""
+    for dir in "${candidates[@]}"; do
+        if [[ -d "$dir" ]] || mkdir -p "$dir" 2>/dev/null; then
+            if [[ -w "$dir" ]]; then
+                chosen="$dir"
+                break
+            fi
+        fi
+    done
+
+    [[ -n "$chosen" ]] || die "no writable directory on PATH found; specify one: nospec install <dir>"
+
+    local link="$chosen/nospec"
+    ln -sf "$self" "$link"
+    echo "symlinked: $link -> $self"
+
+    # If the chosen dir isn't on PATH, tell the user how to add it.
+    if ! echo "$PATH" | tr ':' '\n' | grep -qx "$chosen"; then
+        echo ""
+        echo "note: $chosen is not on your PATH. Add it:"
+        echo "  export PATH=\"$chosen:\$PATH\""
+    fi
+
+    # Verify it resolves.
+    if command -v nospec >/dev/null 2>&1; then
+        echo "nospec is now on PATH: $(command -v nospec)"
+    else
+        echo "run a new shell or re-source your profile, then: nospec --help"
+    fi
 }
 
 # ──────────────────────────── Loop: run ────────────────────────────
@@ -608,7 +675,7 @@ from pathlib import Path
 
 evidence_path, repo_dir = sys.argv[1], sys.argv[2]
 
-# Durable-doc patterns (knack-specific; see ADR-0016)
+# Durable-doc patterns (nospec-specific; see ADR-0016)
 DURABLE_PATTERNS = [
     re.compile(r'^decisions/.*\.md$'),
     re.compile(r'^glossary\.md$'),
@@ -778,14 +845,14 @@ extract_actionable_count() {
 
 write_review_prompt() {
     local out=$1
-    local template="$SCRIPT_DIR/prompts/reviewer.md"
+    local template="$SCRIPT_DIR/../prompts/reviewer.md"
     if [[ -f "$template" ]]; then
         cat "$template" > "$out"
     else
         cat > "$out" <<'EOF'
-# Knack Reviewer
+# Nospec Reviewer
 
-Load and follow the **review** skill in `skills/review/`.
+Load and follow the **nospec-trial** skill.
 Review the completed queue against the current repository state. Write the structured review artifact at the path provided below.
 EOF
     fi
@@ -802,14 +869,14 @@ EOF
 
 write_fix_prompt() {
     local out=$1
-    local template="$SCRIPT_DIR/prompts/fixer.md"
+    local template="$SCRIPT_DIR/../prompts/fixer.md"
     if [[ -f "$template" ]]; then
         cat "$template" > "$out"
     else
         cat > "$out" <<'EOF'
-# Knack Fixer
+# Nospec Fixer
 
-Load and follow the **fix** skill in `skills/fix/`.
+Load and follow the **nospec-mend** skill.
 Read the structured review artifact and append any actionable fix work units to the existing queue. Stop after updating the queue.
 EOF
     fi
@@ -849,7 +916,7 @@ run_phase_agent() {
     fi
 }
 
-# knack run <queue> — the optional batch runner behind a verify gate.
+# nospec run <queue> — the optional batch runner behind a verify gate.
 #
 # cmd_run sets up state (locals) and orchestrates two phases in a loop:
 #   build → review-fix → (if fix produced units) build → ...
@@ -884,15 +951,15 @@ run_one_unit() {
         exit 0
     fi
 
-    echo "knack: tick $tick/$max_ticks — $title"
+    echo "nospec: tick $tick/$max_ticks — $title"
     set_status "$queue_abs" "$title" "in_progress"
     local before
     before=$(work_snapshot "$repo_dir")
 
     local run_prompt
     run_prompt=$(mktemp)
-    cat > "$run_prompt" <<EOF
-$(cat "$prompt_file")
+    cat "$prompt_file" > "$run_prompt"
+    cat >> "$run_prompt" <<EOF
 
 Current work unit from $queue_abs:
 
@@ -932,7 +999,7 @@ EOF
     if [[ $verify_code -eq 0 ]]; then
         set_status "$queue_abs" "$title" "done"
         append_evidence "$evidence" "$title" "done" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
-        echo "knack: verified — $title"
+        echo "nospec: verified — $title"
         tick=$((tick + 1))
         return 0
     fi
@@ -946,7 +1013,7 @@ EOF
         fi
         set_status "$queue_abs" "$title" "pending"
         append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
-        echo "knack: verify failed with no progress; retrying once"
+        echo "nospec: verify failed with no progress; retrying once"
         tick=$((tick + 1))
         return 0
     fi
@@ -976,10 +1043,10 @@ run_build_phase() {
 run_review_fix_phase() {
     if [[ "$review_enabled" == 0 ]]; then
         if (( tick > max_ticks )); then
-            echo "knack: reached max ticks ($max_ticks)"
+            echo "nospec: reached max ticks ($max_ticks)"
             exit 0
         fi
-        echo "knack: no pending work units"
+        echo "nospec: no pending work units"
         exit 0
     fi
 
@@ -995,7 +1062,7 @@ run_review_fix_phase() {
     local review_cmd
     review_cmd="${LOOP_REVIEW_CMD:-${LOOP_AGENT_CMD:-}}"
 
-    echo "knack: review round $review_round/$max_review_rounds"
+    echo "nospec: review round $review_round/$max_review_rounds"
     local review_code
     set +e
     run_phase_agent "review" "$review_prompt" "$review_out" "$review_cmd"
@@ -1010,7 +1077,7 @@ run_review_fix_phase() {
     actionable=$(extract_actionable_count "$review_file") || die "review file has no actionable summary: $review_file"
 
     if [[ "$actionable" == 0 ]]; then
-        echo "knack: review clean"
+        echo "nospec: review clean"
         exit 0
     fi
 
@@ -1025,7 +1092,7 @@ run_review_fix_phase() {
     local fix_cmd
     fix_cmd="${LOOP_FIX_CMD:-${LOOP_AGENT_CMD:-}}"
 
-    echo "knack: fix round $review_round/$max_review_rounds — actionable: $actionable"
+    echo "nospec: fix round $review_round/$max_review_rounds — actionable: $actionable"
     local fix_code
     set +e
     run_phase_agent "fix" "$fix_prompt" "$fix_out" "$fix_cmd"
@@ -1038,13 +1105,14 @@ run_review_fix_phase() {
 
     if [[ -z "$(first_pending_unit "$queue_abs")" ]]; then
         cat "$fix_out"
-        echo "knack: fix produced no new units — review findings overturned or triaged out; stopping clean"
+        echo "nospec: fix produced no new units — review findings overturned or triaged out; stopping clean"
         exit 0
     fi
 }
 
 cmd_run() {
     [[ $# -ge 1 ]] || die "missing queue path"
+    [[ "$1" == "-h" || "$1" == "--help" ]] && { usage; exit 0; }
     local queue_abs
     queue_abs=$(abs_path "$1")
     shift
@@ -1080,7 +1148,7 @@ cmd_run() {
         esac
     done
 
-    local prompt_file="$SCRIPT_DIR/prompts/worker.md"
+    local prompt_file="$SCRIPT_DIR/../prompts/worker.md"
     [[ -f "$prompt_file" ]] || die "worker prompt not found: $prompt_file"
 
     local queue_dir
@@ -1122,24 +1190,30 @@ cmd_run() {
 
 usage() {
     cat <<'EOF'
-knack — derivation, linting, inspection, and the optional batch loop
+nospec — derivation, linting, inspection, and the optional batch loop
 
 Inspection:
-  knack spine    Print the spine ADRs (derived from frontmatter)
-  knack adrs     Print all ADRs with id, status, title
-  knack view     Read-only dashboard of cycles, work units, and decisions
-  knack check    Fail on structural drift (re-enumerated lists, duplicate ownership, missing frontmatter)
+  nospec spine    Print the spine ADRs (derived from frontmatter)
+  nospec adrs     Print all ADRs with id, status, title
+  nospec view     Read-only dashboard of cycles, work units, and decisions
+  nospec check    Fail on structural drift (re-enumerated lists, duplicate ownership, missing frontmatter)
+
+Setup:
+  nospec install [dir]  Symlink this runner onto PATH (run once after npx skills add).
+                       Picks a writable dir on PATH, or ~/.local/bin as fallback.
+                       Optional dir arg overrides the choice.
 
 Batch (optional, AFK):
-  knack run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
+  nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
                  Run work units behind a verify gate. The queue is usually
                  .loop/<name>/QUEUE.md. Use --repo when the queue lives outside
                  the repository it should operate on.
 
 The spine list is derived from decisions/*.md where spine: true.
-Views must not re-enumerate ADR numbers; they point to `knack spine` or decisions/.
+Views must not re-enumerate ADR numbers; they point to `nospec spine` or decisions/.
 
-See ADR-0017 (derivation/lint) and ADR-0018 (loop folded into knack).
+See ADR-0017 (derivation/lint), ADR-0018 (loop folded into nospec),
+and ADR-0019 (runner bundled as a skill).
 EOF
 }
 
@@ -1153,10 +1227,11 @@ main() {
         adrs)   cmd_adrs "$@" ;;
         check)  cmd_check "$@" ;;
         view)   cmd_view "$@" ;;
+        install) cmd_install "$@" ;;
         run)    cmd_run "$@" ;;
         -h|--help|help) usage ;;
         "") usage; exit 1 ;;
-        *) echo "knack: unknown command '$cmd'" >&2; usage >&2; exit 1 ;;
+        *) echo "nospec: unknown command '$cmd'" >&2; usage >&2; exit 1 ;;
     esac
 }
 

@@ -1,5 +1,5 @@
 ---
-name: plan
+name: nospec-shape
 description: Use when decomposing a software task, bug, cleanup, or vague human intent into bounded, observable, independently-verifiable outcomes. When execution will use a batch runner, serialize them as a `.loop/<name>/QUEUE.md`; the planner picks a short name for the cycle (e.g., `parser-bug`).
 ---
 
@@ -68,7 +68,7 @@ For cycles where the worker can't recover the reasoning from the codebase alone 
 
 ## Capture decisions and terms inline
 
-If a ruling crystallizes while you plan, write the ADR now via the `decide` skill — don't queue it. If a domain term is ambiguous or inconsistent, define it now via `domain-modeling`. Decisions and terms are durable; the plan is not.
+If a ruling crystallizes while you plan, write the ADR now via the `nospec-rule` skill — don't queue it. If a domain term is ambiguous or inconsistent, define it now via `nospec-lexicon`. Decisions and terms are durable; the plan is not.
 
 ## Batch queue format
 

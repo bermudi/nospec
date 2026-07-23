@@ -4,12 +4,12 @@ role: view
 
 # Loop reference
 
-`knack run` is the agent-agnostic runner. It reads `QUEUE.md` and executes one work unit per tick, running the verification command outside the worker.
+`nospec run` is the agent-agnostic runner. It reads `QUEUE.md` and executes one work unit per tick, running the verification command outside the worker.
 
 ## Usage
 
 ```bash
-./knack run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
+nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
 ```
 
 - `queue` — path to `QUEUE.md`. Usually `.loop/<name>/QUEUE.md`.
@@ -21,7 +21,7 @@ role: view
 
 ## Environment variables
 
-- `LOOP_AGENT_CMD` — optional command used to invoke the worker. If unset, the loop defaults to `pi -p --no-session --approve` with the prompt text as a single argument. If set, the command is evaluated by `bash -lc` in the repo directory, and `LOOP_PROMPT_FILE` is set to a temporary file containing `prompts/worker.md` plus the current work unit.
+- `LOOP_AGENT_CMD` — optional command used to invoke the worker. If unset, the loop defaults to `pi -p --no-session --approve` with the prompt text as a single argument. If set, the command is evaluated by `bash -lc` in the repo directory, and `LOOP_PROMPT_FILE` is set to a temporary file containing the worker prompt (from `skills/nospec/prompts/worker.md`) plus the current work unit. The worker's harness auto-loads the `nospec-hew` skill by trigger text; no path configuration is needed.
 - `LOOP_PROMPT_FILE` — set by the loop when `LOOP_AGENT_CMD` is used. Points to the generated prompt file. Do not override unless you are calling the worker manually.
 - `LOOP_REVIEW_CMD` — optional command used for the review phase when `--review` is enabled. Defaults to `LOOP_AGENT_CMD`, or to the loop's default `pi` invocation if neither is set.
 - `LOOP_FIX_CMD` — optional command used for the fix phase when `--review` is enabled. Defaults to `LOOP_AGENT_CMD`, or to the loop's default `pi` invocation if neither is set.
@@ -55,7 +55,7 @@ Agent: claude --print --no-session-persistence --dangerously-skip-permissions "$
 
 ## Optional review/fix subloop
 
-By default, `knack run` stops when the build queue has no pending work. With `--review`, it then runs a bounded review/fix subloop:
+By default, `nospec run` stops when the build queue has no pending work. With `--review`, it then runs a bounded review/fix subloop:
 
 1. Invoke a review worker with the review prompt and the completed queue/evidence.
 2. Require the review worker to write `.loop/<name>/REVIEW.md`.
@@ -65,7 +65,7 @@ By default, `knack run` stops when the build queue has no pending work. With `--
 6. Require the fix worker to append new `Status: pending` work units to the same `QUEUE.md`.
 7. Run the build pass again, then review again.
 
-The subloop stops when review is clean, `--max-review-rounds` is reached, `--max-ticks` is exhausted, or fix produces no pending work. The loop owns orchestration and stop conditions only; the `review` and `fix` skills own judgment and work-unit generation.
+The subloop stops when review is clean, `--max-review-rounds` is reached, `--max-ticks` is exhausted, or fix produces no pending work. The loop owns orchestration and stop conditions only; the `nospec-trial` and `nospec-mend` skills own judgment and work-unit generation.
 
 ## Work unit statuses
 
@@ -78,20 +78,20 @@ The subloop stops when review is clean, `--max-review-rounds` is reached, `--max
 
 ## Output files
 
-`knack run` writes next to the queue:
+`nospec run` writes next to the queue:
 
-- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary (what this verify mechanically proves, derived from the command), and a pin-state record (which durable docs were touched and whether any prior pins have moved). It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references. Pin alerts in the ledger are triage triggers for the `review` skill, not coherence gates (ADR-0016).
+- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary (what this verify mechanically proves, derived from the command), and a pin-state record (which durable docs were touched and whether any prior pins have moved). It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references. Pin alerts in the ledger are triage triggers for the `nospec-trial` skill, not coherence gates (ADR-0016).
 - `HANDOFF.md` — written on non-clean exit. Sections: completed, in progress, remaining, next action. Delete when the work resumes.
 - `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line.
 
 ## Agent invocation examples
 
 ```bash
-LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' ./knack run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' ./knack run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' ./knack run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='opencode run --auto "$(cat "$LOOP_PROMPT_FILE")"' ./knack run .loop/<name>/QUEUE.md
-LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' ./knack run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' nospec run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' nospec run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' nospec run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='opencode run --auto "$(cat "$LOOP_PROMPT_FILE")"' nospec run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --permission-mode dangerous' nospec run .loop/<name>/QUEUE.md
 ```
 
 The command is passed to `bash -lc` in the repo directory, so the typical pattern is `"$(cat "$LOOP_PROMPT_FILE")"`.
@@ -102,11 +102,11 @@ Review and fix can use separate agents:
 LOOP_AGENT_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' \
 LOOP_REVIEW_CMD='claude --print --no-session-persistence --dangerously-skip-permissions "$(cat "$LOOP_PROMPT_FILE")"' \
 LOOP_FIX_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral "$(cat "$LOOP_PROMPT_FILE")"' \
-./knack run .loop/<name>/QUEUE.md --review
+nospec run .loop/<name>/QUEUE.md --review
 ```
 
 ## Verification notes
 
-- `knack run` does **not** validate `QUEUE.md` structure. The loop trusts the format; use the `plan` skill or inspect the file directly before running.
-- `knack run` runs review and fix only when `--review` is set. It invokes the skills and reads the actionable count from `REVIEW.md`; it does not judge findings or manage ADRs/glossary.
+- `nospec run` does **not** validate `QUEUE.md` structure. The loop trusts the format; use the `nospec-shape` skill or inspect the file directly before running.
+- `nospec run` runs review and fix only when `--review` is set. It invokes the skills and reads the actionable count from `REVIEW.md`; it does not judge findings or manage ADRs/glossary.
 - The `Verify:` command must be deterministic and executable by the runner — tests, builds, type checks, not an LLM-as-judge.

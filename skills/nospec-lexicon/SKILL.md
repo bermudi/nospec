@@ -1,5 +1,5 @@
 ---
-name: domain-modeling
+name: nospec-lexicon
 description: Use when domain terms surface during exploration, planning, building, or review and need to be defined, challenged, or stress-tested against the project's ubiquitous language. Manages `glossary.md` — the project's shared vocabulary. Triggers on "what does X mean here", "are these the same concept", "let's define our terms", "that term is ambiguous", or when a domain concept is used inconsistently across a conversation or codebase.
 ---
 
@@ -7,7 +7,7 @@ description: Use when domain terms surface during exploration, planning, buildin
 
 Manage the project's ubiquitous language — the shared vocabulary that lets human and agent mean the same thing by the same word, in code, specs, conversation, and skills. A shared glossary is the protocol for precision between human and agent; without it, the agent drifts toward competing terminology and slop.
 
-This is a shared skill — called inline by `explore`, `plan`, `build`, and `review` whenever a term needs defining, in any attention-mode. It is not a separate phase. If a term is being used inconsistently, define it now, then continue.
+This is a shared skill — called inline by `nospec-scout`, `nospec-shape`, `nospec-hew`, and `nospec-trial` whenever a term needs defining, in any attention-mode. It is not a separate phase. If a term is being used inconsistently, define it now, then continue.
 
 ## The glossary
 
@@ -35,7 +35,7 @@ Keep it scannable. A flat list of definitions is usually enough; split into sect
 
 Don't add terms with no project-specific meaning (don't define "database" or "API"), terms that appear once and won't recur, or terms obvious from the code itself.
 
-After adding, removing, or redefining a term, invoke the `document` skill to check whether `AGENTS.md`, the relevant skills, or other durable docs use the old meaning in a projection.
+After adding, removing, or redefining a term, invoke the `nospec-curator` skill to check whether `AGENTS.md`, the relevant skills, or other durable docs use the old meaning in a projection.
 
 ## Stress-testing terms
 

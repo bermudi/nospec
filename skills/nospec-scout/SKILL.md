@@ -1,5 +1,5 @@
 ---
-name: explore
+name: nospec-scout
 description: Use when investigating a codebase, grilling intent, or stress-testing ideas before planning or building work. Read code, challenge assumptions, surface the real problem, and capture decisions as they crystallize. Triggers on "explore", "investigate", "let me understand", "what's going on with", "grill this", "stress-test", "help me decide", "what should I do next", or when the real problem isn't clear yet.
 ---
 
@@ -23,12 +23,12 @@ These are concepts, not a script — they interleave, not sequence. Read the wor
 
 - **Find the existing path before building a new one.** Before committing to an approach, find the machinery that already does — or nearly does — what's needed, and plan to extend it rather than parallel it. Reinventing existing capability produces a worse copy: it misses the edge cases the original already handled, and it's usually larger too. The failure mode is subtle — you find the right code, read it as context, then rebuild it from scratch instead of calling it. A sibling format, parser, matcher, or helper that solves an adjacent problem is the template, not the competition. Surfacing this during explore is what keeps build from reinventing it.
 
-- **Capture decisions inline.** If a ruling crystallizes during exploration — "we'll use X because Y" — write the ADR now via the `decide` skill, not queued for later. If a domain term is ambiguous or inconsistent, define it now via `domain-modeling`. Decisions made during exploration are recorded during exploration.
+- **Capture decisions inline.** If a ruling crystallizes during exploration — "we'll use X because Y" — write the ADR now via the `nospec-rule` skill, not queued for later. If a domain term is ambiguous or inconsistent, define it now via `nospec-lexicon`. Decisions made during exploration are recorded during exploration.
 
 ## What explore is not
 
-- Not planning — that's `plan`. Explore doesn't write `QUEUE.md`.
-- Not a spec phase — no proposals or designs. Those are disposable and belong in `plan` if they're needed at all.
+- Not planning — that's `nospec-shape`. Explore doesn't write `QUEUE.md`.
+- Not a spec phase — no proposals or designs. Those are disposable and belong in `nospec-shape` if they're needed at all.
 - Not a code phase — no edits. Read-only, except durable traces captured inline.
 
 Explore is where you figure out what the problem actually is.
@@ -36,4 +36,4 @@ Explore is where you figure out what the problem actually is.
 ## Reasoned defaults
 
 - **Default to exploring when the real problem isn't clear yet.** Override: skip it when the problem is already clear — a small fix, code you already know, a bug report with a reproduction. The skills are composable; reach for explore when clarity is the missing ingredient, not as a mandatory first step.
-- **Communicate what you found.** The real problem if it differs from the stated one, the approach you'd take and why, the decisions and terms you captured. Then the next step is whatever the clarity points to — `plan` to decompose, direct edits, or nothing — not automatically `plan`.
+- **Communicate what you found.** The real problem if it differs from the stated one, the approach you'd take and why, the decisions and terms you captured. Then the next step is whatever the clarity points to — `nospec-shape` to decompose, direct edits, or nothing — not automatically `nospec-shape`.

@@ -1,5 +1,5 @@
 ---
-name: decide
+name: nospec-rule
 description: Use when an architectural ruling crystallizes — during exploration, planning, building, or review. Captures decisions as ADRs in `decisions/` so they persist after specs are deleted and code moves on. Triggers on "we decided to", "let's go with", "the ruling is", "why did we choose", "record this decision", or when a design choice with lasting consequences is made.
 ---
 
@@ -7,7 +7,7 @@ description: Use when an architectural ruling crystallizes — during exploratio
 
 Capture architectural rulings as ADRs. Decisions persist; specs and plans don't. A plan is disposable coordination state — throw it away when it drifts and regenerate from the codebase (plan-disposability) — but a decision stays, explaining why the code is the way it is long after the code has moved on.
 
-This is a shared skill — called inline by `explore`, `plan`, `build`, and `review` whenever a ruling crystallizes, in any attention-mode. It is not a separate phase. If you're mid-plan and a decision crystallizes, write the ADR now, then continue planning; don't queue it for later.
+This is a shared skill — called inline by `nospec-scout`, `nospec-shape`, `nospec-hew`, and `nospec-trial` whenever a ruling crystallizes, in any attention-mode. It is not a separate phase. If you're mid-plan and a decision crystallizes, write the ADR now, then continue planning; don't queue it for later.
 
 ## When to write an ADR
 
@@ -53,7 +53,7 @@ grandfathered: "<reason>"   # only for pre-ledger ADRs (rare)
 
 NNNN is a zero-padded sequence number — look at `decisions/` for the next available one; if the directory doesn't exist, create it and start at `0001`.
 
-The `spine` field marks whether this ADR is load-bearing — part of the curated spine that defines what the project is and how it works. Most ADRs are `spine: false`; only rulings that reshape the project's thesis get `spine: true`. The spine is derived from this field by `./knack spine`; never re-list the spine in prose (ADR-0017).
+The `spine` field marks whether this ADR is load-bearing — part of the curated spine that defines what the project is and how it works. Most ADRs are `spine: false`; only rulings that reshape the project's thesis get `spine: true`. The spine is derived from this field by `./nospec spine`; never re-list the spine in prose (ADR-0017).
 
 An ADR is *active* unless its `status` is `superseded`. Superseding is a two-step mutual link: mark the old ADR `status: superseded` and add `superseded_by: [NNNN]`; write the new ADR with `supersedes: [NNNN]` pointing back. Both sides must reference each other — a one-sided link is a broken chain; fix it before moving on. The bilateral-link rule applies to `supersedes`/`superseded_by` only; `amends` and `builds_on` are one-directional (the amended ADR's status stays `accepted` and needs no back-reference).
 

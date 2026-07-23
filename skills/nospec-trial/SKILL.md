@@ -1,5 +1,5 @@
 ---
-name: review
+name: nospec-trial
 description: Use when reviewing a change against intent and standards — adversarial scrutiny before accepting work. Two axes — standards (does the change follow the codebase's own conventions?) and intent (does it do what it was supposed to?). Reviews against the actual codebase, not specs. Triggers on "review", "check this", "is this right", "what did we miss", "stress-test the implementation", or when work needs adversarial scrutiny before being accepted.
 ---
 
@@ -12,7 +12,7 @@ Adversarial review of a change. Two axes, run independently so neither pollutes 
 
 Review against the **actual codebase**, not against specs that may have rotted — stale specs are worse than none (doc-rot); the code is the source of truth.
 
-That core is the same whether the change is an interactive edit or a completed batch work unit. What the batch path adds is artifacts: a `QUEUE.md` unit states what was promised, an `EVIDENCE.md` records what verify proved, and a `REVIEW.md` carries findings to the `fix` skill. Interactively, the "unit" is the stated intent and the change itself; findings go straight to the human or back into the work.
+That core is the same whether the change is an interactive edit or a completed batch work unit. What the batch path adds is artifacts: a `QUEUE.md` unit states what was promised, an `EVIDENCE.md` records what verify proved, and a `REVIEW.md` carries findings to the `nospec-mend` skill. Interactively, the "unit" is the stated intent and the change itself; findings go straight to the human or back into the work.
 
 ## When to review
 
@@ -56,6 +56,10 @@ Does the change do what it was supposed to?
 The `Verify:` command is the mechanically enforceable subset of the outcome. The gap between the outcome and its verify is the review surface: intent review checks what the verify command cannot.
 
 Verify passing is a proxy, not proof — it means the mechanically enforceable subset held, not that the outcome is genuinely satisfied. Intent review asks the harder question: does the change *generalize*? Does it hold up against behavior the verify doesn't exercise, or did it satisfy the visible surface while leaving the real property unmet? A change that passes its verify only by fitting the visible tests — not by implementing the underlying behavior — is the signature intent finding, and it's the one the gate is structurally blind to.
+
+The technique that surfaces it: probe *how* the result is produced, not just *what* was returned. A verify that checks return values can pass while the underlying behavior is wrong — a `traverse` that eagerly maps every element then checks for failure returns the right `Nothing` while still calling the callback on elements past the failure. The intent review asks whether the verify exercises the side effects that distinguish the real property from its visible shadow: invocation counts, processing order, variant exhaustion (does each sum-type variant do what its case demands, or did one branch get copy-pasted from its neighbor?). A counter test — assert the callback ran exactly twice, not three times — is the shape. When the verify only observes the outcome, the intent review observes the trace.
+
+Know the limit before you lean on this. Most of these failures are omission — the worker knew how and didn't check, so a verification pause catches them. Some are comprehension — the worker misread the contract and will re-confirm its wrong reading under any pause that asks it to "verify the signature." A checklist entrenches comprehension failures; it doesn't fix them. The intent review pays off when the worker *could have* done it right and skipped; it doesn't when the worker's model of the problem is itself wrong, which is a `fix`-direction or a `decide`-direction problem, not a review finding.
 
 > **Intent review is a judgment check, not a deterministic gate.** Be explicit about its scope and confidence. Any finding that becomes a new work unit must have a deterministic `Verify` command the runner can execute.
 

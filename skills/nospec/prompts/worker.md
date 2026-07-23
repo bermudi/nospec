@@ -1,8 +1,8 @@
-# Knack Worker
+# Nospec Worker
 
 Complete exactly one work unit, then stop.
 
-Load and follow the **build** skill in `skills/build/` before doing any work.
+Load and follow the **nospec-hew** skill before doing any work.
 
 ## Posture
 

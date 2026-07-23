@@ -47,15 +47,15 @@ Status: pending
 EOF
 }
 
-bash -n "$root/knack"
-"$root/knack" run "$root/examples/smoke/.loop/smoke/QUEUE.md" --dry-run >/tmp/loop-dry-run.txt
+bash -n "$root/skills/nospec/scripts/nospec"
+"$root/skills/nospec/scripts/nospec" run "$root/examples/smoke/.loop/smoke/QUEUE.md" --dry-run >/tmp/loop-dry-run.txt
 assert_contains /tmp/loop-dry-run.txt "Verify:"
 assert_contains /tmp/loop-dry-run.txt "test -f smoke.done"
 
 repo1="$tmp/repo-pass"
 mkdir -p "$repo1"
 make_queue "$repo1" "test -f smoke.done"
-LOOP_AGENT_CMD='touch smoke.done; echo worker pass' "$root/knack" run "$repo1/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-pass.txt
+LOOP_AGENT_CMD='touch smoke.done; echo worker pass' "$root/skills/nospec/scripts/nospec" run "$repo1/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-pass.txt
 assert_contains "$repo1/.loop/QUEUE.md" "Status: done"
 assert_contains "$repo1/.loop/EVIDENCE.md" "Status: done"
 assert_contains "$repo1/.loop/EVIDENCE.md" "worker pass"
@@ -64,7 +64,7 @@ repo2="$tmp/repo-fail"
 mkdir -p "$repo2"
 make_queue "$repo2" "test -f never-created"
 set +e
-LOOP_AGENT_CMD='echo worker failed to create file' "$root/knack" run "$repo2/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-fail.txt 2>&1
+LOOP_AGENT_CMD='echo worker failed to create file' "$root/skills/nospec/scripts/nospec" run "$repo2/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-fail.txt 2>&1
 code=$?
 set -e
 if [[ $code -eq 0 ]]; then
@@ -79,7 +79,7 @@ repo3="$tmp/target-repo"
 queue_home="$tmp/external-queue"
 mkdir -p "$repo3" "$queue_home/.loop"
 make_queue "$queue_home" "test -f target.done"
-LOOP_AGENT_CMD='pwd > worker.pwd; touch target.done' "$root/knack" run "$queue_home/.loop/QUEUE.md" --repo "$repo3" --max-ticks 1 >/tmp/loop-repo.txt
+LOOP_AGENT_CMD='pwd > worker.pwd; touch target.done' "$root/skills/nospec/scripts/nospec" run "$queue_home/.loop/QUEUE.md" --repo "$repo3" --max-ticks 1 >/tmp/loop-repo.txt
 assert_contains "$queue_home/.loop/QUEUE.md" "Status: done"
 test -f "$repo3/target.done"
 assert_contains "$repo3/worker.pwd" "$repo3"
@@ -94,7 +94,7 @@ repo5="$tmp/repo-blocked"
 mkdir -p "$repo5/.loop"
 make_queue "$repo5" "test -f blocked.done"
 set +e
-LOOP_AGENT_CMD='exit 1' "$root/knack" run "$repo5/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-blocked.txt 2>&1
+LOOP_AGENT_CMD='exit 1' "$root/skills/nospec/scripts/nospec" run "$repo5/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-blocked.txt 2>&1
 code=$?
 set -e
 if [[ $code -eq 0 ]]; then
@@ -126,7 +126,7 @@ echo "# AGENTS v1" > "$repo_pin/AGENTS.md"
 make_queue "$repo_pin" "test -f pin1.done"
 ( cd "$repo_pin" && git add -A && git commit -q -m init )
 LOOP_AGENT_CMD='touch pin1.done; echo "# AGENTS v2" > AGENTS.md' \
-  "$root/knack" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
+  "$root/skills/nospec/scripts/nospec" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pinned: AGENTS.md @"
 # No pin alerts on the first cycle
 if grep -q 'Pin alert:' "$repo_pin/.loop/EVIDENCE.md"; then
@@ -136,7 +136,7 @@ fi
 ( cd "$repo_pin" && git add -A && git commit -q -m "cycle 1" )
 make_queue "$repo_pin" "test -f pin2.done"
 LOOP_AGENT_CMD='touch pin2.done; echo "# AGENTS v3" > AGENTS.md' \
-  "$root/knack" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
+  "$root/skills/nospec/scripts/nospec" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
 # Second cycle should have a pin alert for AGENTS.md
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pin alert: AGENTS.md moved since"
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "was "
@@ -174,7 +174,7 @@ Done means:
 
 Status: pending
 EOF
-LOOP_AGENT_CMD='echo should-not-run' "$root/knack" run "$repo4/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-override.txt
+LOOP_AGENT_CMD='echo should-not-run' "$root/skills/nospec/scripts/nospec" run "$repo4/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-override.txt
 assert_contains "$repo4/.loop/QUEUE.md" "Status: done"
 test -f "$repo4/override.done"
 
@@ -190,7 +190,7 @@ touch smoke.done
 EOF
 chmod +x "$fake_bin/pi"
 make_queue "$repo_pi" "test -f smoke.done"
-env -u LOOP_AGENT_CMD PATH="$fake_bin:$PATH" "$root/knack" run "$repo_pi/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-pi-default.txt
+env -u LOOP_AGENT_CMD PATH="$fake_bin:$PATH" "$root/skills/nospec/scripts/nospec" run "$repo_pi/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-pi-default.txt
 assert_contains "$repo_pi/.loop/QUEUE.md" "Status: done"
 assert_contains "$repo_pi/pi-args.txt" "--no-session"
 assert_contains "$repo_pi/pi-args.txt" "--approve"
@@ -201,7 +201,7 @@ repo_lpf="$tmp/repo-loop-prompt-file"
 mkdir -p "$repo_lpf"
 make_queue "$repo_lpf" "test -f lpf.done"
 LOOP_AGENT_CMD='test -n "$LOOP_PROMPT_FILE" && test -f "$LOOP_PROMPT_FILE" && cp "$LOOP_PROMPT_FILE" captured-prompt.txt; touch lpf.done' \
-  "$root/knack" run "$repo_lpf/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-lpf.txt
+  "$root/skills/nospec/scripts/nospec" run "$repo_lpf/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-lpf.txt
 assert_contains "$repo_lpf/.loop/QUEUE.md" "Status: done"
 test -f "$repo_lpf/captured-prompt.txt"
 assert_contains "$repo_lpf/captured-prompt.txt" "the test fixture reaches its verify condition"
@@ -316,7 +316,7 @@ chmod +x "$repo_review/fix-worker.sh"
 LOOP_AGENT_CMD="$repo_review/build-worker.sh" \
   LOOP_REVIEW_CMD="$repo_review/review-worker.sh" \
   LOOP_FIX_CMD="$repo_review/fix-worker.sh" \
-  "$root/knack" run "$repo_review/.loop/QUEUE.md" --review --max-ticks 2 >/tmp/loop-review.txt
+  "$root/skills/nospec/scripts/nospec" run "$repo_review/.loop/QUEUE.md" --review --max-ticks 2 >/tmp/loop-review.txt
 assert_contains "$repo_review/.loop/QUEUE.md" "## the fix unit repairs the bug"
 assert_contains "$repo_review/.loop/QUEUE.md" "Status: done"
 assert_contains "$repo_review/.loop/REVIEW.md" "- actionable: 0"
@@ -383,8 +383,8 @@ Status: proposed
 Test.
 EOF
 
-"$root/knack" view --repo "$repo_view" >/tmp/loop-view.txt
-assert_contains /tmp/loop-view.txt "Knack Dashboard"
+"$root/skills/nospec/scripts/nospec" view --repo "$repo_view" >/tmp/loop-view.txt
+assert_contains /tmp/loop-view.txt "Nospec Dashboard"
 assert_contains /tmp/loop-view.txt "Active Cycles: 1"
 assert_contains /tmp/loop-view.txt "feature-a"
 assert_contains /tmp/loop-view.txt "1/3 done"
@@ -397,15 +397,15 @@ assert_contains /tmp/loop-view.txt "proposed"
 # view with no cycles and no decisions is not an error
 repo_empty="$tmp/repo-empty"
 mkdir -p "$repo_empty"
-"$root/knack" view --repo "$repo_empty" >/tmp/loop-view-empty.txt
-assert_contains /tmp/loop-view-empty.txt "Knack Dashboard"
+"$root/skills/nospec/scripts/nospec" view --repo "$repo_empty" >/tmp/loop-view-empty.txt
+assert_contains /tmp/loop-view-empty.txt "Nospec Dashboard"
 assert_contains /tmp/loop-view-empty.txt "Active Cycles: 0"
 
-# No references to deleted CLI commands remain in user-facing docs
+# No references to deleted CLI commands or the old project name remain in user-facing docs
 echo "checking for stale CLI references in README.md and docs/..."
 stale_refs=0
 for doc in "$root/README.md" "$root/docs"/*.md; do
-  if grep -nE 'knack (validate|skills init|decisions check|status)|cli\.md|cli/' "$doc" | grep -v 'decisions/0011' >/tmp/stale.txt 2>&1; then
+  if grep -nE 'knack|nospec (validate|skills init|decisions check|status)|cli\.md|cli/' "$doc" >/tmp/stale.txt 2>&1; then
     echo "stale CLI reference in $doc:" >&2
     cat /tmp/stale.txt >&2
     stale_refs=1
@@ -416,35 +416,52 @@ if [[ $stale_refs -ne 0 ]]; then
   exit 1
 fi
 
-# knack CLI: syntax check, spine derivation, and structural drift check
-bash -n "$root/knack"
-"$root/knack" spine >/tmp/knack-spine.txt
-assert_contains /tmp/knack-spine.txt "ADR-0009"
-assert_contains /tmp/knack-spine.txt "ADR-0016"
+# nospec CLI: syntax check, spine derivation, and structural drift check
+bash -n "$root/skills/nospec/scripts/nospec"
+"$root/skills/nospec/scripts/nospec" --repo "$root" spine >/tmp/nospec-spine.txt
+assert_contains /tmp/nospec-spine.txt "ADR-0009"
+assert_contains /tmp/nospec-spine.txt "ADR-0016"
 # Spine must not include pre-reframe ADRs (0001-0008)
-if grep -q 'ADR-000[1-8]' /tmp/knack-spine.txt; then
+if grep -q 'ADR-000[1-8]' /tmp/nospec-spine.txt; then
   echo "spine should not include pre-reframe ADRs" >&2
-  cat /tmp/knack-spine.txt >&2
+  cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
 # Spine must include all of 0009-0016 (8 entries)
-spine_count=$(grep -c '^ADR-' /tmp/knack-spine.txt)
+spine_count=$(grep -c '^ADR-' /tmp/nospec-spine.txt)
 if [[ "$spine_count" -ne 8 ]]; then
   echo "expected 8 spine ADRs, got $spine_count" >&2
-  cat /tmp/knack-spine.txt >&2
+  cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
-# adrs should list all 18 ADRs
-"$root/knack" adrs >/tmp/knack-adrs.txt
-adr_count=$(grep -c '^ADR-' /tmp/knack-adrs.txt)
-if [[ "$adr_count" -ne 18 ]]; then
-  echo "expected 18 ADRs, got $adr_count" >&2
-  cat /tmp/knack-adrs.txt >&2
+# adrs should list all 20 ADRs (19 + ADR-0020 for the rename)
+"$root/skills/nospec/scripts/nospec" --repo "$root" adrs >/tmp/nospec-adrs.txt
+adr_count=$(grep -c '^ADR-' /tmp/nospec-adrs.txt)
+if [[ "$adr_count" -ne 20 ]]; then
+  echo "expected 20 ADRs, got $adr_count" >&2
+  cat /tmp/nospec-adrs.txt >&2
   exit 1
 fi
 # check must pass on the real repo
-"$root/knack" check >/tmp/knack-check.txt
-assert_contains /tmp/knack-check.txt "all checks passed"
+"$root/skills/nospec/scripts/nospec" --repo "$root" check >/tmp/nospec-check.txt
+assert_contains /tmp/nospec-check.txt "all checks passed"
+
+# nospec install: symlinks the runner onto PATH (in a temp PATH)
+install_bin="$tmp/fake-bin"
+mkdir -p "$install_bin"
+PATH="$install_bin:$PATH" "$root/skills/nospec/scripts/nospec" install "$install_bin" >/tmp/nospec-install.txt 2>&1
+assert_contains /tmp/nospec-install.txt "symlinked:"
+assert_contains /tmp/nospec-install.txt "nospec"
+test -L "$install_bin/nospec"
+# The symlink must point at the real runner
+target=$(readlink "$install_bin/nospec")
+[[ "$target" == "$root/skills/nospec/scripts/nospec" ]] || {
+  echo "symlink target mismatch: $target" >&2
+  exit 1
+}
+# And it must be invocable via PATH
+PATH="$install_bin:$PATH" nospec --help >/tmp/nospec-via-path.txt 2>&1
+assert_contains /tmp/nospec-via-path.txt "nospec run"
 
 # check must catch all four spine re-enumeration patterns
 # Each test case gets its own mini-repo with the drift file in docs/
@@ -464,7 +481,7 @@ role: view
 # Pattern A
 The spine: [0009](decisions/0009.md) (synopsis), [0010](decisions/0010.md) (synopsis).'
 set +e
-"$root/knack" --repo "$repo_a" check >/tmp/drift-a.txt 2>&1
+"$root/skills/nospec/scripts/nospec" --repo "$repo_a" check >/tmp/drift-a.txt 2>&1
 code_a=$?
 set -e
 if [[ $code_a -eq 0 ]]; then
@@ -483,7 +500,7 @@ role: view
 - ADR-0010 — concepts not rules
 - ADR-0011 — ship via skills.sh'
 set +e
-"$root/knack" --repo "$repo_b" check >/tmp/drift-b.txt 2>&1
+"$root/skills/nospec/scripts/nospec" --repo "$repo_b" check >/tmp/drift-b.txt 2>&1
 code_b=$?
 set -e
 if [[ $code_b -eq 0 ]]; then
@@ -500,7 +517,7 @@ role: view
 # Pattern C
 The spine is ADR-0009, ADR-0010, ADR-0011, ADR-0012, ADR-0013, ADR-0014, ADR-0015, ADR-0016.'
 set +e
-"$root/knack" --repo "$repo_c" check >/tmp/drift-c.txt 2>&1
+"$root/skills/nospec/scripts/nospec" --repo "$repo_c" check >/tmp/drift-c.txt 2>&1
 code_c=$?
 set -e
 if [[ $code_c -eq 0 ]]; then
@@ -519,7 +536,7 @@ role: view
 - ADR-0010 concepts not rules
 - ADR-0011 ship via skills.sh'
 set +e
-"$root/knack" --repo "$repo_d" check >/tmp/drift-d.txt 2>&1
+"$root/skills/nospec/scripts/nospec" --repo "$repo_d" check >/tmp/drift-d.txt 2>&1
 code_d=$?
 set -e
 if [[ $code_d -eq 0 ]]; then
@@ -536,7 +553,7 @@ role: view
 # Prose
 Judgment belongs in skills (ADR-0010), not gate commands (ADR-0011).'
 set +e
-"$root/knack" --repo "$repo_prose" check >/tmp/drift-prose.txt 2>&1
+"$root/skills/nospec/scripts/nospec" --repo "$repo_prose" check >/tmp/drift-prose.txt 2>&1
 code_prose=$?
 set -e
 if [[ $code_prose -ne 0 ]]; then
@@ -553,4 +570,4 @@ if command -v skills-ref >/dev/null 2>&1; then
   done
 fi
 
-echo "knack tests passed"
+echo "nospec tests passed"

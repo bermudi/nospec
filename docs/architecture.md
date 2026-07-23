@@ -10,7 +10,7 @@ Authoritative rulings live in `decisions/`; this doc is a view that ties them to
 
 ## Spine
 
-The spine (ADR-0009 onward) is the curated set of load-bearing rulings. It's derived from `decisions/` frontmatter — run `./knack spine` to list it. See `decisions/` for the full set.
+The spine (ADR-0009 onward) is the curated set of load-bearing rulings. It's derived from `decisions/` frontmatter — run `nospec spine` to list it. See `decisions/` for the full set.
 
 ## One sentence
 
@@ -29,19 +29,19 @@ Skills serve all three. The loop serves only batch. Skills are the product; the 
 ## Two layers
 
 ```
-skills/                       knack run
+skills/                       nospec run
 product                     optional companion
 procedural knowledge        mechanical execution
 agent-agnostic              agent-agnostic
 
-explore  plan  build  review  fix
-  │       │     │      │       │
-  │       │     │      │       └── reads/writes .loop/<name>/QUEUE.md
-  │       │     │      │
-  └── decide, domain-modeling, document — shared across everyone
+nospec-scout  nospec-shape  nospec-hew  nospec-trial  nospec-mend  nospec
+  │            │            │           │            │            │
+  │            │            │           │            │            └── scripts/nospec: the runner
+  │            │            │           │            │
+  └── nospec-rule, nospec-lexicon, nospec-curator — shared across everyone
 ```
 
-The loop never reads skills. The worker prompt names the skill explicitly — name and path — so the agent reads the file directly (ADR-0007). The loop only knows `QUEUE.md`, environment variables, and exit status.
+The runner ships as the `nospec` skill; the other eight skills are procedural knowledge it points the worker at. The loop never reads skills itself — the worker prompt names the skill explicitly, and the worker's harness auto-loads it by trigger text, same as any skill invocation (ADR-0007, ADR-0019). The loop only knows `QUEUE.md`, environment variables, and exit status.
 
 ## Artifact roles
 
@@ -83,15 +83,15 @@ The same skills serve all three modes; only who runs verification and whether a 
 ### Interactive
 
 ```
-explore → plan → build → review → fix → done
+nospec-scout → nospec-shape → nospec-hew → nospec-trial → nospec-mend → done
 ```
 
-Skip steps as needed. `bug → plan → build → done` is valid. The agent runs `Verify:` itself before declaring done.
+Skip steps as needed. `bug → nospec-shape → nospec-hew → done` is valid. The agent runs `Verify:` itself before declaring done.
 
 ### Plan-then-leave
 
 ```
-explore + plan (interactive) → queue written → agent builds while human absent → done
+nospec-scout + nospec-shape (interactive) → queue written → agent builds while human absent → done
 ```
 
 The queue is a shared to-do list. Verification discipline is still the agent's.
@@ -99,17 +99,17 @@ The queue is a shared to-do list. Verification discipline is still the agent's.
 ### Batch (AFK)
 
 ```
-plan (writes QUEUE.md) → knack run runs ticks → optional --review subloop → done
+nospec-shape (writes QUEUE.md) → nospec run runs ticks → optional --review subloop → done
 ```
 
 The loop owns the verify gate: it invokes the agent, runs `Verify:` outside the agent, and appends evidence.
 
 ## Coherence is not compilation
 
-Green tests and valid links do not prove that durable docs agree with rulings, terms, or the current code. Coherence is a separate, judgment-based check: do the records and their projections still tell the same story? The `document` skill exists to surface and route these problems.
+Green tests and valid links do not prove that durable docs agree with rulings, terms, or the current code. Coherence is a separate, judgment-based check: do the records and their projections still tell the same story? The `nospec-curator` skill exists to surface and route these problems.
 
-Some structural drift is mechanically detectable: `./knack check` catches re-enumerated spine lists, duplicate ownership claims, and missing frontmatter (ADR-0017). It does not catch semantic contradiction — that remains judgment.
+Some structural drift is mechanically detectable: `nospec check` catches re-enumerated spine lists, duplicate ownership claims, and missing frontmatter (ADR-0017). It does not catch semantic contradiction — that remains judgment.
 
 ## Grounding
 
-The cited theory lives in the [AgenticWiki](https://github.com/bermudi/AgenticWiki). See [`theory.md`](./theory.md) for the lineage of what knack keeps, drops, and borrows, plus the full concept map. Key concepts include doc-rot, plan-disposability, code-clarifies-spec, backpressure, compounding-loops, ralph-loop, agent-loop, decision-extraction, ubiquitous-language, evolving-context, and tracer-bullets.
+The cited theory lives in the [AgenticWiki](https://github.com/bermudi/AgenticWiki). See [`theory.md`](./theory.md) for the lineage of what nospec keeps, drops, and borrows, plus the full concept map. Key concepts include doc-rot, plan-disposability, code-clarifies-spec, backpressure, compounding-loops, ralph-loop, agent-loop, decision-extraction, ubiquitous-language, evolving-context, and tracer-bullets.

@@ -4,7 +4,7 @@ role: view
 
 # Getting started
 
-knack is a skills collection plus an optional bash loop for unattended batch work. Most work is interactive; reach for the loop when you want to leave.
+nospec is a skills collection plus an optional bash loop for unattended batch work. Most work is interactive; reach for the loop when you want to leave.
 
 ## Install the skills
 
@@ -14,22 +14,22 @@ npx skills add <owner>/<repo>
 
 [`npx skills`](https://github.com/vercel-labs/skills) detects your agent and installs into its native skills path. Update with `npx skills update`; remove with `npx skills remove`.
 
-Once installed, invoke a skill by name: `explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, or `document`.
+Once installed, invoke a skill by name: `nospec-scout`, `nospec-shape`, `nospec-hew`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, or `nospec` (the runner skill, for batch mode).
 
 ## Use the skills interactively
 
 ```
-explore → plan → build → review → fix → done
+nospec-scout → nospec-shape → nospec-hew → nospec-trial → nospec-mend → done
 ```
 
-This is a default path, not a gate. `bug → plan → build → done` is equally valid.
+This is a default path, not a gate. `bug → nospec-shape → nospec-hew → done` is equally valid.
 
 ## Run the loop (optional)
 
 The loop runs a `QUEUE.md` one work unit at a time while you are away:
 
 ```bash
-LOOP_AGENT_CMD='pi -p --no-session' ./knack run .loop/<name>/QUEUE.md
+LOOP_AGENT_CMD='pi -p --no-session' nospec run .loop/<name>/QUEUE.md
 ```
 
 See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix subloop.

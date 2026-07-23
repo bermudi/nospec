@@ -68,15 +68,15 @@ Stop condition:
 ## queue parser ignores `###` subheadings
 
 Read first:
-- `knack run` queue parser
+- `nospec run` queue parser
 - `tests/run.sh` parser tests
 
 Constraints:
-- `knack run` behavior remains the source of truth for the parser.
+- `nospec run` behavior remains the source of truth for the parser.
 - No other headings are affected.
 
 Done means:
-- `knack run` does not treat `###` lines as unit boundaries.
+- `nospec run` does not treat `###` lines as unit boundaries.
 - Existing tests still pass.
 
 Verify:

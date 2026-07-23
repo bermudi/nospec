@@ -1,5 +1,5 @@
 ---
-name: document
+name: nospec-curator
 description: Use when deciding where durable knowledge belongs, detecting contradictions across durable artifacts, or maintaining the views that project authoritative records. Triggers on "where does this go", "document this", "are these docs consistent", "this is stale", "update the docs", or when a ruling or interface change may invalidate existing documentation.
 ---
 
@@ -62,7 +62,7 @@ A view is useful only if it points to the right record and stays aligned.
 
 Coherence is the relationship between durable artifacts. It is not the same as compilation or passing tests. A repo can verify green while its durable docs contradict its rulings.
 
-Some structural drift is mechanically detectable. If the project has a `knack` CLI (ADR-0017), `./knack check` catches re-enumerated spine lists, duplicate ownership claims across records, and missing frontmatter — the shapes that drift most reliably. Run it first to surface what's mechanically provable, then apply judgment for the rest.
+Some structural drift is mechanically detectable. If the project has a `nospec` CLI (ADR-0017), `./nospec check` catches re-enumerated spine lists, duplicate ownership claims across records, and missing frontmatter — the shapes that drift most reliably. Run it first to surface what's mechanically provable, then apply judgment for the rest.
 
 Look for:
 
@@ -92,13 +92,13 @@ Superseded or duplicated explanations do not need to be kept for posterity. ADRs
 - **Not a prose-writing skill.** It does not generate documentation for its own sake. It decides where claims live.
 - **Not a semantic validator.** Coherence is judgment, not a command that exits 0. Mechanical checks can catch broken links and missing paths, but they cannot prove that a view correctly projects its record.
 - **Not a separate phase.** Invoke it when placement or coherence is a concern, not as ceremony before every change.
-- **Not a replacement for `decide` or `domain-modeling`.** `decide` captures rulings; `domain-modeling` captures terms. `document` ensures those captures project cleanly into the rest of the durable context.
+- **Not a replacement for `nospec-rule` or `nospec-lexicon`.** `nospec-rule` captures rulings; `nospec-lexicon` captures terms. `nospec-curator` ensures those captures project cleanly into the rest of the durable context.
 
 ## Delegation
 
-Other skills call `document` inline when durable context changes:
+Other skills call `nospec-curator` inline when durable context changes:
 
-- `decide` — after superseding a ruling, check which views still cite the old ruling and need projection updates.
-- `domain-modeling` — after adding or changing a term, check whether the operational context, skills, or other views use the old meaning in a projection.
-- `build` — when an operational learning surfaces, route it to the operational-context record or the insights ledger and update any view that quotes it.
-- `review` — under the standards axis, when a change affects a public interface or a ruling, flag projection drift as a standards finding and invoke `document` to assess coherence. Also route `Pin alerts:` from `EVIDENCE.md` — each alert is a durable doc that moved since a prior cycle pinned it, and `document` scopes the coherence check from the diff.
+- `nospec-rule` — after superseding a ruling, check which views still cite the old ruling and need projection updates.
+- `nospec-lexicon` — after adding or changing a term, check whether the operational context, skills, or other views use the old meaning in a projection.
+- `nospec-hew` — when an operational learning surfaces, route it to the operational-context record or the insights ledger and update any view that quotes it.
+- `nospec-trial` — under the standards axis, when a change affects a public interface or a ruling, flag projection drift as a standards finding and invoke `nospec-curator` to assess coherence. Also route `Pin alerts:` from `EVIDENCE.md` — each alert is a durable doc that moved since a prior cycle pinned it, and `nospec-curator` scopes the coherence check from the diff.

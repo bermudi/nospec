@@ -29,7 +29,7 @@ A named body of work under `.loop/<name>/` with its own queue, evidence, and han
 
 ## evidence
 
-`EVIDENCE.md` — the durable, append-only ledger of what each tick proved. Each entry carries a registry-derived proof boundary (what the verify command mechanically proves, derived from the command itself) and a pin-state record (which durable docs were touched, with alerts when a prior pin moves). Survives `QUEUE.md` deletion so a completed cycle still anchors its ADR references. Pin alerts are triage triggers for `review` → `document`, not coherence gates (ADR-0016).
+`EVIDENCE.md` — the durable, append-only ledger of what each tick proved. Each entry carries a registry-derived proof boundary (what the verify command mechanically proves, derived from the command itself) and a pin-state record (which durable docs were touched, with alerts when a prior pin moves). Survives `QUEUE.md` deletion so a completed cycle still anchors its ADR references. Pin alerts are triage triggers for `nospec-trial` → `nospec-curator`, not coherence gates (ADR-0016).
 
 ## handoff
 

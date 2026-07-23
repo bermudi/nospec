@@ -1,5 +1,5 @@
 ---
-name: build
+name: nospec-hew
 description: Use when implementing a bounded, observable outcome — whether supplied conversationally or as a work unit from a `.loop/<name>/QUEUE.md`. Verify-first — read the verify before changing code, and don't declare done until it actually passes. Triggers on "build", "implement", "apply this unit", "do the work", "run the loop", or when work needs executing. Also used when the loop invokes the worker for a tick.
 ---
 
@@ -17,7 +17,9 @@ If the unit's `Read first:` cites `.loop/<name>/DESIGN.md`, read it first — it
 
 ## Execution discipline
 
-How you reach the outcome matters as much as reaching it. Three concepts, each preventing a concrete failure mode:
+How you reach the outcome matters as much as reaching it. Four concepts, each preventing a concrete failure mode:
+
+**Inventory the contract before editing.** The cheapest wrong implementation is a familiar name with the wrong contract — pattern-matching `zip` to array-zipping when the call site passes single values, implementing the direct form and missing the curried overload, dropping a method the tests import but you never enumerated. The defense is reading discipline, not reasoning: before the first edit, enumerate the actual call sites and signatures the outcome must satisfy — what's imported, what's invoked, with what arity and shape — and hold that list against the work as you go. Reading the codebase for 48% of your steps before editing isn't procrastination; it's the gap between a model that ships the right contract and one that ships a confident wrong one. Default: if the outcome touches a public surface, list its call sites before writing. Override: a one-line change with no new surface — but notice when "I know what this does" is pattern-matching, not reading.
 
 **Close the loop early.** The strongest predictor of a clean outcome is *when* you first run something executable against the work — not whether you verify at the end, but how soon you close a feedback loop after the first change. Bugs bake into unverified code; the longer the gap between writing and first testing, the more error accumulates blind and the costlier the eventual fix. Default: as soon as a sliver of the outcome works end-to-end, run it — don't accumulate a large diff you've never exercised. Override: a change small enough to hold in your head — but notice when "trivial" is a rationalization for not closing the loop.
 
@@ -38,7 +40,7 @@ The verify gate is the backpressure — the mechanism that mechanically rejects 
 
 ## Capturing decisions during build
 
-Implementation surfaces decisions the spec missed — the code pushes back, and that's when the most valuable rulings crystallize (code-clarifies-spec). If you discover one — "we need to handle X this way because Y" — write the ADR now via the `decide` skill, inline, not after the outcome. It's a durable trace, not part of the verify scope.
+Implementation surfaces decisions the spec missed — the code pushes back, and that's when the most valuable rulings crystallize (code-clarifies-spec). If you discover one — "we need to handle X this way because Y" — write the ADR now via the `nospec-rule` skill, inline, not after the outcome. It's a durable trace, not part of the verify scope.
 
 ## Capturing operational learnings
 
@@ -47,7 +49,7 @@ If you learn how the project works, capture it in the right durable file:
 - **Operational gotchas** — build commands, test conventions, how to verify — go in `AGENTS.md`.
 - **Domain or problem insights** — "X doesn't work because Y", "the parser has this surprising property" — become a durable record (ADR, `glossary.md`, or a new artifact) when one actually appears. Do not pre-allocate an empty insights ledger.
 
-If you discover that a durable doc contradicts a ruling, a term, or the current code, invoke the `document` skill to route the correction to the owning record and update its projections. Don't patch the contradiction in place without checking whether the same claim lives elsewhere.
+If you discover that a durable doc contradicts a ruling, a term, or the current code, invoke the `nospec-curator` skill to route the correction to the owning record and update its projections. Don't patch the contradiction in place without checking whether the same claim lives elsewhere.
 
 Don't add trivia. Add what would have saved you time upfront.
 
