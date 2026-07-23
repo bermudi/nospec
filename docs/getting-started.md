@@ -9,7 +9,7 @@ nospec is a skills collection plus an optional bash loop for unattended batch wo
 ## Install the skills
 
 ```bash
-npx skills add bermudi/nospec
+npx skills add bermudi/nospec --all
 ```
 
 [`npx skills`](https://github.com/vercel-labs/skills) detects your agent and installs into its native skills path. Update with `npx skills update`; remove with `npx skills remove`.
