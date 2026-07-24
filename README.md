@@ -45,7 +45,7 @@ That symlinks the runner onto PATH. Then `nospec run ...` works from any directo
 |---|---|
 | **nospec-scout** | read the codebase, grill intent, stress-test ideas *before* planning |
 | **nospec-shape** | decompose intent into a disposable `QUEUE.md` of verifiable work units |
-| **nospec-hew** | implement a bounded observable outcome; verify-first, don't declare done until it passes |
+| **nospec-carve** | implement a bounded observable outcome; verify-first, don't declare done until it passes |
 | **nospec-trial** | two-axis adversarial review — standards + intent — against the actual codebase |
 | **nospec-mend** | resolve review findings — directly, or as new work units appended to the queue |
 | **nospec-rule** *(shared)* | capture architectural rulings as ADRs in `decisions/`, inline as they crystallize |
@@ -53,7 +53,7 @@ That symlinks the runner onto PATH. Then `nospec run ...` works from any directo
 | **nospec-curator** *(shared)* | route knowledge to its authoritative artifact and maintain coherent projections |
 | **nospec** *(optional)* | the batch runner — drives a `QUEUE.md` behind a verify gate while you're away |
 
-`nospec-scout → nospec-shape → nospec-hew → nospec-trial → nospec-mend` is a default path, not a gate. `bug → nospec-shape → nospec-hew → done` is equally valid. Skills compose.
+`nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend` is a default path, not a gate. `bug → nospec-shape → nospec-carve → done` is equally valid. Skills compose.
 
 ## Optional: unattended batch mode
 

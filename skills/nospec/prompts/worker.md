@@ -2,7 +2,7 @@
 
 Complete exactly one work unit, then stop.
 
-Load and follow the **nospec-hew** skill before doing any work.
+Load and follow the **nospec-carve** skill before doing any work.
 
 ## Posture
 

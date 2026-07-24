@@ -34,7 +34,7 @@ All nine skills are prefixed with `nospec-` to prevent collisions with other ski
 |---|---|---|
 | `explore` | `nospec-scout` | recon before work |
 | `plan` | `nospec-shape` | decompose intent into verifiable units |
-| `build` | `nospec-hew` | implement one bounded outcome |
+| `build` | `nospec-carve` | implement one bounded outcome |
 | `review` | `nospec-trial` | adversarial scrutiny |
 | `fix` | `nospec-mend` | resolve review findings |
 | `decide` | `nospec-rule` | capture ADR rulings |

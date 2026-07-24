@@ -34,7 +34,7 @@ product                     optional companion
 procedural knowledge        mechanical execution
 agent-agnostic              agent-agnostic
 
-nospec-scout  nospec-shape  nospec-hew  nospec-trial  nospec-mend  nospec
+nospec-scout  nospec-shape  nospec-carve  nospec-trial  nospec-mend  nospec
   │            │            │           │            │            │
   │            │            │           │            │            └── scripts/nospec: the runner
   │            │            │           │            │
@@ -83,10 +83,10 @@ The same skills serve all three modes; only who runs verification and whether a 
 ### Interactive
 
 ```
-nospec-scout → nospec-shape → nospec-hew → nospec-trial → nospec-mend → done
+nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend → done
 ```
 
-Skip steps as needed. `bug → nospec-shape → nospec-hew → done` is valid. The agent runs `Verify:` itself before declaring done.
+Skip steps as needed. `bug → nospec-shape → nospec-carve → done` is valid. The agent runs `Verify:` itself before declaring done.
 
 ### Plan-then-leave
 

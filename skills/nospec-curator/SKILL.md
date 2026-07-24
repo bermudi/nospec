@@ -104,5 +104,5 @@ Other skills call `nospec-curator` inline when durable context changes:
 
 - `nospec-rule` — after superseding a ruling, check which views still cite the old ruling and need projection updates.
 - `nospec-lexicon` — after adding or changing a term, check whether the operational context, skills, or other views use the old meaning in a projection.
-- `nospec-hew` — when an operational learning surfaces, route it to the operational-context record or the insights ledger and update any view that quotes it.
+- `nospec-carve` — when an operational learning surfaces, route it to the operational-context record or the insights ledger and update any view that quotes it.
 - `nospec-trial` — under the standards axis, when a change affects a public interface or a ruling, flag projection drift as a standards finding and invoke `nospec-curator` to assess coherence. Also route `Pin alerts:` from `EVIDENCE.md` — each alert is a durable doc that moved since a prior cycle pinned it, and `nospec-curator` scopes the coherence check from the diff.

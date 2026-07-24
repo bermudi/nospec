@@ -8,8 +8,8 @@ This doc is a view, not a record. It preserves the reasoning that led to nospec'
 
 ## What we're keeping from litespec
 
-- The flow shape: `nospec-scout → nospec-shape → nospec-hew → nospec-trial → nospec-mend` (now composable, not rigid)
-- Skills as procedural knowledge (`think/plan/build/review` → `nospec-scout/nospec-shape/nospec-hew/nospec-trial/nospec-mend` + shared `nospec-rule`/`nospec-lexicon`; `nospec-curator` was added later by ADR-0015)
+- The flow shape: `nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend` (now composable, not rigid)
+- Skills as procedural knowledge (`think/plan/build/review` → `nospec-scout/nospec-shape/nospec-carve/nospec-trial/nospec-mend` + shared `nospec-rule`/`nospec-lexicon`; `nospec-curator` was added later by ADR-0015)
 - Decisions (ADRs) — they persist because they're about rulings, not current behavior; when they stop applying, they're explicitly superseded, not left to silently rot
 - Glossary — small, curated, doesn't rot the way specs do
 - The patch lane concept (lightweight for small changes — now the default, not a special mode)

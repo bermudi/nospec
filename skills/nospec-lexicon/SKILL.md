@@ -11,7 +11,7 @@ metadata:
 
 Manage the project's ubiquitous language — the shared vocabulary that lets human and agent mean the same thing by the same word, in code, specs, conversation, and skills. A shared glossary is the protocol for precision between human and agent; without it, the agent drifts toward competing terminology and slop.
 
-This is a shared skill — called inline by `nospec-scout`, `nospec-shape`, `nospec-hew`, and `nospec-trial` whenever a term needs defining, in any attention-mode. It is not a separate phase. If a term is being used inconsistently, define it now, then continue.
+This is a shared skill — called inline by `nospec-scout`, `nospec-shape`, `nospec-carve`, and `nospec-trial` whenever a term needs defining, in any attention-mode. It is not a separate phase. If a term is being used inconsistently, define it now, then continue.
 
 ## The glossary
 

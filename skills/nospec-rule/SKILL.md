@@ -11,7 +11,7 @@ metadata:
 
 Capture architectural rulings as ADRs. Decisions persist; specs and plans don't. A plan is disposable coordination state — throw it away when it drifts and regenerate from the codebase (plan-disposability) — but a decision stays, explaining why the code is the way it is long after the code has moved on.
 
-This is a shared skill — called inline by `nospec-scout`, `nospec-shape`, `nospec-hew`, and `nospec-trial` whenever a ruling crystallizes, in any attention-mode. It is not a separate phase. If you're mid-plan and a decision crystallizes, write the ADR now, then continue planning; don't queue it for later.
+This is a shared skill — called inline by `nospec-scout`, `nospec-shape`, `nospec-carve`, and `nospec-trial` whenever a ruling crystallizes, in any attention-mode. It is not a separate phase. If you're mid-plan and a decision crystallizes, write the ADR now, then continue planning; don't queue it for later.
 
 ## When to write an ADR
 

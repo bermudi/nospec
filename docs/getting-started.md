@@ -14,15 +14,15 @@ npx skills add bermudi/nospec --all
 
 [`npx skills`](https://github.com/vercel-labs/skills) detects your agent and installs into its native skills path. Update with `npx skills update`; remove with `npx skills remove`.
 
-Once installed, invoke a skill by name: `nospec-scout`, `nospec-shape`, `nospec-hew`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, or `nospec` (the runner skill, for batch mode).
+Once installed, invoke a skill by name: `nospec-scout`, `nospec-shape`, `nospec-carve`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, or `nospec` (the runner skill, for batch mode).
 
 ## Use the skills interactively
 
 ```
-nospec-scout → nospec-shape → nospec-hew → nospec-trial → nospec-mend → done
+nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend → done
 ```
 
-This is a default path, not a gate. `bug → nospec-shape → nospec-hew → done` is equally valid.
+This is a default path, not a gate. `bug → nospec-shape → nospec-carve → done` is equally valid.
 
 ## Run the loop (optional)
 

@@ -55,13 +55,13 @@ Once installed:
 nospec run .loop/<name>/QUEUE.md
 ```
 
-The runner drives a worker agent (set via `LOOP_AGENT_CMD`) which loads the `nospec-hew` skill by name — the worker's harness auto-loads skills by trigger text, same as any other skill invocation. No skill-path configuration is needed; the worker is a harness session, and harnesses find their own skills.
+The runner drives a worker agent (set via `LOOP_AGENT_CMD`) which loads the `nospec-carve` skill by name — the worker's harness auto-loads skills by trigger text, same as any other skill invocation. No skill-path configuration is needed; the worker is a harness session, and harnesses find their own skills.
 
 ## What the runner does per tick
 
 1. Reads the first `Status: pending` unit, marks it `in_progress`.
 2. Snapshots the repo (diff + untracked files outside `.loop`).
-3. Invokes the worker with the `nospec-hew` skill and the unit.
+3. Invokes the worker with the `nospec-carve` skill and the unit.
 4. If the worker exits non-zero, marks the unit `blocked`, writes a handoff, stops.
 5. Runs the unit's `Verify:` command outside the agent.
 6. On success: marks `done`, appends evidence, continues.
