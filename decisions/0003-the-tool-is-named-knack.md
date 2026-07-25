@@ -6,6 +6,8 @@ spine: false
 grandfathered: "enacted before the evidence-ledger convention (ADR-0006); the rename is done across code and docs."
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. The tool, CLI binary, and log prefix are all now `nospec`.
+
 # 0003: The tool is named knack
 
 ## Context

@@ -5,6 +5,8 @@ status: accepted
 spine: true
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `decide` → `nospec-rule`.
+
 # 0014: Durability is maintenance, not permanence
 
 ## Context

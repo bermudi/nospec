@@ -6,6 +6,8 @@ spine: true
 supersedes: [0006]
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `decide` → `nospec-rule`.
+
 # 0012: Orphan-ADR semantics are relevance, not citation
 
 ## Context

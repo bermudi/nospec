@@ -6,6 +6,8 @@ spine: true
 supersedes: [0001, 0002]
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `decide` → `nospec-rule`, `domain-modeling` → `nospec-lexicon`. Also amended by [ADR-0019](0019-bundle-runner-as-ninth-skill.md): the runner ships as the `nospec` skill, not as a separate binary.
+
 # 0011: Ship as a skills collection via skills.sh; delete the Go CLI
 
 ## Context

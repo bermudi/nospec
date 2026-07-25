@@ -6,6 +6,8 @@ spine: false
 grandfathered: "enacted before the ADR-citation convention (ADR-0005); the named-cycles cycle that implemented it predates `Read first:` ADR citations, so its EVIDENCE.md ledger never references this ADR by number. The work is verified in code and the surviving skills/docs."
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `plan` → `nospec-shape`.
+
 # 0004: Named work cycles under .loop/
 
 ## Context

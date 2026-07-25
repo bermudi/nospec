@@ -5,6 +5,8 @@ status: accepted
 spine: false
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `build` → `nospec-carve`. Also amended by [ADR-0019](0019-bundle-runner-as-ninth-skill.md): "name and path" → "name only" (harnesses auto-load skills by trigger).
+
 # 0007: Name the skill explicitly in the worker prompt
 
 ## Context

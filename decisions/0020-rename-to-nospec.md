@@ -3,7 +3,7 @@ id: 0020
 date: 2026-07-20
 status: accepted
 spine: false
-amends: [0003, 0009, 0010, 0011, 0017, 0018, 0019]
+amends: [0003, 0004, 0005, 0007, 0008, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019]
 ---
 
 # 0020: Rename to nospec
@@ -67,7 +67,7 @@ The runner is `scripts/nospec` inside the `nospec` skill. All CLI commands chang
 ## Consequences
 
 - ADR-0003 ("the tool is named knack") is amended: the tool is now named `nospec`.
-- ADR-0009, ADR-0010, ADR-0011, ADR-0017, ADR-0018, ADR-0019 are amended: all references to `knack` as the project/CLI/skill name become `nospec`; all references to old skill names (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`) become the new `nospec-` prefixed names.
+- ADRs 0004, 0005, 0007, 0008, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019 are amended: all references to `knack` as the project/CLI/skill name become `nospec`; all references to old skill names (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`) become the new `nospec-` prefixed names. Each amended ADR carries an inline note pointing back to this ADR so a cold reader sees the rename without backtracking.
 - The ADR filenames in `decisions/` are NOT renamed — they are historical records. ADR-0003's file is still `0003-the-tool-is-named-knack.md`; its content is amended by this ADR.
 - `tests/run.sh` references the runner at `skills/nospec/scripts/nospec`; the stale-CLI-reference check now catches `knack` in docs (the old name) alongside the old Go CLI subcommands.
 - The ADR count is now 20 (this ADR added).

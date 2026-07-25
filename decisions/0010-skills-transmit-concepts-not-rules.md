@@ -5,6 +5,8 @@ status: accepted
 spine: true
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `plan` → `nospec-shape`.
+
 # 0010: Skills transmit concepts and reasoning, not rules
 
 ## Context

@@ -7,6 +7,8 @@ amends: [0007, 0011, 0017, 0018]
 builds_on: [0009]
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. The ninth skill directory is `skills/nospec/`, the runner is `skills/nospec/scripts/nospec`, and all path references below are amended accordingly.
+
 # 0019: Bundle the runner as the ninth skill
 
 ## Context

@@ -5,6 +5,8 @@ status: accepted
 spine: true
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. All skill name references (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`) are now `nospec-` prefixed.
+
 # 0009: Skills are the product; the loop is an optional batch companion
 
 ## Context

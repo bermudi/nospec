@@ -5,6 +5,8 @@ status: accepted
 spine: true
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `build` → `nospec-carve`, `review` → `nospec-trial`, `document` → `nospec-curator`.
+
 # 0016: Proof-boundary is mechanical; pin-state is provenance, not coherence
 
 ## Context

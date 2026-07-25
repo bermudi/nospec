@@ -6,6 +6,8 @@ spine: false
 amends: [0011, 0017]
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. The title's `knack` is now `nospec`; the verbs (`spine`, `check`, `adrs`, `view`, `run`, `install`) are unchanged.
+
 # 0018: One command with verbs; fold the loop into `knack`
 
 ## Context

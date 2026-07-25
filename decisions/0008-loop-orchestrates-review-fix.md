@@ -5,6 +5,8 @@ status: accepted
 spine: false
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `build` → `nospec-carve`, `review` → `nospec-trial`, `fix` → `nospec-mend`.
+
 # 0008: The loop orchestrates the review-fix subloop; skills keep the judgment
 
 ## Context

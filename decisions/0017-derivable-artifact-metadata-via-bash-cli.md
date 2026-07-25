@@ -7,6 +7,8 @@ amends: [0011]
 builds_on: [0015]
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `decide` → `nospec-rule`, `document` → `nospec-curator`. Also amended by [ADR-0018](0018-one-command-with-verbs.md): separate commands (`knack spine`, `knack check`, `knack adrs`) collapsed into `nospec <verb>`.
+
 # 0017: Derivable artifact metadata via a bash CLI
 
 ## Context

@@ -5,6 +5,8 @@ status: accepted
 spine: true
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `build` → `nospec-carve`, `review` → `nospec-trial`, `decide` → `nospec-rule`, `document` → `nospec-curator`, `domain-modeling` → `nospec-lexicon`.
+
 # 0015: Artifact roles and ownership for durable knowledge
 
 ## Context

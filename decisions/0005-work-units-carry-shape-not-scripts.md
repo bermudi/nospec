@@ -5,6 +5,8 @@ status: accepted
 spine: false
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `build` → `nospec-carve`, `plan` → `nospec-shape`, `review` → `nospec-trial`, `fix` → `nospec-mend`.
+
 # 0005: Work units carry shape, not scripts
 
 ## Context

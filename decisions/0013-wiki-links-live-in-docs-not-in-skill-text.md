@@ -6,6 +6,8 @@ spine: true
 amends: [0010]
 ---
 
+> **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `domain-modeling` → `nospec-lexicon`.
+
 # 0013: Wiki links live in docs, not in skill text
 
 ## Context
