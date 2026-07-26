@@ -8,9 +8,9 @@ owns: operational-context
 
 ## Project
 
-**nospec** is a composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. It ships as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional bash runner (`nospec run`) provides externally verified AFK execution; the skills also support interactive and plan-then-leave work without it.
+**nospec** is a composable **skills collection** for turning intent into verified code while keeping temporary coordination disposable and durable knowledge explicit. It procedurally encodes the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional runner (`nospec run`) provides externally verified AFK execution; the skills also support interactive and plan-then-leave work without it.
 
-It replaces litespec. Specs are disposable; code is the source of truth; decisions and skills are durable.
+It replaces litespec. Work specs are disposable; code and tests own current implemented behavior; decisions, skills, and contract records are durable maintained records.
 
 `docs/architecture.md` and `docs/theory.md` carry the conceptual shape and lineage; `decisions/` carries the rulings. When they disagree, the ADR wins.
 
@@ -32,7 +32,7 @@ Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (deco
 
 Two layers live in this repo. **`skills/` is the product** — what `npx skills add` installs into *other* projects, so it must be self-contained: no external links, which would be dead weight in a foreign project's context (ADR-0013). **Everything else here is nospec's own development context** — `AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `docs/` — which guides working *on* nospec, is never installed, and links freely.
 
-- `skills/` — nine skills (`nospec-scout`, `nospec-shape`, `nospec-carve`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, `nospec`). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. The first eight transmit procedural concepts (ADR-0010: mode-independent, concept-forward); the ninth (`nospec`) carries the batch runner as `scripts/nospec` and transmits the batch-mode concept. No external links.
+- `skills/` — nine independently invoked skills. `nospec-carve` handles clear bounded implementation; Scout/Shape address uncertainty and decomposition; Trial/Mend review and correct; Rule/Lexicon/Curator preserve durable knowledge; `nospec` transmits the batch-mode concept and carries the optional runner as `scripts/nospec`. **These are the product, not a required workflow.** No external links.
 - `decisions/` — durable ADRs with YAML frontmatter (`nospec`, `id`, `date`, `status`, `spine`, optional `supersedes`/`superseded_by`/`amends`/`builds_on`/`grandfathered`). `glossary.md` — ubiquitous language: nospec-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
 - `skills/nospec/scripts/nospec` — the project's single bash entry point (ADR-0017; amended by ADR-0018 and ADR-0019). Verbs: `spine` / `adrs` (derive ADR views), `check` (validate opted-in artifact metadata and structural drift), `lint` (whole-queue structure and shell preflight), `view` (read-only dashboard), `install` (one-time PATH symlink), and `run` (optional AFK runner with external verify and opt-in review/fix). `scripts/queue_parser.py` is its internal canonical queue parser, not a second entry point. No Go or compile step.
 
@@ -40,9 +40,9 @@ Two layers live in this repo. **`skills/` is the product** — what `npx skills 
 
 **Durable** (maintained records whose value survives the work cycle): `skills/`, `decisions/`, `glossary.md`, this file, and `.loop/<name>/EVIDENCE.md` (the append-only ledger kept after a cycle's `QUEUE.md` is deleted).
 
-**Disposable** (consumed then discarded): `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/`.
+**Disposable** (consumed then discarded): `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, and scratch work specs such as `.loop/<name>/specs/`.
 
-The load-bearing distinction: specs are disposable; code, decisions, and skills are durable. Treating disposable coordination state as durable is the spec-rot failure mode.
+The load-bearing distinction is role-based: work specs are disposable coordination state; maintained records survive because the project owns their claim class. Nospec neither creates a universal behavioral canon nor infers artifact role from a `specs/` path (ADR-0025).
 
 ## Working conventions
 
@@ -55,7 +55,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - A batch worker signals a blocker by writing `blocked` plus its reason to `LOOP_RESULT_FILE`; the runner consumes it before verify. Non-`pending` unresolved units hold queue order and require explicit `--resume` after their cause is addressed.
 - A cycle's first mutating run refuses staged, unstaged, or untracked paths outside `.loop/`, and targets without a Git baseline. `--accept-dirty-baseline` records and explicitly accepts that risk; `--repo` can point at a manually created worktree. Worktrees separate ordinary edits but are not security sandboxes (ADR-0024).
 - Work units have a nonempty `## <outcome>` plus unique, required `Done means:`, `Verify:`, and `Status:` fields. Add unique `Read first:` and `Constraints:` only when context or boundaries exist; if present, they must be nonempty. `Verify:` is the mechanically enforceable subset of `Done means:`; the gap is the review surface.
-- Specs are disposable. Decisions are durable. Code is the source of truth.
+- Work specs are disposable. Decisions are durable. Code/tests own current implemented behavior; contract records own their designated promises (ADR-0025).
 - Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment. `nospec check` handles only structural drift in artifacts carrying `nospec: true`; generic repository Markdown metadata is outside its authority. Nospec's own exact metadata inventory is enforced by source tests.
 - An accepted ADR records a ruling already made by the decision owner or under explicitly delegated authority. Recommendations stay in conversation or disposable design material; a batch worker blocks on a newly discovered consequential trade-off.
 - The evidence ledger (`EVIDENCE.md`) records the accepted cycle baseline, resulting worktree state, exact verify command, output, exit result, and a conservative proof boundary without interpreting shell syntax. It pins changed Markdown artifacts marked `nospec: true`; ordinary host docs are outside the pin boundary. Pin alerts are triage triggers for `nospec-trial` → `nospec-curator`, not coherence gates (ADR-0016 and its amendments; baseline: ADR-0024).

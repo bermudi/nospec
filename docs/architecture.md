@@ -5,7 +5,7 @@ role: view
 
 # Architecture
 
-A composable **skills collection** for agentic development — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory — shipped as plain [agentskills.io](https://agentskills.io) skills, with an optional bash loop for unattended batch work.
+A composable **skills collection** for turning intent into verified code while keeping temporary coordination disposable and durable knowledge explicit. It encodes the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory as plain [agentskills.io](https://agentskills.io) skills, with an optional runner for unattended batch work.
 
 Authoritative rulings live in `decisions/`; this doc is a view that ties them together. When they disagree, the ADR wins.
 
@@ -15,7 +15,7 @@ The spine (ADR-0009 onward) is the curated set of load-bearing rulings. It's der
 
 ## One sentence
 
-A composable skills collection for agentic development — procedural knowledge as reusable concepts, with decisions, glossary, and operational context as durable records, and an optional bash loop for unattended batch work.
+Composable capabilities help agents understand, change, challenge, and remember software work across levels of human attention; an optional runner supplies external enforcement when the human leaves.
 
 ## Human attention spectrum
 
@@ -27,22 +27,11 @@ Work with agents happens across levels of attention, not a pipeline:
 
 Skills serve all three. The loop serves only batch. Skills are the product; the loop is optional.
 
-## Two layers
+## Skills and batch companion
 
-```
-skills/                       nospec run
-product                     optional companion
-procedural knowledge        mechanical execution
-agent-agnostic              agent-agnostic
+`nospec-carve` is the common implementation skill. Scout, Shape, Trial, and Mend address uncertainty, decomposition, review, and correction only when those problems occur. Rule, Lexicon, and Curator preserve the rulings, language, and context worth keeping after work state is discarded. Each remains independently invokable; their names do not define a workflow.
 
-nospec-scout  nospec-shape  nospec-carve  nospec-trial  nospec-mend  nospec
-  │            │            │           │            │            │
-  │            │            │           │            │            └── scripts/nospec: the runner
-  │            │            │           │            │
-  └── nospec-rule, nospec-lexicon, nospec-curator — shared across everyone
-```
-
-The runner ships as the `nospec` skill; the other eight skills are procedural knowledge it points the worker at. The loop never reads skills itself — the worker prompt names the skill explicitly, and the worker's harness auto-loads it by trigger text, same as any skill invocation (ADR-0007, ADR-0019). The loop only knows `QUEUE.md`, environment variables, and exit status.
+The ninth skill, `nospec`, transmits when AFK execution is appropriate and what its verify gate can establish, then carries the runner that enforces that concept in batch. The runner never reads skills itself: worker prompts name the relevant skill, and the worker's harness loads it. It knows only its queue, environment, repository state, process results, and evidence contract (ADR-0007, ADR-0019).
 
 ## Artifact roles
 
@@ -50,10 +39,10 @@ Durable knowledge is organized by role. Each fact has one owner; other documents
 
 | Role | Examples | Purpose |
 |---|---|---|
-| **Record** | `skills/`, `decisions/`, `glossary.md`, `AGENTS.md`, code/tests | Owns a class of claim |
+| **Record** | `skills/`, `decisions/`, `glossary.md`, `AGENTS.md`, code/tests, project-designated contract records | Owns a class of claim |
 | **View** | `README.md`, `docs/architecture.md`, `docs/getting-started.md`, `docs/skills.md`, `docs/loop.md` | Helps readers understand records together |
 | **Ledger** | `.loop/<name>/EVIDENCE.md` | Append-only record of what happened |
-| **Work state** | `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, `specs/` | Coordination state consumed then discarded |
+| **Work state** | `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, scratch work specs | Coordination state consumed then discarded |
 
 Views summarize and link; they do not independently redefine what they project. When a record changes, its projections are reconciled. When a view contradicts its record, the record wins.
 
@@ -61,7 +50,8 @@ Views summarize and link; they do not independently redefine what they project. 
 
 Durable artifacts survive the work cycle because they are maintained records:
 
-- code and tests — implemented behavior
+- code and tests — current implemented behavior
+- project-designated contract records — public promises or required behavior assigned through operational context, accepted rulings, or established metadata conventions
 - `skills/` — procedural knowledge
 - `decisions/` — architectural rulings
 - `glossary.md` — domain terms
@@ -75,7 +65,7 @@ Disposable artifacts are consumed then discarded:
 - `.loop/<name>/REVIEW.md` — review artifact under `--review`
 - `.loop/<name>/specs/` — planning artifacts for big work
 
-The inversion from litespec: specs are disposable, code is durable.
+The inversion from litespec is precise: **work specs are disposable**. Nospec does not maintain a universal behavioral canon, but it respects durable contract records explicitly owned by the host project. A filename such as `specs/` grants neither disposability nor authority by itself (ADR-0025).
 
 ## The flow, by attention mode
 

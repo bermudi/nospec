@@ -8,6 +8,14 @@ owns: domain-terms
 
 nospec's domain-specific terms. For the underlying concepts — doc-rot, backpressure, tracer bullets, and the rest — see the [AgenticWiki](https://github.com/bermudi/AgenticWiki); this file defines only what's specific to this project. Wiki concepts are linked, not redefined (ADR-0010).
 
+## work spec
+
+Disposable coordination state for a current change: a queue, handoff, review artifact, design note, or scratch plan. A work spec owns current implementation intent only while the work is active; it is not a durable public contract.
+
+## contract record
+
+A maintained artifact designated as the owner of a public promise or required behavior through the host project's operational context, an accepted ruling, or an established metadata convention. Examples include an API schema, protocol definition, compatibility policy, or executable contract test. `nospec: true` alone does not confer this authority; an undesignated artifact remains unclassified.
+
 ## work unit
 
 One chunk of work in a `QUEUE.md`: a nonempty `## <outcome>` header with required `Done means:` and `Verify:` fields, plus `Read first:` or `Constraints:` when context or boundaries need stating. The atom the loop processes.

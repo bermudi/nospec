@@ -13,7 +13,7 @@ Implement one bounded outcome. Scope is the outcome plus its constraints, not a 
 
 ## Orient before editing
 
-Read the verify first. Then inspect the operational context, cited records, relevant code, tests, call sites, and any referenced cycle design note. For a public surface, inventory its actual signatures and consumers before changing it; familiar names often hide unfamiliar contracts.
+Read the verify first. Then inspect the operational context, cited records, relevant code, tests, call sites, and any referenced cycle design note. For a public surface, inventory its actual signatures, consumers, and project-designated contracts; familiar names often hide unfamiliar obligations.
 
 Find the existing implementation path and extend it where possible. A parallel helper or abstraction adds another invariant to maintain and verify.
 

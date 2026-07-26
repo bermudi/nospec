@@ -7,6 +7,8 @@ spine: false
 amends: [0003, 0004, 0005, 0007, 0008, 0009, 0010, 0011, 0012, 0013, 0014, 0015, 0016, 0017, 0018, 0019]
 ---
 
+> **Contract-record boundary added by [ADR-0025](0025-work-specs-are-disposable-contract-records-are-project-owned.md):** the name rejects work-spec permanence and universal spec authority, not explicitly project-owned API schemas, protocol definitions, compatibility policies, or contract tests.
+
 # 0020: Rename to nospec
 
 ## Context

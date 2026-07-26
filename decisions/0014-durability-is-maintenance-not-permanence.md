@@ -7,6 +7,8 @@ spine: true
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `decide` → `nospec-rule`.
+>
+> **Contract-record boundary added by [ADR-0025](0025-work-specs-are-disposable-contract-records-are-project-owned.md):** work specs are disposable; explicitly project-owned contract records remain durable owners of the promises assigned to them.
 
 # 0014: Durability is maintenance, not permanence
 

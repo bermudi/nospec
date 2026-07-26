@@ -1062,24 +1062,31 @@ bash -n "$root/skills/nospec/scripts/nospec"
 "$root/skills/nospec/scripts/nospec" --repo "$root" spine >/tmp/nospec-spine.txt
 assert_contains /tmp/nospec-spine.txt "ADR-0009"
 assert_contains /tmp/nospec-spine.txt "ADR-0016"
+assert_contains /tmp/nospec-spine.txt "ADR-0025"
 # Spine must not include pre-reframe ADRs (0001-0008)
 if grep -q 'ADR-000[1-8]' /tmp/nospec-spine.txt; then
   echo "spine should not include pre-reframe ADRs" >&2
   cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
-# Spine must include all of 0009-0016 (8 entries)
+# Spine output must match the frontmatter-owned source inventory.
 spine_count=$(grep -c '^ADR-' /tmp/nospec-spine.txt)
-if [[ "$spine_count" -ne 8 ]]; then
-  echo "expected 8 spine ADRs, got $spine_count" >&2
+expected_spine_count=0
+for decision_file in "$root"/decisions/*.md; do
+  spine_value=$(awk 'NR == 1 { next } /^---$/ { exit } /^spine:/ { print $2; exit }' "$decision_file")
+  [[ "$spine_value" == "true" ]] && expected_spine_count=$((expected_spine_count + 1))
+done
+if [[ "$spine_count" -ne "$expected_spine_count" ]]; then
+  echo "expected $expected_spine_count spine ADRs, got $spine_count" >&2
   cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
-# adrs should list all 24 ADRs
+# adrs should list every ADR source file; the source inventory owns the count.
 "$root/skills/nospec/scripts/nospec" --repo "$root" adrs >/tmp/nospec-adrs.txt
 adr_count=$(grep -c '^ADR-' /tmp/nospec-adrs.txt)
-if [[ "$adr_count" -ne 24 ]]; then
-  echo "expected 24 ADRs, got $adr_count" >&2
+expected_adr_count=$(find "$root/decisions" -maxdepth 1 -type f -name '[0-9][0-9][0-9][0-9]-*.md' | wc -l | tr -d ' ')
+if [[ "$adr_count" -ne "$expected_adr_count" ]]; then
+  echo "expected $expected_adr_count ADRs, got $adr_count" >&2
   cat /tmp/nospec-adrs.txt >&2
   exit 1
 fi

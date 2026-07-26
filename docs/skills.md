@@ -7,19 +7,21 @@ role: view
 
 Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/SKILL.md`. Any agent that supports agentskills.io can discover them automatically. The loop names the skill explicitly in the worker prompt; the worker's harness auto-loads it by trigger text, same as any skill invocation. See ADR-0007 and ADR-0019.
 
-## Default skills
+## Skill catalog
+
+Clear work can start directly with `nospec-carve`; the other skills are selected only when their specific problem is present. Agents discover and load each skill independently.
 
 | Skill | Purpose |
 |---|---|
+| `nospec-carve` | Implement one bounded outcome, conversational or queued; verify before claiming success. |
 | `nospec-scout` | Investigate when the real problem or binding intent is unclear. Read-only; no mandatory artifact. |
 | `nospec-shape` | Decompose intent into verifiable outcomes; serialize a queue only for handoff or batch. |
-| `nospec-carve` | Implement one bounded outcome, conversational or queued; verify before claiming success. |
 | `nospec-trial` | Run two-axis adversarial review (standards + intent) and generate findings. |
-| `nospec-mend` | Convert review findings into new work units. |
+| `nospec-mend` | Resolve supported findings directly or as new work units. |
 | `nospec-rule` | Record an architectural ruling after explicit acceptance or delegated authority. |
 | `nospec-lexicon` | Define and update `glossary.md` terms. |
-| `nospec-curator` | Route knowledge to its authoritative artifact and maintain coherent projections. |
-| `nospec` *(optional)* | The batch runner. Carries `scripts/nospec` and transmits the batch-mode concept — when to reach for AFK execution and what the verify gate guarantees. |
+| `nospec-curator` | Route lasting knowledge to its authoritative record and maintain coherent projections. |
+| `nospec` *(optional)* | Explain batch-worthiness and carry the runner that supplies an external verify gate while the human is absent. |
 
 ## Skill format
 

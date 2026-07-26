@@ -9,6 +9,8 @@ spine: true
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. All skill name references (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`) are now `nospec-` prefixed.
 >
 > **Decision authority narrowed by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** a ruling is recorded only after the decision owner accepts it or delegates authority; an agent recommendation does not become an accepted ADR merely because it crystallizes.
+>
+> **Spec boundary narrowed by [ADR-0025](0025-work-specs-are-disposable-contract-records-are-project-owned.md):** disposable specs are work coordination; explicitly project-owned contract records remain durable owners of assigned promises or required behavior.
 
 # 0009: Skills are the product; the loop is an optional batch companion
 

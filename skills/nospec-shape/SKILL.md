@@ -11,7 +11,7 @@ metadata:
 
 Decompose work into outcomes that can be checked independently. Interactive work can stay conversational; serialize a queue only when another session or the batch runner needs a durable handoff.
 
-Plans are disposable coordination state. Regenerate a stale plan from the current code instead of preserving it as a long-lived contract.
+Plans and work specs—queues, handoffs, and scratch designs for the current change—are disposable coordination state. Regenerate a stale plan from current records instead of preserving it as a universal behavioral canon. Project-designated contracts such as API schemas, protocol definitions, compatibility policies, or contract tests remain durable. If no authoritative project context, accepted ruling, or established metadata convention designates one, ask rather than inferring authority from its filename.
 
 ## Choose a useful cut
 

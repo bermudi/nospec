@@ -11,6 +11,8 @@ builds_on: [0015]
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `decide` → `nospec-rule`, `document` → `nospec-curator`. Also amended by [ADR-0018](0018-one-command-with-verbs.md): separate commands (`knack spine`, `knack check`, `knack adrs`) collapsed into `nospec <verb>`.
 >
 > **Adoption boundary added by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** the distributed checker validates only artifacts marked `nospec: true`; Nospec's own exact inventory remains a source-test concern.
+>
+> **Path semantics narrowed by [ADR-0025](0025-work-specs-are-disposable-contract-records-are-project-owned.md):** `.loop/<name>/specs/` is disposable work state; Nospec does not classify an arbitrary host `specs/` path as disposable or authoritative.
 
 # 0017: Derivable artifact metadata via a bash CLI
 

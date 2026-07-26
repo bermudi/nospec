@@ -13,12 +13,12 @@ Keep durable knowledge coherent by giving each class of claim one authority. Thi
 
 ## Artifact roles
 
-- **Record** — owns a claim class: code/tests for implemented behavior, ADRs for rulings, a glossary for domain terms, operational context for repository practice, and skills for procedural knowledge.
+- **Record** — owns a claim class: code/tests for current implemented behavior, project-designated contracts for assigned promises or required behavior, ADRs for rulings, a glossary for domain terms, operational context for repository practice, and skills for procedural knowledge.
 - **View** — explains or combines records without becoming another authority, such as a README or guide.
 - **Ledger** — append-only evidence of what happened.
-- **Work state** — queues, handoffs, reviews, and scratch specs consumed then deleted.
+- **Work state** — queues, handoffs, reviews, and scratch work specs consumed then deleted. A filename does not decide the role: a designated API schema or protocol definition is not work state.
 
-A fact may appear in several places, but only one place owns it. Other appearances are projections that must defer to the record.
+A fact may appear in several places, but only one place owns it. Other appearances are projections that must defer to the record. Contract designation must be recoverable from operational context, an accepted ruling, or an established project metadata convention. `nospec: true` opts into structural checks only. If no owner is designated, leave the artifact unclassified and ask.
 
 ## Place and project
 

@@ -5,9 +5,9 @@ role: view
 
 # nospec
 
-A composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. Shipped as plain [agentskills.io](https://agentskills.io) skills you install into any agent, with an optional bash loop for unattended batch work.
+A composable **skills collection** for turning intent into verified code while keeping temporary coordination disposable and durable knowledge explicit. It encodes the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory as plain [agentskills.io](https://agentskills.io) skills, with an optional batch runner for unattended work.
 
-It exists to replace `/plan` commands, spec-kit / openspec, and ad-hoc "ralph loops" with one pick-and-choose workflow you own and edit.
+It replaces `/plan` commands, spec-kit / openspec, and ad-hoc "ralph loops" with capabilities you pick only when their problem is present. It is not a pipeline.
 
 ## Why
 
@@ -42,19 +42,13 @@ That symlinks the runner onto PATH. Then `nospec run ...` works from any directo
 
 ## The skills
 
-| skill | what it transmits |
-|---|---|
-| **nospec-scout** | read the codebase, grill intent, stress-test ideas *before* planning |
-| **nospec-shape** | decompose intent into verifiable outcomes; serialize a queue only for handoff or batch |
-| **nospec-carve** | implement a bounded observable outcome; verify-first, don't declare done until it passes |
-| **nospec-trial** | two-axis adversarial review — standards + intent — against the actual codebase |
-| **nospec-mend** | resolve review findings — directly, or as new work units appended to the queue |
-| **nospec-rule** *(shared)* | record an architectural ruling after the decision owner accepts it |
-| **nospec-lexicon** *(shared)* | manage `glossary.md`, the project's ubiquitous language |
-| **nospec-curator** *(shared)* | route knowledge to its authoritative artifact and maintain coherent projections |
-| **nospec** *(optional)* | the batch runner — drives a `QUEUE.md` behind a verify gate while you're away |
+Clear work can go directly to `nospec-carve`, the common implementation skill. Reach for `nospec-scout` when the problem is unclear, `nospec-shape` when outcomes need decomposition, and `nospec-trial` / `nospec-mend` when a change needs adversarial review or supported correction.
 
-Skills compose without a mandatory path. Clear work can go directly to `nospec-carve`; use scouting, shaping, review, or mending only when their problem is present.
+`nospec-rule`, `nospec-lexicon`, and `nospec-curator` preserve the decisions, shared language, and durable context worth keeping after disposable planning is gone. The optional `nospec` skill judges batch-worthiness and carries the runner used when the human leaves. These are independently invoked capabilities, not a prescribed workflow. See the [skills guide](docs/skills.md) for the full catalog.
+
+## Work specs and durable contracts
+
+Nospec discards **work specs**—queues, handoffs, and scratch designs used to coordinate a current change. It does not discard contracts designated by the project's operational context, accepted rulings, or established metadata conventions, such as OpenAPI schemas, protocol definitions, compatibility policies, or executable contract tests. `nospec: true` opts into structural checks; it does not confer contract authority. Nospec creates no universal prose canon beside the code.
 
 ## Optional: unattended batch mode
 

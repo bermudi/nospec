@@ -15,11 +15,13 @@ skills add -p bermudi/nospec --skill '*'
 
 This installs every nospec skill into the current project. Update with `skills update -p`; remove with `skills remove`.
 
-Once installed, invoke a skill by name: `nospec-scout`, `nospec-shape`, `nospec-carve`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, or `nospec` (the runner skill, for batch mode).
+Clear work can start with `nospec-carve`. Add Scout or Shape only for uncertainty or decomposition, Trial or Mend for review and correction, Rule/Lexicon/Curator for durable knowledge, and the optional `nospec` runner only for AFK execution.
 
 ## Use the skills interactively
 
 Invoke only the skill the work needs. A clear change can go directly to `nospec-carve`; unresolved intent may need `nospec-scout`, and decomposition may need `nospec-shape`. No queue or Nospec artifact is required for interactive work.
+
+Nospec discards work specs used to coordinate a current change; it preserves project-designated contracts such as API schemas, protocol definitions, compatibility policies, and contract tests.
 
 ## Run the loop (optional)
 

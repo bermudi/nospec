@@ -16,7 +16,7 @@ Review an existing change on two independent axes:
 
 Review after reading the diff and available evidence. In a batch cycle, read the queue, `EVIDENCE.md`, and any provided design note. Interactively, recover intent from the request and conversation.
 
-Use the authoritative source for each claim: code and tests for implemented behavior, ADRs for rulings, the glossary for domain terms, operational context for repository practice, and the request or queue for current intent. Do not treat a stale spec or the current implementation as authority over all of them.
+Use the authoritative source for each claim: code and tests for current implemented behavior, project-designated contracts for assigned promises, ADRs for rulings, the glossary for domain terms, operational context for repository practice, and the request or queue for current intent. Work specs are disposable; designated contracts are not. If ownership is unclear, surface that uncertainty rather than inferring it from a filename. Do not treat any one source as authority over every claim class.
 
 ## Standards axis
 

@@ -7,6 +7,8 @@ spine: true
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `build` → `nospec-carve`, `review` → `nospec-trial`, `decide` → `nospec-rule`, `document` → `nospec-curator`, `domain-modeling` → `nospec-lexicon`.
+>
+> **Record taxonomy amended by [ADR-0025](0025-work-specs-are-disposable-contract-records-are-project-owned.md):** a host project's explicitly owned contract records are durable records; only work specs and scratch plans are disposable by Nospec convention.
 
 # 0015: Artifact roles and ownership for durable knowledge
 
