@@ -10,7 +10,7 @@ role: view
 ## Usage
 
 ```bash
-nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run] [--resume]
+nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run] [--resume] [--accept-dirty-baseline]
 ```
 
 - `queue` — path to `QUEUE.md`. Usually `.loop/<name>/QUEUE.md`.
@@ -18,8 +18,24 @@ nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds 
 - `--max-ticks N` — maximum units to attempt. Default is `3`.
 - `--review` — opt into the bounded review/fix subloop after pending build units drain. Default behavior does not run review.
 - `--max-review-rounds N` — maximum review/fix rounds when `--review` is enabled. Default is `2`.
-- `--dry-run` — preflight every unit, then print the first pending unit's title, repo, and verify command without invoking a worker.
+- `--dry-run` — preflight every unit, report whether the cycle baseline is safe, then print the first pending unit's title, repo, and verify command without invoking a worker or writing evidence.
 - `--resume` — explicitly reset the first unresolved `in_progress`, `verify_failed`, `no_progress`, or `blocked` unit to `pending` and retry it before any later unit.
+- `--accept-dirty-baseline` — explicitly accept and record pre-existing changes, or the absence of Git, for a cycle's first mutating run. This bypasses the clean-start guard; it does not protect those files from the worker.
+
+## Starting-state safety
+
+Before a cycle's first mutating run, Nospec records its Git root, HEAD, and starting worktree state in `EVIDENCE.md`. It refuses staged, unstaged, or untracked paths outside `.loop/`, and refuses when Git cannot establish a baseline. This happens after whole-queue preflight but before status mutation or worker invocation.
+
+A deliberate plan-then-leave handoff may already contain human edits. `--accept-dirty-baseline` permits that case and records the pre-existing paths so later evidence does not imply Nospec created them. Commit or stash first when those edits need recoverability.
+
+A separate worktree is the safer AFK choice when the current checkout contains unrelated work. Queue state can remain in the original checkout because `--repo` selects the worker and verification directory:
+
+```bash
+git worktree add ../project-nospec -b nospec/<cycle>
+nospec run .loop/<cycle>/QUEUE.md --repo ../project-nospec
+```
+
+A Git worktree separates ordinary edits but is not a sandbox. An unrestricted worker can still reach other filesystem paths; containment belongs to the agent harness, container, or operating system.
 
 ## Environment variables
 
@@ -84,7 +100,7 @@ An interrupted `in_progress` unit also requires `--resume`. Recovery always targ
 
 `nospec run` writes next to the queue:
 
-- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary, and pins for changed Markdown artifacts explicitly marked `nospec: true`. Untagged host-repository documents receive no Nospec pin semantics. Keep the ledger after deleting `QUEUE.md`; pin alerts are triage triggers for `nospec-trial`, not coherence gates.
+- `EVIDENCE.md` — append-only ledger. Starts with the accepted cycle baseline; tick entries include the full unit, resulting worktree state, exact verify command, exit result and output, worker output, and a conservative proof boundary stating only whether external verification succeeded. It does not infer behavior from shell syntax. Changed Markdown artifacts explicitly marked `nospec: true` are pinned; untagged host documents receive no Nospec pin semantics. Keep the ledger after deleting `QUEUE.md`; pin alerts are triage triggers for `nospec-trial`, not coherence gates.
 - `HANDOFF.md` — written on non-clean exit. Sections cover completed, in-progress, and remaining units plus unresolved actionable review findings and the next action. It is removed automatically only when both the build queue and review state are clean.
 - `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line. `nospec view` projects a non-zero count as `REVIEW BLOCKED` even when every build unit is done.
 

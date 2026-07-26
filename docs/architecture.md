@@ -66,7 +66,7 @@ Durable artifacts survive the work cycle because they are maintained records:
 - `decisions/` — architectural rulings
 - `glossary.md` — domain terms
 - `AGENTS.md` — operational context
-- `.loop/<name>/EVIDENCE.md` — what each tick proved (registry-derived proof boundary + durable-doc pin state; ADR-0016)
+- `.loop/<name>/EVIDENCE.md` — accepted cycle baseline, resulting worktree state, exact verify command/result, conservative proof boundary, and adopted-artifact pin state (ADR-0016 and its amendments; baseline: ADR-0024)
 
 Disposable artifacts are consumed then discarded:
 

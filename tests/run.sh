@@ -19,6 +19,7 @@ assert_contains() {
 make_queue() {
   local dir=$1 verify=$2
   mkdir -p "$dir/.loop"
+  git init -q "$dir"
   cat > "$dir/.loop/QUEUE.md" <<EOF
 # Loop Queue: test
 
@@ -67,6 +68,7 @@ assert_contains /tmp/accessor-title.txt "the smoke fixture creates a file that t
 # Preflight validates the entire queue, not only the first pending unit.
 repo_lint="$tmp/repo-lint"
 mkdir -p "$repo_lint/.loop"
+git init -q "$repo_lint"
 cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
 # Loop Queue: malformed later unit
 
@@ -441,6 +443,64 @@ LOOP_AGENT_CMD='touch smoke.done; echo worker pass' "$root/skills/nospec/scripts
 assert_contains "$repo1/.loop/QUEUE.md" "Status: done"
 assert_contains "$repo1/.loop/EVIDENCE.md" "Status: done"
 assert_contains "$repo1/.loop/EVIDENCE.md" "worker pass"
+assert_contains "$repo1/.loop/EVIDENCE.md" "cycle baseline"
+assert_contains "$repo1/.loop/EVIDENCE.md" "Status: clean"
+assert_contains "$repo1/.loop/EVIDENCE.md" 'clean outside `.loop/`'
+assert_contains "$repo1/.loop/EVIDENCE.md" "Worktree state after tick:"
+
+# A first mutating run refuses pre-existing source changes before invoking the
+# worker. Dry-run reports the same condition without writing cycle evidence.
+repo_dirty="$tmp/repo-dirty-baseline"
+make_queue "$repo_dirty" "test -f worker.done"
+printf 'base\n' > "$repo_dirty/tracked.txt"
+( cd "$repo_dirty" && git add -A && git -c user.name=nospec -c user.email=nospec@example.invalid commit -q -m fixture )
+printf 'human work\n' > "$repo_dirty/tracked.txt"
+printf 'staged work\n' > "$repo_dirty/staged.txt"
+git -C "$repo_dirty" add staged.txt
+printf 'untracked work\n' > "$repo_dirty/preexisting.txt"
+"$root/skills/nospec/scripts/nospec" run "$repo_dirty/.loop/QUEUE.md" --dry-run >/tmp/loop-dirty-dry-run.txt
+assert_contains /tmp/loop-dirty-dry-run.txt "Baseline: unsafe"
+test ! -e "$repo_dirty/.loop/EVIDENCE.md"
+set +e
+LOOP_AGENT_CMD='touch worker.done' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_dirty/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-dirty-refused.txt 2>&1
+code=$?
+set -e
+if [[ $code -eq 0 ]]; then
+  echo "expected dirty starting worktree to be refused" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-dirty-refused.txt "--accept-dirty-baseline"
+assert_contains /tmp/loop-dirty-refused.txt '?? "preexisting.txt"'
+assert_contains /tmp/loop-dirty-refused.txt 'A  "staged.txt"'
+assert_contains /tmp/loop-dirty-refused.txt ' M "tracked.txt"'
+assert_contains "$repo_dirty/.loop/QUEUE.md" "Status: pending"
+test ! -e "$repo_dirty/worker.done"
+LOOP_AGENT_CMD='touch worker.done' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_dirty/.loop/QUEUE.md" --accept-dirty-baseline --max-ticks 1 >/tmp/loop-dirty-accepted.txt 2>&1
+assert_contains "$repo_dirty/.loop/EVIDENCE.md" "Status: accepted unsafe baseline"
+assert_contains "$repo_dirty/.loop/EVIDENCE.md" '?? "preexisting.txt"'
+assert_contains "$repo_dirty/.loop/EVIDENCE.md" 'A  "staged.txt"'
+assert_contains "$repo_dirty/.loop/EVIDENCE.md" ' M "tracked.txt"'
+assert_contains "$repo_dirty/.loop/QUEUE.md" "Status: done"
+
+# Git remains optional only through the same explicit unsafe-baseline escape.
+repo_unversioned="$tmp/repo-unversioned-baseline"
+make_queue "$repo_unversioned" "test -f worker.done"
+mv "$repo_unversioned/.git" "$tmp/repo-unversioned-git-metadata"
+set +e
+LOOP_AGENT_CMD='touch worker.done' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_unversioned/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-unversioned-refused.txt 2>&1
+code=$?
+set -e
+if [[ $code -eq 0 ]]; then
+  echo "expected unversioned starting worktree to be refused" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-unversioned-refused.txt "target is not a Git worktree"
+LOOP_AGENT_CMD='touch worker.done' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_unversioned/.loop/QUEUE.md" --accept-dirty-baseline --max-ticks 1 >/tmp/loop-unversioned-accepted.txt 2>&1
+assert_contains "$repo_unversioned/.loop/EVIDENCE.md" "Status: accepted unsafe baseline"
 
 # Standard named-cycle paths infer the repository above `.loop`.
 repo_named="$tmp/repo-named-cycle"
@@ -471,6 +531,7 @@ assert_contains /tmp/loop-fail.txt "retrying once"
 repo3="$tmp/target-repo"
 queue_home="$tmp/external-queue"
 mkdir -p "$repo3" "$queue_home/.loop"
+git init -q "$repo3"
 make_queue "$queue_home" "test -f target.done"
 LOOP_AGENT_CMD='pwd > worker.pwd; touch target.done' "$root/skills/nospec/scripts/nospec" run "$queue_home/.loop/QUEUE.md" --repo "$repo3" --max-ticks 1 >/tmp/loop-repo.txt
 assert_contains "$queue_home/.loop/QUEUE.md" "Status: done"
@@ -528,6 +589,7 @@ assert_contains /tmp/loop-blocker-signal.txt "worker reported blocker"
 # Non-pending unresolved work prevents later pending units from bypassing it.
 repo_recovery="$tmp/repo-recovery-order"
 mkdir -p "$repo_recovery/.loop"
+git init -q "$repo_recovery"
 cat > "$repo_recovery/.loop/QUEUE.md" <<'EOF'
 # Loop Queue: recovery order
 
@@ -577,15 +639,22 @@ assert_contains "$repo_recovery/.loop/QUEUE.md" "Status: done"
 [[ $(sed -n '1p' "$repo_recovery/order.txt") == "first" ]]
 [[ $(sed -n '2p' "$repo_recovery/order.txt") == "second" ]]
 
-# ADR-0016: registry-derived proof claims replace the vacuous negative.
-# The verify `test -f smoke.done` should derive "file exists: smoke.done".
-assert_contains "$repo1/.loop/EVIDENCE.md" "file exists: smoke.done"
-assert_contains "$repo1/.loop/EVIDENCE.md" "What remains unverified:"
-assert_contains "$repo1/.loop/EVIDENCE.md" "see the verify command for the exact check"
-# Failed verify should not claim anything was proven
-assert_contains "$repo2/.loop/EVIDENCE.md" "The work unit is not externally verified."
+# ADR-0023: evidence records the exact command and result without narrating
+# shell syntax into stronger behavioral claims.
+assert_contains "$repo1/.loop/EVIDENCE.md" "Verify result: exit 0"
+assert_contains "$repo1/.loop/EVIDENCE.md" "Proof boundary:"
+assert_contains "$repo1/.loop/EVIDENCE.md" "The recorded Verify command exited 0 in this repository state. No broader behavior is inferred."
+assert_contains "$repo1/.loop/EVIDENCE.md" "test -f smoke.done"
+if grep -q 'file exists: smoke.done' "$repo1/.loop/EVIDENCE.md"; then
+  echo "evidence should not synthesize a proof claim from shell syntax" >&2
+  exit 1
+fi
+# Failed and skipped verifies record their actual mechanical result without a claim.
+assert_contains "$repo2/.loop/EVIDENCE.md" "Verify result: exit 1"
+assert_contains "$repo2/.loop/EVIDENCE.md" "No successful external verification is recorded for this work unit."
+assert_contains "$repo_signal/.loop/EVIDENCE.md" "Verify result: not run"
 
-# ADR-0016: pin-state records durable docs touched in changed_files.
+# ADR-0016: pin-state records adopted durable docs present in worktree state.
 # repo1 has no durable docs (temp dir), so pins should be empty.
 assert_contains "$repo1/.loop/EVIDENCE.md" "Pinned durable docs:"
 assert_contains "$repo1/.loop/EVIDENCE.md" "- (none)"
@@ -629,6 +698,7 @@ assert_contains "$repo_pin/.loop/EVIDENCE.md" "now "
 # Per-unit Agent: override
 repo4="$tmp/repo-agent-override"
 mkdir -p "$repo4/.loop"
+git init -q "$repo4"
 cat > "$repo4/.loop/QUEUE.md" <<EOF
 # Loop Queue: agent override
 
@@ -690,6 +760,7 @@ assert_contains "$repo_lpf/captured-prompt.txt" "the test fixture reaches its ve
 # Review-fix loop with fake build, review, and fix workers.
 repo_review="$tmp/repo-review"
 mkdir -p "$repo_review/.loop"
+git init -q "$repo_review"
 cat > "$repo_review/.loop/QUEUE.md" <<'EOF'
 # Loop Queue: review cycle
 
@@ -790,6 +861,7 @@ EOF_QUEUE
 echo "fix appended unit"
 EOF
 chmod +x "$repo_review/fix-worker.sh"
+( cd "$repo_review" && git add -A && git -c user.name=nospec -c user.email=nospec@example.invalid commit -q -m fixture )
 
 LOOP_AGENT_CMD="$repo_review/build-worker.sh" \
   LOOP_REVIEW_CMD="$repo_review/review-worker.sh" \
@@ -834,6 +906,7 @@ set -euo pipefail
 echo "no units appended"
 EOF
 chmod +x "$repo_review_stalled/fix-worker.sh"
+( cd "$repo_review_stalled" && git add -A && git -c user.name=nospec -c user.email=nospec@example.invalid commit -q -m fixture )
 set +e
 LOOP_AGENT_CMD='touch smoke.done' \
   LOOP_REVIEW_CMD="$repo_review_stalled/review-worker.sh" \
@@ -1002,11 +1075,11 @@ if [[ "$spine_count" -ne 8 ]]; then
   cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
-# adrs should list all 22 ADRs
+# adrs should list all 24 ADRs
 "$root/skills/nospec/scripts/nospec" --repo "$root" adrs >/tmp/nospec-adrs.txt
 adr_count=$(grep -c '^ADR-' /tmp/nospec-adrs.txt)
-if [[ "$adr_count" -ne 22 ]]; then
-  echo "expected 22 ADRs, got $adr_count" >&2
+if [[ "$adr_count" -ne 24 ]]; then
+  echo "expected 24 ADRs, got $adr_count" >&2
   cat /tmp/nospec-adrs.txt >&2
   exit 1
 fi

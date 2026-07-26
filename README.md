@@ -65,7 +65,7 @@ LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' \
   nospec run .loop/<name>/QUEUE.md
 ```
 
-Run `nospec lint .loop/<name>/QUEUE.md` before leaving; `nospec run` repeats that whole-queue preflight before mutation. Per-unit model routing (`Agent:`), handoffs, and opt-in review/fix (`--review`) are covered in [docs/loop.md](docs/loop.md). Most work is interactive.
+Run `nospec lint .loop/<name>/QUEUE.md` before leaving; `nospec run` repeats that whole-queue preflight and requires a clean starting worktree before mutation. Deliberate dirty handoffs require `--accept-dirty-baseline`; a separate worktree can be selected with `--repo`. Per-unit model routing (`Agent:`), handoffs, and opt-in review/fix (`--review`) are covered in [docs/loop.md](docs/loop.md). Most work is interactive.
 
 ## The thinking
 

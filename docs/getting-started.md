@@ -23,7 +23,7 @@ Invoke only the skill the work needs. A clear change can go directly to `nospec-
 
 ## Run the loop (optional)
 
-The loop runs a `QUEUE.md` one work unit at a time while you are away:
+The loop runs a `QUEUE.md` one work unit at a time while you are away. Its first mutating run requires a clean Git baseline outside `.loop/`; use `--accept-dirty-baseline` only for a deliberate dirty handoff, or point `--repo` at a separate worktree:
 
 ```bash
 LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' nospec run .loop/<name>/QUEUE.md

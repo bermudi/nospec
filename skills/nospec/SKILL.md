@@ -1,7 +1,7 @@
 ---
 name: nospec
 description: Use when installing Nospec, deciding whether work is safe for AFK execution, or intentionally running an already-shaped queue behind the external verify gate.
-compatibility: Requires Bash and Python 3.10 or newer. The runner supports macOS and Linux and is invoked as `scripts/nospec` from this skill directory (or via `nospec` on PATH after `nospec install`).
+compatibility: Requires Bash and Python 3.10 or newer; safe baseline checks use Git, with explicit unversioned operation available via `--accept-dirty-baseline`. The runner supports macOS and Linux and is invoked as `scripts/nospec` from this skill directory (or via `nospec` on PATH after `nospec install`).
 license: MIT
 metadata:
   author: bermudi
@@ -20,9 +20,9 @@ Optional review inspects unverified acceptance surface; it does not convert subj
 
 ## Mechanical guarantee
 
-Before mutation, the runner requires each unit to have a nonempty outcome, `Done means:`, fenced Bash `Verify:`, and valid `Status:`. Optional `Read first:` and `Constraints:` fields must be unique and nonempty when present. Preflight also checks shell syntax and rejects obviously vacuous verifies (`true`, `:`, and `exit 0`). Per tick it invokes one worker, then executes `Verify:` outside the agent. It marks the unit done only when that command exits zero. The worker cannot self-certify.
+Before mutation, the runner requires each unit to have a nonempty outcome, `Done means:`, fenced Bash `Verify:`, and valid `Status:`. Optional `Read first:` and `Constraints:` fields must be unique and nonempty when present. Preflight also checks shell syntax and rejects obviously vacuous verifies (`true`, `:`, and `exit 0`). The cycle's first mutating run then requires a clean Git worktree outside `.loop/`; `--accept-dirty-baseline` explicitly accepts and records pre-existing changes or an unversioned target without protecting them. Per tick the runner invokes one worker, then executes `Verify:` outside the agent. It marks the unit done only when that command exits zero. The worker cannot self-certify.
 
-This proves the verify command passed in that repository state—nothing beyond its scope. `EVIDENCE.md` records the command, output, changed files, and a conservative proof boundary.
+This proves the verify command passed in that repository state—nothing beyond its scope. `EVIDENCE.md` records the cycle baseline, exact command, exit result, output, resulting worktree state, and a conservative proof boundary without interpreting shell syntax.
 
 Run preflight directly with:
 
@@ -46,7 +46,7 @@ For a global skill install, use `~/.agents/skills/nospec/scripts/nospec install`
 nospec run .loop/<name>/QUEUE.md
 ```
 
-`--dry-run` preflights the whole queue and previews the next runnable unit. `--repo DIR` selects the target when the queue lives elsewhere.
+`--dry-run` preflights the whole queue, reports baseline safety, and previews the next runnable unit. `--repo DIR` selects the target when the queue lives elsewhere; use it with a manually created Git worktree to separate AFK edits from the current checkout. A worktree is not a security sandbox.
 
 `LOOP_AGENT_CMD` selects the worker. `LOOP_REVIEW_CMD` and `LOOP_FIX_CMD` may select separate review and fix agents; a unit's `Agent:` overrides the worker for that unit.
 

@@ -659,6 +659,176 @@ Path(handoff).write_text("\n".join(out) + "\n")
 PY
 }
 
+inspect_cycle_baseline() {
+    local repo_dir=$1 report=$2
+    "$PYTHON_BIN" - "$repo_dir" "$report" <<'PY'
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path, PurePosixPath
+
+repo_dir, report_path = sys.argv[1:]
+
+
+def git(*args: str) -> subprocess.CompletedProcess[bytes]:
+    return subprocess.run(
+        ["git", "-C", repo_dir, *args],
+        capture_output=True,
+        check=False,
+    )
+
+
+def display_path(raw: bytes) -> str:
+    return json.dumps(raw.decode("utf-8", "backslashreplace"), ensure_ascii=False)
+
+
+def is_loop_path(raw: bytes) -> bool:
+    path = raw.decode("utf-8", "surrogateescape")
+    return bool(PurePosixPath(path).parts and PurePosixPath(path).parts[0] == ".loop")
+
+
+def write_report(lines: list[str]) -> None:
+    Path(report_path).write_text("\n".join(lines) + "\n")
+
+
+try:
+    root_result = git("rev-parse", "--show-toplevel")
+except FileNotFoundError:
+    write_report([
+        "Git root: unavailable",
+        "Git HEAD: unavailable",
+        "Starting worktree:",
+        "- safety unavailable: Git is not installed",
+    ])
+    raise SystemExit(11)
+
+if root_result.returncode != 0:
+    write_report([
+        "Git root: unavailable",
+        "Git HEAD: unavailable",
+        "Starting worktree:",
+        "- safety unavailable: target is not a Git worktree",
+    ])
+    raise SystemExit(11)
+
+root = os.fsdecode(root_result.stdout.strip())
+head_result = subprocess.run(
+    ["git", "-C", root, "rev-parse", "--verify", "HEAD"],
+    capture_output=True,
+    check=False,
+)
+head = os.fsdecode(head_result.stdout.strip()) if head_result.returncode == 0 else "unborn"
+status_result = subprocess.run(
+    ["git", "-C", root, "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+    capture_output=True,
+    check=False,
+)
+if status_result.returncode != 0:
+    detail = status_result.stderr.decode("utf-8", "backslashreplace").strip()
+    write_report([
+        f"Git root: {json.dumps(root, ensure_ascii=False)}",
+        f"Git HEAD: {head}",
+        "Starting worktree:",
+        f"- safety unavailable: git status failed: {detail or 'unknown error'}",
+    ])
+    raise SystemExit(11)
+
+changes: list[str] = []
+records = status_result.stdout.split(b"\0")
+i = 0
+while i < len(records):
+    record = records[i]
+    i += 1
+    if not record:
+        continue
+    status = record[:2].decode("ascii", "replace")
+    path = record[3:]
+    original: bytes | None = None
+    if "R" in status or "C" in status:
+        if i < len(records):
+            original = records[i]
+            i += 1
+    relevant = not is_loop_path(path) or (original is not None and not is_loop_path(original))
+    if not relevant:
+        continue
+    rendered = f"{status} {display_path(path)}"
+    if original is not None:
+        rendered += f" <- {display_path(original)}"
+    changes.append(rendered)
+
+lines = [
+    f"Git root: {json.dumps(root, ensure_ascii=False)}",
+    f"Git HEAD: {head}",
+    "Starting worktree:",
+]
+if changes:
+    lines.extend(f"- {change}" for change in changes)
+    write_report(lines)
+    raise SystemExit(10)
+
+lines.append("- clean outside `.loop/`")
+write_report(lines)
+PY
+}
+
+ensure_cycle_baseline() {
+    local repo_dir=$1 evidence=$2 dry_run=$3 accept_dirty=$4
+    local marker='<!-- nospec-cycle-baseline:v1 -->'
+    if [[ -f "$evidence" ]] && grep -Fq "$marker" "$evidence"; then
+        [[ "$dry_run" == 0 ]] || echo "Baseline: already recorded for this cycle"
+        return 0
+    fi
+
+    local report result
+    report=$(mktemp)
+    set +e
+    inspect_cycle_baseline "$repo_dir" "$report"
+    result=$?
+    set -e
+
+    if [[ $result -ne 0 && $result -ne 10 && $result -ne 11 ]]; then
+        [[ ! -s "$report" ]] || cat "$report" >&2
+        die "baseline inspection failed unexpectedly (exit $result)"
+    fi
+
+    if [[ "$dry_run" == 1 ]]; then
+        if [[ $result -eq 0 ]]; then
+            echo "Baseline: clean"
+        else
+            echo "Baseline: unsafe — a mutating run would refuse without --accept-dirty-baseline"
+        fi
+        cat "$report"
+        return 0
+    fi
+
+    if [[ $result -ne 0 && "$accept_dirty" == 0 ]]; then
+        cat "$report" >&2
+        echo "nospec: commit or stash the starting changes, use --repo with a clean worktree," >&2
+        die "or rerun with --accept-dirty-baseline to record and accept this risk"
+    fi
+
+    local disposition="clean"
+    if [[ $result -ne 0 ]]; then
+        disposition="accepted unsafe baseline"
+        echo "nospec: accepting an unsafe starting baseline" >&2
+    fi
+
+    mkdir -p "$(dirname "$evidence")"
+    {
+        echo
+        local timestamp
+        timestamp=$("$PYTHON_BIN" -c 'from datetime import datetime; print(datetime.now().astimezone().isoformat(timespec="seconds"))')
+        echo "## $timestamp — cycle baseline"
+        echo
+        echo "$marker"
+        echo
+        echo "Status: $disposition"
+        echo
+        cat "$report"
+    } >> "$evidence"
+}
+
 work_snapshot() {
     local repo_dir=$1
     if git -C "$repo_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
@@ -669,70 +839,6 @@ work_snapshot() {
     else
         echo "__no_git__"
     fi
-}
-
-derive_proof_claims() {
-    local verify_cmd=$1
-    "$PYTHON_BIN" - "$verify_cmd" <<'PY'
-import re, sys
-
-def classify(segment):
-    s = segment.strip()
-    # Strip common prefixes that don't affect the proof claim
-    s = re.sub(r'^cd\s+\S+\s+', '', s)
-    s = re.sub(r'^env\s+-C\s+\S+\s+', '', s)
-    s = s.strip().strip('()').strip()
-    if not s:
-        return None
-    if s.startswith('go test'):
-        return 'Go test suite passes'
-    if s.startswith('go build'):
-        return 'Go binary compiles'
-    if s.startswith('go run'):
-        return 'Go program runs'
-    if s.startswith('! grep'):
-        m = re.search(r"['\"]([^'\"]*)['\"]", s)
-        pat = m.group(1) if m else 'pattern'
-        return f'no matches for "{pat}" in scope'
-    if s.startswith('grep -q') or s.startswith('grep -E -q'):
-        m = re.search(r"['\"]([^'\"]*)['\"]", s)
-        pat = m.group(1) if m else 'pattern'
-        return f'pattern "{pat}" found in target'
-    if s.startswith('diff -r'):
-        return 'directories match'
-    if s.startswith('test -f'):
-        m = re.search(r'test -f\s+(\S+)', s)
-        path = m.group(1) if m else 'path'
-        return f'file exists: {path}'
-    if s.startswith('bash -n'):
-        return 'shell script syntax valid'
-    if './tests/run.sh' in s:
-        return 'project test suite passes'
-    if 'glossary check' in s:
-        return 'glossary has no undefined/stale terms'
-    if 'decisions check' in s:
-        return 'decisions are internally consistent'
-    # Fallback for unknown commands — never interpret, just record exit-0.
-    # Includes pipe-to-count constructs like `test $(... | wc -l) -eq N`:
-    # the real claim is relational (N matches for pattern in scope), which
-    # mechanical decomposition cannot extract without misclassification risk.
-    short = s if len(s) <= 60 else s[:57] + '...'
-    return f'command exited 0: {short}'
-
-cmd = sys.argv[1]
-# Simple split on && — conservative; misclassification is bounded
-# because the raw command is always adjacent in the evidence entry
-segments = re.split(r'\s*&&\s*', cmd)
-claims = []
-for seg in segments:
-    c = classify(seg)
-    if c:
-        claims.append(c)
-if not claims:
-    claims = ['- The verify command passed for this work unit in the current repo state.']
-for c in claims:
-    print(f'- {c}')
-PY
 }
 
 record_pin_state() {
@@ -846,7 +952,7 @@ if alerts:
 PY
 }
 
-changed_files() {
+worktree_state() {
     local repo_dir=$1
     if git -C "$repo_dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
         git -C "$repo_dir" status --short --untracked-files=all || true
@@ -856,7 +962,7 @@ changed_files() {
 }
 
 append_evidence() {
-    local evidence=$1 title=$2 status=$3 verify=$4 verify_out=$5 agent_out=$6 repo_dir=$7 unit_file=$8
+    local evidence=$1 title=$2 status=$3 verify=$4 verify_out=$5 agent_out=$6 repo_dir=$7 unit_file=$8 verify_result=$9
     mkdir -p "$(dirname "$evidence")"
     {
         echo
@@ -871,15 +977,17 @@ append_evidence() {
         cat "$unit_file"
         echo '````'
         echo
-        echo "Files changed:"
+        echo "Worktree state after tick:"
         echo '```text'
-        changed_files "$repo_dir"
+        worktree_state "$repo_dir"
         echo '```'
         echo
         echo "Verify command:"
         echo '```bash'
         echo "$verify"
         echo '```'
+        echo
+        echo "Verify result: $verify_result"
         echo
         echo "Verify output:"
         echo '```text'
@@ -891,18 +999,11 @@ append_evidence() {
         cat "$agent_out"
         echo '````'
         echo
-        echo "What this proves:"
-        if [[ "$status" == "done" ]]; then
-            derive_proof_claims "$verify"
+        echo "Proof boundary:"
+        if [[ "$verify_result" == "exit 0" ]]; then
+            echo "- The recorded Verify command exited 0 in this repository state. No broader behavior is inferred."
         else
-            echo "- The work unit is not externally verified."
-        fi
-        echo
-        echo "What remains unverified:"
-        if [[ "$status" == "done" ]]; then
-            echo "- Anything outside the above proof scope; see the verify command for the exact check."
-        else
-            echo "- The verify command did not pass; nothing is proven."
+            echo "- No successful external verification is recorded for this work unit."
         fi
         echo
         record_pin_state "$evidence" "$repo_dir"
@@ -1063,7 +1164,7 @@ EOF
     if [[ $agent_code -ne 0 ]]; then
         set_status "$queue_abs" "$title" "blocked"
         : > "$verify_out"
-        append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+        append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "not run"
         cat "$agent_out"
         die "worker exited nonzero for $title"
     fi
@@ -1076,7 +1177,7 @@ EOF
             cat "$result_file" >> "$agent_out"
             set_status "$queue_abs" "$title" "blocked"
             : > "$verify_out"
-            append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+            append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "not run"
             cat "$agent_out"
             die "invalid worker result signal for $title"
         fi
@@ -1084,7 +1185,7 @@ EOF
         tail -n +2 "$result_file" >> "$agent_out"
         set_status "$queue_abs" "$title" "blocked"
         : > "$verify_out"
-        append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+        append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "not run"
         cat "$agent_out"
         die "worker reported blocker for $title"
     fi
@@ -1100,7 +1201,7 @@ EOF
 
     if [[ $verify_code -eq 0 ]]; then
         set_status "$queue_abs" "$title" "done"
-        append_evidence "$evidence" "$title" "done" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+        append_evidence "$evidence" "$title" "done" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "exit $verify_code"
         echo "nospec: verified — $title"
         tick=$((tick + 1))
         return 0
@@ -1110,18 +1211,18 @@ EOF
         no_progress_strikes=$((no_progress_strikes + 1))
         if [[ $no_progress_strikes -ge 2 ]]; then
             set_status "$queue_abs" "$title" "no_progress"
-            append_evidence "$evidence" "$title" "no_progress" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+            append_evidence "$evidence" "$title" "no_progress" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "exit $verify_code"
             die "no progress after $no_progress_strikes attempts on $title"
         fi
         set_status "$queue_abs" "$title" "pending"
-        append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+        append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "exit $verify_code"
         echo "nospec: verify failed with no progress; retrying once"
         tick=$((tick + 1))
         return 0
     fi
 
     set_status "$queue_abs" "$title" "verify_failed"
-    append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+    append_evidence "$evidence" "$title" "verify_failed" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file" "exit $verify_code"
     cat "$verify_out"
     die "verify failed for $title"
 }
@@ -1255,7 +1356,7 @@ cmd_run() {
     [[ -f "$queue_abs" ]] || die "queue not found: $queue_abs"
     [[ -f "$QUEUE_PARSER" ]] || die "queue parser not found: $QUEUE_PARSER"
 
-    local max_ticks=3 max_review_rounds=2 review_enabled=0 dry_run=0 resume_enabled=0 repo_override=""
+    local max_ticks=3 max_review_rounds=2 review_enabled=0 dry_run=0 resume_enabled=0 accept_dirty_baseline=0 repo_override=""
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --repo)
@@ -1285,6 +1386,10 @@ cmd_run() {
                 resume_enabled=1
                 shift
                 ;;
+            --accept-dirty-baseline)
+                accept_dirty_baseline=1
+                shift
+                ;;
             *) die "unknown argument: $1" ;;
         esac
     done
@@ -1311,6 +1416,9 @@ cmd_run() {
     local review_file="$queue_dir/REVIEW.md"
     local design_file="$queue_dir/DESIGN.md"
     local no_progress_strikes=0
+
+    preflight_queue "$queue_abs"
+    ensure_cycle_baseline "$repo_dir" "$evidence" "$dry_run" "$accept_dirty_baseline"
 
     write_handoff_on_exit() {
         local rc=$?
@@ -1349,10 +1457,12 @@ Setup:
                        Optional dir arg overrides the choice.
 
 Batch (optional, AFK):
-  nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run] [--resume]
+  nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run] [--resume] [--accept-dirty-baseline]
                  Run work units behind a verify gate. The queue is usually
                  .loop/<name>/QUEUE.md. Use --repo when the queue lives outside
-                 the repository it should operate on.
+                 the repository it should operate on. A first mutating run
+                 refuses dirty or unversioned targets unless the operator passes
+                 --accept-dirty-baseline; --dry-run reports baseline safety.
 
 The spine list is derived from decisions/*.md where spine: true.
 Views must not re-enumerate ADR numbers; they point to `nospec spine` or decisions/.

@@ -9,6 +9,8 @@ spine: true
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `build` → `nospec-carve`, `review` → `nospec-trial`, `document` → `nospec-curator`.
 >
 > **Adoption boundary added by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** pin-state applies only to changed Markdown artifacts marked `nospec: true`; ordinary host-repository documents are outside the pin boundary.
+>
+> **Proof narration removed by [ADR-0023](0023-evidence-does-not-interpret-verification-commands.md):** evidence retains the exact command, output, and external result but no longer interprets shell syntax into prose claims.
 
 # 0016: Proof-boundary is mechanical; pin-state is provenance, not coherence
 
