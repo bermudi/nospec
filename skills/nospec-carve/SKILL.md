@@ -1,70 +1,43 @@
 ---
 name: nospec-carve
-description: Use when implementing a bounded, observable outcome — whether supplied conversationally or as a work unit from a `.loop/<name>/QUEUE.md`. Verify-first — read the verify before changing code, and don't declare done until it actually passes. Triggers on "build", "implement", "apply this unit", "do the work", "run the loop", or when work needs executing. Also used when the loop invokes the worker for a tick.
+description: Use when implementing one already-bounded outcome, conversationally or as the worker for one batch queue unit.
 license: MIT
 metadata:
   author: bermudi
   version: "1.0.0"
 ---
 
-# Build
+# Carve
 
-Implement one bounded, observable outcome. Do the work. Don't declare done on vibes — the verify must actually pass before you stop.
+Implement one bounded outcome. Scope is the outcome plus its constraints, not a planner-supplied file list.
 
-That core is the same whether the outcome arrived in conversation or as a unit in a `.loop/<name>/QUEUE.md`. What changes across modes is who runs the verify. Interactively, you run it yourself — there's no external runner, so the discipline of proving it before you claim it is yours. In a batch cycle, the loop owns the verify gate: it runs the unit's `Verify:` command after you exit, so you never self-certify; your job is to make the repository state satisfy that command. The principle — don't claim success without verification — survives across modes; the enforcement mechanism doesn't.
+## Orient before editing
 
-## Scope
+Read the verify first. Then inspect the operational context, cited records, relevant code, tests, call sites, and any referenced cycle design note. For a public surface, inventory its actual signatures and consumers before changing it; familiar names often hide unfamiliar contracts.
 
-The scope is the outcome plus its constraints — never a file list. You decide which files to change and how; constraints close the solution space, they don't prescribe the path (ADR-0005). The `Verify:` command is the mechanically enforceable subset of `Done means:`; the gap between them is the review surface.
+Find the existing implementation path and extend it where possible. A parallel helper or abstraction adds another invariant to maintain and verify.
 
-If the unit's `Read first:` cites `.loop/<name>/DESIGN.md`, read it first — it carries cycle-level reasoning you can't recover from the codebase alone. The planner's `Read first:` is the worker's channel to it (review and fix get `Design:` injected directly, because they span the whole queue).
+## Work in feedback loops
 
-## Execution discipline
+Make the smallest coherent change that advances the outcome, then exercise it early. Do not accumulate a large untested diff.
 
-How you reach the outcome matters as much as reaching it. Four concepts, each preventing a concrete failure mode:
+Prefer structural edits to chains of fragile text substitutions. Diagnose repeated failures instead of patching symptoms: if the same area keeps failing, re-read the surrounding invariant before trying again.
 
-**Inventory the contract before editing.** The cheapest wrong implementation is a familiar name with the wrong contract — pattern-matching `zip` to array-zipping when the call site passes single values, implementing the direct form and missing the curried overload, dropping a method the tests import but you never enumerated. The defense is reading discipline, not reasoning: before the first edit, enumerate the actual call sites and signatures the outcome must satisfy — what's imported, what's invoked, with what arity and shape — and hold that list against the work as you go. Reading the codebase for 48% of your steps before editing isn't procrastination; it's the gap between a model that ships the right contract and one that ships a confident wrong one. Default: if the outcome touches a public surface, list its call sites before writing. Override: a one-line change with no new surface — but notice when "I know what this does" is pattern-matching, not reading.
+Keep unrelated cleanup out. Abstraction is justified only when the outcome requires it.
 
-**Close the loop early.** The strongest predictor of a clean outcome is *when* you first run something executable against the work — not whether you verify at the end, but how soon you close a feedback loop after the first change. Bugs bake into unverified code; the longer the gap between writing and first testing, the more error accumulates blind and the costlier the eventual fix. Default: as soon as a sliver of the outcome works end-to-end, run it — don't accumulate a large diff you've never exercised. Override: a change small enough to hold in your head — but notice when "trivial" is a rationalization for not closing the loop.
+## Verify before claiming success
 
-**Edit structurally.** Prefer replacing a coherent block over chaining fragile inline patches. Each inline string-surgery edit is a chance to break syntax, imports, or formatting, and failed edits cascade into repair cycles that consume the budget without advancing the outcome. Default: replace whole functions or blocks; reach for inline edits only on genuine one-liners, and validate after each. Override: a harness where inline edits are the sane primitive — but never batch fragile edits and hope.
+- **Interactive:** run the narrowest credible verification yourself. Report exactly what passed and any remaining unverified surface.
+- **Batch:** make the repository satisfy the unit's `Verify:` command, then stop. The runner executes it independently and owns status and `EVIDENCE.md`; do not edit either.
 
-**Keep it minimal.** The smallest change that satisfies the outcome is the default; abstraction is earned, not assumed. Every speculative layer, wrapper, or parallel path is an invariant you now have to get right *and* verify — surface area is bug surface, and the bugs land in the layers the outcome never asked for. Default: extend the existing path before building a parallel one; add abstraction only when the outcome demands it. Override: a change whose purpose *is* to introduce an abstraction — but then the abstraction is the outcome, not decoration.
+A passing command proves only what it exercises. Do not inflate it into architectural or semantic certainty.
 
-These are judgment, not gates. The verify gate below is the mechanical contract; these are how you reach it without baking in avoidable error.
+## Decisions and blockers
 
-## Verification
+Implementation may expose a trade-off the plan missed. Do not silently turn your preference into an accepted ADR. In interactive work, present the choice to the decision owner. In batch, a novel consequential decision is a blocker unless authority was explicitly delegated; report what must be decided and stop. Use `nospec-rule` to record a ruling only after acceptance.
 
-Verify-first: read the `Verify:` command before you change code, so you know what state the repo must reach. Then make it pass.
+Capture durable operational discoveries in the project's operational-context record. Route contradictory durable claims through `nospec-curator`. Do not create records for trivia.
 
-- **Interactive** — run the verify yourself before you stop. If it fails, fix the cause if it belongs to this outcome; otherwise report the blocker. Don't claim success the command didn't confirm.
-- **Batch (under a runner)** — the runner runs `Verify:` after you exit. You don't self-certify and you don't mark the unit done; you make the repository state satisfy the command. Don't edit `.loop/<name>/EVIDENCE.md` — the runner writes the evidence ledger after verification.
+If the outcome cannot fit in one pass while leaving the repository coherent, stop with a precise handoff: what changed, what remains, what was verified, and what would unblock completion.
 
-The verify gate is the backpressure — the mechanism that mechanically rejects wrong output, outside the agent. Your relationship to it is to aim the work at making it pass, not to assert that it would.
-
-## Capturing decisions during build
-
-Implementation surfaces decisions the spec missed — the code pushes back, and that's when the most valuable rulings crystallize (code-clarifies-spec). If you discover one — "we need to handle X this way because Y" — write the ADR now via the `nospec-rule` skill, inline, not after the outcome. It's a durable trace, not part of the verify scope.
-
-## Capturing operational learnings
-
-If you learn how the project works, capture it in the right durable file:
-
-- **Operational gotchas** — build commands, test conventions, how to verify — go in `AGENTS.md`.
-- **Domain or problem insights** — "X doesn't work because Y", "the parser has this surprising property" — become a durable record (ADR, `glossary.md`, or a new artifact) when one actually appears. Do not pre-allocate an empty insights ledger.
-
-If you discover that a durable doc contradicts a ruling, a term, or the current code, invoke the `nospec-curator` skill to route the correction to the owning record and update its projections. Don't patch the contradiction in place without checking whether the same claim lives elsewhere.
-
-Don't add trivia. Add what would have saved you time upfront.
-
-## When the work is too big for one pass
-
-Do as much as keeps the repo in a working state, then hand off what remains — interactively to the human or the next session; in a batch cycle, as a handoff note. If verify fails in batch, the runner writes a handoff and stops; a later session resumes from it. Don't cram work that genuinely needs more into one pass; the loop is designed for multiple ticks, and interactive work resumes from where you left it.
-
-## When you're blocked
-
-State the blocker clearly, note what would unblock you (a decision, a dependency, a missing file), and stop. Don't thrash — and recognize thrashing's signature: if verify keeps failing on the same spot, you're almost certainly treating a symptom, not the cause. Stop patching and re-read the code to isolate the invariant actually being violated; a fix that needs many attempts is a diagnosis problem, not an attempt-count problem. Interactively that's a message to the human; in a batch cycle the runner marks the unit `blocked` and writes a handoff the next session picks up.
-
-## Batch behavior (under a runner)
-
-When the loop invokes you for a tick, `prompts/worker.md` governs the tick — one unit only, the handoff output format, the don't-self-certify posture. The sections above are the skill's core; the worker prompt is the batch-tick protocol. If it's in your context, follow it.
+When invoked by the batch runner, the worker prompt supplies the one-unit protocol and terminal handoff format.

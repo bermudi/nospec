@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 
@@ -8,7 +9,7 @@ This doc is a view, not a record. It preserves the reasoning that led to nospec'
 
 ## What we're keeping from litespec
 
-- The flow shape: `nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend` (now composable, not rigid)
+- The individual practices of exploration, decomposition, implementation, review, and correction — now independently composable rather than a default flow
 - Skills as procedural knowledge (`think/plan/build/review` → `nospec-scout/nospec-shape/nospec-carve/nospec-trial/nospec-mend` + shared `nospec-rule`/`nospec-lexicon`; `nospec-curator` was added later by ADR-0015)
 - Decisions (ADRs) — they persist because they're about rulings, not current behavior; when they stop applying, they're explicitly superseded, not left to silently rot
 - Glossary — small, curated, doesn't rot the way specs do
@@ -32,7 +33,7 @@ OpenAI's [`PLANS.md` / ExecPlan](https://developers.openai.com/cookbook/articles
 - **Decision Log *inside* the spec → decisions *extracted* to ADRs.** ExecPlans keep decisions in the spec "for posterity," conflating work-state and decision-state. nospec follows [decision-extraction](https://github.com/bermudi/AgenticWiki/blob/main/wiki/concepts/decision-extraction.md): the thing worth keeping from a spec is the decisions, not the spec — so decisions are extracted to durable ADRs and the spec is discarded.
 - **Prose-first forcing planner thoughtfulness → structured work units for parseability and review.** ExecPlan argues prose forces the author to think and reserves checklists for the Progress section, optimizing for a single multi-hour task. nospec's work-unit format (`Read first:` / `Constraints:` / `Done means:` / `Verify:`) is structured because the batch runner parses it and the `Done means:`/`Verify:` gap is the review surface, optimizing for many small units across a loop. Different bets for different shapes of work, not a defect on either side.
 
-The shared ground: validation is non-optional, outcomes must be observable, ambiguities get resolved autonomously. These are independent arrivals at the same conclusions nospec encodes in the `Verify:` field and ADR-0010's mechanical-contracts-stay-hard-rules.
+The shared ground: validation is non-optional, outcomes must be observable, and implementation ambiguity is resolved within delegated authority. Consequential trade-offs return to the decision owner (ADR-0021); autonomy is not architectural authority.
 
 ## What we're keeping from nospec
 

@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 

@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 
@@ -44,16 +45,16 @@ That symlinks the runner onto PATH. Then `nospec run ...` works from any directo
 | skill | what it transmits |
 |---|---|
 | **nospec-scout** | read the codebase, grill intent, stress-test ideas *before* planning |
-| **nospec-shape** | decompose intent into a disposable `QUEUE.md` of verifiable work units |
+| **nospec-shape** | decompose intent into verifiable outcomes; serialize a queue only for handoff or batch |
 | **nospec-carve** | implement a bounded observable outcome; verify-first, don't declare done until it passes |
 | **nospec-trial** | two-axis adversarial review — standards + intent — against the actual codebase |
 | **nospec-mend** | resolve review findings — directly, or as new work units appended to the queue |
-| **nospec-rule** *(shared)* | capture architectural rulings as ADRs in `decisions/`, inline as they crystallize |
+| **nospec-rule** *(shared)* | record an architectural ruling after the decision owner accepts it |
 | **nospec-lexicon** *(shared)* | manage `glossary.md`, the project's ubiquitous language |
 | **nospec-curator** *(shared)* | route knowledge to its authoritative artifact and maintain coherent projections |
 | **nospec** *(optional)* | the batch runner — drives a `QUEUE.md` behind a verify gate while you're away |
 
-`nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend` is a default path, not a gate. `bug → nospec-shape → nospec-carve → done` is equally valid. Skills compose.
+Skills compose without a mandatory path. Clear work can go directly to `nospec-carve`; use scouting, shaping, review, or mending only when their problem is present.
 
 ## Optional: unattended batch mode
 
@@ -64,7 +65,7 @@ LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' \
   nospec run .loop/<name>/QUEUE.md
 ```
 
-Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix (`--review`) are covered in [docs/loop.md](docs/loop.md). Most work is interactive; reach for the loop when you actually want to leave.
+Run `nospec lint .loop/<name>/QUEUE.md` before leaving; `nospec run` repeats that whole-queue preflight before mutation. Per-unit model routing (`Agent:`), handoffs, and opt-in review/fix (`--review`) are covered in [docs/loop.md](docs/loop.md). Most work is interactive.
 
 ## The thinking
 
@@ -76,7 +77,7 @@ Per-unit model routing (`Agent:`), handoff files on pause, and opt-in review/fix
 
 ```
 skills/        the nine skills — the product (incl. the nospec runner skill)
-decisions/     durable ADRs (YAML frontmatter: id, date, status, spine, ...)
+decisions/     durable ADRs (YAML frontmatter: nospec, id, date, status, spine, ...)
 glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
 docs/          user and architecture docs
 tests/run.sh   test harness for nospec

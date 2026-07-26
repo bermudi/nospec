@@ -1,4 +1,5 @@
 ---
+nospec: true
 id: 0002
 date: 2026-07-06
 status: superseded

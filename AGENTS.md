@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: record
 owns: operational-context
 ---
@@ -7,7 +8,7 @@ owns: operational-context
 
 ## Project
 
-**nospec** is a composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. It ships as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional bash batch runner (`nospec run`) provides unattended ("AFK") execution; everything else is interactive.
+**nospec** is a composable **skills collection** for working with coding agents — the procedural encoding of the [AgenticWiki](https://github.com/bermudi/AgenticWiki)'s theory. It ships as plain [agentskills.io](https://agentskills.io) skills, installable into any agent via [`npx skills`](https://github.com/vercel-labs/skills) / [skills.sh](https://skills.sh). An optional bash runner (`nospec run`) provides externally verified AFK execution; the skills also support interactive and plan-then-leave work without it.
 
 It replaces litespec. Specs are disposable; code is the source of truth; decisions and skills are durable.
 
@@ -32,8 +33,8 @@ Skills transmit **concepts and reasoning, not rules** (ADR-0010). Judgment (deco
 Two layers live in this repo. **`skills/` is the product** — what `npx skills add` installs into *other* projects, so it must be self-contained: no external links, which would be dead weight in a foreign project's context (ADR-0013). **Everything else here is nospec's own development context** — `AGENTS.md`, `glossary.md`, `decisions/`, `README.md`, `docs/` — which guides working *on* nospec, is never installed, and links freely.
 
 - `skills/` — nine skills (`nospec-scout`, `nospec-shape`, `nospec-carve`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, `nospec`). **These are the product.** Spec-compliant; installable via `npx skills add <owner>/<repo>`. The first eight transmit procedural concepts (ADR-0010: mode-independent, concept-forward); the ninth (`nospec`) carries the batch runner as `scripts/nospec` and transmits the batch-mode concept. No external links.
-- `decisions/` — durable ADRs with YAML frontmatter (`id`, `date`, `status`, `spine`, optional `supersedes`/`superseded_by`/`amends`/`grandfathered`). `glossary.md` — ubiquitous language: nospec-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
-- `skills/nospec/scripts/nospec` — the project's single bash entry point (ADR-0017; amended by ADR-0018 and ADR-0019). Verbs: `spine` (derive the spine from ADR frontmatter), `adrs` (list all ADRs), `check` (fail on structural drift — re-enumerated spine lists, duplicate ownership, missing frontmatter), `view` (read-only dashboard of cycles, work units, decisions), `install` (one-time symlink onto PATH — the agent runs this when the user asks to set up nospec; skills.sh doesn't touch PATH), `run` (the optional AFK batch runner — agent-agnostic via `LOOP_AGENT_CMD`, owns the verify gate, per-unit `Agent:` overrides, opt-in review/fix via `--review`). No Go, no compile step. Ships inside the `nospec` skill; `npx skills add` installs it alongside the other skills.
+- `decisions/` — durable ADRs with YAML frontmatter (`nospec`, `id`, `date`, `status`, `spine`, optional `supersedes`/`superseded_by`/`amends`/`builds_on`/`grandfathered`). `glossary.md` — ubiquitous language: nospec-domain terms defined here; wiki concepts linked, not redefined (ADR-0010).
+- `skills/nospec/scripts/nospec` — the project's single bash entry point (ADR-0017; amended by ADR-0018 and ADR-0019). Verbs: `spine` / `adrs` (derive ADR views), `check` (validate opted-in artifact metadata and structural drift), `lint` (whole-queue structure and shell preflight), `view` (read-only dashboard), `install` (one-time PATH symlink), and `run` (optional AFK runner with external verify and opt-in review/fix). `scripts/queue_parser.py` is its internal canonical queue parser, not a second entry point. No Go or compile step.
 
 ## Core artifacts
 
@@ -49,12 +50,14 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - The AgenticWiki — nospec's cited theory — has a local checkout at `~/Documents/AgenticWiki`. When a task needs to read, cite, or enrich the wiki (ingests, concept synopses for the skills, glossary depth), work in that tree — don't clone a duplicate. (A fresh clone once landed in `~/build/` and an ingest went into the wrong tree; the nospec docs named only the GitHub URL, never the local path.)
 - Skills transmit concepts + reasoning (ADR-0010). Don't prescribe *when* to deploy a concept as a rule. Hard rules are only for mechanical contracts.
 - The worker never declares done without a passing verify. In batch the loop owns the gate; interactively the worker runs it — the principle survives across modes, the enforcement mechanism doesn't.
-- A `Verify` command must be deterministic and executable by the runner — not an LLM-as-judge.
+- A batch `Verify` command must be deterministic, runner-executable, and discriminating: it should fail for a plausible state where the unit's central outcome is absent.
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic). `LOOP_REVIEW_CMD` / `LOOP_FIX_CMD` override review/fix. Per-unit `Agent:` overrides for one unit.
+- A batch worker signals a blocker by writing `blocked` plus its reason to `LOOP_RESULT_FILE`; the runner consumes it before verify. Non-`pending` unresolved units hold queue order and require explicit `--resume` after their cause is addressed.
 - Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
-- Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment — transmitted as concepts in the `nospec-rule`, `nospec-lexicon`, and `nospec-curator` skills, not enforced by gate commands. Structural drift (re-enumerated spine lists, duplicate ownership, missing frontmatter) is mechanical — `nospec check` catches it (ADR-0017).
-- The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary (mechanical: `nospec run` derives it from the verify command) and a pin-state record (mechanical: `nospec run` records which durable docs were touched and alerts when a prior pin moves). Pin alerts are triage triggers for `nospec-trial` → `nospec-curator`, not coherence gates (ADR-0016).
+- Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment. `nospec check` handles only structural drift in artifacts carrying `nospec: true`; generic repository Markdown metadata is outside its authority. Nospec's own exact metadata inventory is enforced by source tests.
+- An accepted ADR records a ruling already made by the decision owner or under explicitly delegated authority. Recommendations stay in conversation or disposable design material; a batch worker blocks on a newly discovered consequential trade-off.
+- The evidence ledger (`EVIDENCE.md`) carries a registry-derived proof boundary and pins changed Markdown artifacts marked `nospec: true`; ordinary host docs are outside the pin boundary. Pin alerts are triage triggers for `nospec-trial` → `nospec-curator`, not coherence gates (ADR-0016, amended by ADR-0021).
 - Operational gotchas go here; domain or problem insights that do not fit an ADR are added as a new durable record when one actually appears.
 
 ## Verification
@@ -63,7 +66,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 ./tests/run.sh
 ```
 
-Exercises `nospec run` (parsing, verify gate, handoff, review-fix) and `nospec view`, validates skill frontmatter via `skills-ref` when available, and runs `nospec check` (spine derivation, structural drift, frontmatter validity). There is no Go CLI; `go test` is gone.
+Exercises `nospec lint` / `run` (whole-queue preflight, verify gate, handoff, review-fix), `nospec view`, source metadata inventory, foreign-repository adoption boundaries, and `nospec check`; validates skill frontmatter via `skills-ref` when available.
 
 ## Lessons learned
 
@@ -73,7 +76,7 @@ Exercises `nospec run` (parsing, verify gate, handoff, review-fix) and `nospec v
 - **The loop works end-to-end with Devin as the worker.** `LOOP_AGENT_CMD='devin --print --prompt-file "$LOOP_PROMPT_FILE" --model kimi-k2.7 --permission-mode dangerous'` drove units to verified completion. `--permission-mode dangerous` is required for the worker to write code and run verify without hanging on approvals.
 - **The worker prompt names the skill explicitly (ADR-0007, amended by ADR-0019).** `skills/nospec/prompts/worker.md` tells the worker to load the `nospec-carve` skill by name; the worker's harness auto-loads it by trigger text, same as any skill invocation. The loop passes the prompt via `LOOP_PROMPT_FILE`. No path injection is needed — the worker is a harness session, and harnesses find their own skills. (ADR-0007's original "name and path" was a workaround for non-harness workers that doesn't apply when `LOOP_AGENT_CMD` drives a real agent.)
 - **A verify command run across units compounds.** Each unit's verify runs prior units' tests too, so regressions surface at the next gate.
-- **Review catches what verify can't.** The queue-parser regex `^##\s*(.*)$` once matched `###` subheadings as work units — a real bug tests missed because no fixture used `###`. Adversarial review against the actual codebase found it. Fix: exclude `###` in the unit-header check.
+- **Review catches what verify can't.** The queue parser once matched `###` subheadings as units because no fixture exercised them. The runner now uses one fence-aware parser for lint, selection, status mutation, dashboard, and handoff; preflight checks every unit before mutation.
 - **The verify gate proves the mechanical contract, not the coherence contract.** Tests-green + no-dead-refs-in-code can coexist with a durable doc that contradicts the ADRs: `AGENTS.md` once claimed `glossary.md` held "nospec-domain terms only" while the file was 21 wiki-concept redefinitions, and the `README` linked the AgenticWiki as a public backbone while it was a private repo. After changing rulings, separately check that durable docs (`AGENTS.md`, `glossary.md`, `README`, `docs/`) still cohere with them — the grep that proves "no dead CLI refs in code" deliberately excludes docs and will not catch this. Coherence is a separate gate from compilation, handled by the `nospec-curator` skill. The pin-state record (ADR-0016) catches *direct* drift — a durable doc that a prior cycle pinned has since changed — and routes it to `nospec-trial` → `nospec-curator`. It does not catch *indirect* coherence failure (A changed in a way that contradicts unpinned B); that remains judgment.
 - **Hand-maintained lists of derivable facts drift; make them derivable.** The "spine" — the curated set of load-bearing ADRs — was listed in three docs (`AGENTS.md`, `docs/architecture.md`, `README.md`) with three different answers (seven, six, and five entries respectively). ADR-0015 says each fact has one owner; the spine-list had three owners and no record. ADR-0016's pin-check couldn't catch it because no pin was set on the list itself — it was indirect coherence failure on an unpinned fact, exactly the case the project's own lessons-learned called out. Fix (ADR-0017): the spine is now a `spine: true` field in ADR frontmatter; `nospec spine` derives it; `nospec check` fails on any doc that re-enumerates it. The lesson generalizes: if a fact is already in the artifacts, derive it — don't re-state it in prose that will drift.
 - **Verify commands must be path-correct.** A unit once had `cd subproj && go test ./... && ./tests/run.sh` — but `./tests/run.sh` ran from `subproj/` after the `cd`, not the repo root. The loop correctly caught the failure; the verify command was wrong. Always test verify commands manually before writing them into a queue.

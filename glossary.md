@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: record
 owns: domain-terms
 ---

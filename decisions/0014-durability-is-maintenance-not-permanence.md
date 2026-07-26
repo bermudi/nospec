@@ -1,4 +1,5 @@
 ---
+nospec: true
 id: 0014
 date: 2026-07-18
 status: accepted

@@ -1,134 +1,84 @@
 ---
 name: nospec-trial
-description: Use when reviewing a change against intent and standards — adversarial scrutiny before accepting work. Two axes — standards (does the change follow the codebase's own conventions?) and intent (does it do what it was supposed to?). Reviews against the actual codebase, not specs. Triggers on "review", "check this", "is this right", "what did we miss", "stress-test the implementation", or when work needs adversarial scrutiny before being accepted.
+description: Use for adversarial review of an existing change against repository standards and the stated intent it was meant to satisfy.
 license: MIT
 metadata:
   author: bermudi
   version: "1.0.0"
 ---
 
-# Review
+# Trial
 
-Adversarial review of a change. Two axes, run independently so neither pollutes the other:
+Review an existing change on two independent axes:
 
-1. **Standards** — does the change follow the repo's coding conventions and codebase patterns?
-2. **Intent** — does the change do what it was supposed to?
+1. **Standards** — does it fit the repository's conventions and constraints?
+2. **Intent** — does it satisfy the promised outcome beyond the narrow checks already run?
 
-Review against the **actual codebase**, not against specs that may have rotted — stale specs are worse than none (doc-rot); the code is the source of truth.
+Review after reading the diff and available evidence. In a batch cycle, read the queue, `EVIDENCE.md`, and any provided design note. Interactively, recover intent from the request and conversation.
 
-That core is the same whether the change is an interactive edit or a completed batch work unit. What the batch path adds is artifacts: a `QUEUE.md` unit states what was promised, an `EVIDENCE.md` records what verify proved, and a `REVIEW.md` carries findings to the `nospec-mend` skill. Interactively, the "unit" is the stated intent and the change itself; findings go straight to the human or back into the work.
+Use the authoritative source for each claim: code and tests for implemented behavior, ADRs for rulings, the glossary for domain terms, operational context for repository practice, and the request or queue for current intent. Do not treat a stale spec or the current implementation as authority over all of them.
 
-## When to review
+## Standards axis
 
-- After a change is made and its verify passes
-- After a full batch queue is completed
-- When the user asks for a sanity check
-- Before accepting work as finished
+Compare the change with stated conventions and neighboring code. Look for:
 
-Review is not a gate the loop enforces — it's a skill the user or agent invokes when they want adversarial scrutiny.
+- incorrect error handling, naming, layout, or test style;
+- regressions, dead code, debugging residue, or unused paths;
+- unnecessary wrappers, abstractions, and parallel implementations;
+- stale projections after a public interface, ruling, term, or operational instruction changed.
 
-## Before you review
+A pin alert in `EVIDENCE.md` says a durable document moved; it is a prompt to inspect coherence, not proof of a defect. Use `nospec-curator` when durable records and views may disagree.
 
-Read the change (the diff). If there's a work unit (`.loop/<name>/QUEUE.md`) and evidence (`.loop/<name>/EVIDENCE.md`), read them — the unit states what was promised, the evidence what verify proved. Read the `Pin alerts:` section of `EVIDENCE.md` if present — each alert means a durable doc that a prior cycle pinned has since changed, which is a coherence signal the verify gate cannot see. If the prompt includes a `Design:` path, read `.loop/<name>/DESIGN.md` for the reasoning context (external constraints, decisions, trade-offs) the work was planned against; a deviation from its stated constraints is a stronger finding than one based on inference. Interactively, gather the stated intent from the request or conversation.
+## Intent axis
 
-## Two-axis review
+Compare the actual behavior with the outcome and constraints. A passing verify establishes only its mechanical scope.
 
-### Axis 1: Standards
+Probe plausible counterexamples outside that scope: variants, call order, side effects, short-circuit behavior, integration boundaries, and omissions. Ask how the result was produced, not only whether one visible value matched. Promote a concern only when the repository provides evidence for it.
 
-Does the change follow the codebase's existing patterns?
+Review can inspect the unverified acceptance surface; it cannot turn judgment into deterministic proof.
 
-- Read `AGENTS.md` for stated conventions.
-- Read neighboring code — does the change look like it belongs?
-- Check error handling, naming, file layout, test style.
-- Look for regressions — did the change break something nearby?
-- Check for dead code, unused imports, leftover debugging.
-- Check for over-reach — does the change add abstraction, wrappers, or parallel paths the outcome never asked for? Speculative structure is a standards finding even when it works: surface area is bug surface, and the bugs land in the layers nobody required.
-- Check for durable-context drift — if the change alters a public interface, a convention, a ruling, or a domain term, does it leave stale projections behind? If so, invoke the `document` skill to assess coherence and route corrections to the owning record.
-- Check `Pin alerts:` in `EVIDENCE.md` — each alert is a durable doc that a prior cycle pinned and has since changed. Route each alert to the `document` skill to assess whether the change left stale projections in other durable docs that describe or depend on it. A pin alert is a triage trigger, not a coherence finding by itself — it says "something moved," not "something is wrong." `document` judges whether the move broke coherence.
+## Evidence and confidence
 
-The question is not "is this good code?" — that's subjective. The question is "does this match the codebase's own standards?"
+Every promoted finding cites an exact `path:line` and a short excerpt.
 
-### Axis 2: Intent
+- **high** — direct evidence and a clear violation.
+- **medium** — direct evidence, but interpretation or impact remains uncertain.
+- **low or uncitable** — keep under `## Speculative`; do not count it as actionable.
 
-Does the change do what it was supposed to?
+This guard limits reviewer false positives. A plausible story without a cited premise is not a finding.
 
-- Read the stated outcome and constraints — from the work unit's `Done means:` / `Constraints:` if present, otherwise from the request.
-- Read the actual diff.
-- Does the diff satisfy the stated outcome? Stay within the constraints?
-- Did it introduce anything not asked for, or miss anything it said it would?
+## Classification
 
-The `Verify:` command is the mechanically enforceable subset of the outcome. The gap between the outcome and its verify is the review surface: intent review checks what the verify command cannot.
+- **actionable** — should be changed now and has one clear fix direction. Patch size is irrelevant.
+- **trivial** — non-blocking polish that may be ignored; the batch runner does not send it to the fixer.
+- **disputed** — evidence does not support the concern or project authority rejects it.
+- **deferred** — valid, intentionally outside the current work.
 
-Verify passing is a proxy, not proof — it means the mechanically enforceable subset held, not that the outcome is genuinely satisfied. Intent review asks the harder question: does the change *generalize*? Does it hold up against behavior the verify doesn't exercise, or did it satisfy the visible surface while leaving the real property unmet? A change that passes its verify only by fitting the visible tests — not by implementing the underlying behavior — is the signature intent finding, and it's the one the gate is structurally blind to.
+If a one-line issue must be fixed before acceptance, classify it as actionable. Reviewers do not edit source or append queue units in batch; `nospec-mend` owns that conversion.
 
-The technique that surfaces it: probe *how* the result is produced, not just *what* was returned. A verify that checks return values can pass while the underlying behavior is wrong — a `traverse` that eagerly maps every element then checks for failure returns the right `Nothing` while still calling the callback on elements past the failure. The intent review asks whether the verify exercises the side effects that distinguish the real property from its visible shadow: invocation counts, processing order, variant exhaustion (does each sum-type variant do what its case demands, or did one branch get copy-pasted from its neighbor?). A counter test — assert the callback ran exactly twice, not three times — is the shape. When the verify only observes the outcome, the intent review observes the trace.
+A fix direction is one unambiguous instruction, not a menu. If choosing a direction requires a new architectural ruling, report the decision need instead of laundering it into a fix.
 
-Know the limit before you lean on this. Most of these failures are omission — the worker knew how and didn't check, so a verification pause catches them. Some are comprehension — the worker misread the contract and will re-confirm its wrong reading under any pause that asks it to "verify the signature." A checklist entrenches comprehension failures; it doesn't fix them. The intent review pays off when the worker *could have* done it right and skipped; it doesn't when the worker's model of the problem is itself wrong, which is a `fix`-direction or a `decide`-direction problem, not a review finding.
+## Batch output contract
 
-> **Intent review is a judgment check, not a deterministic gate.** Be explicit about its scope and confidence. Any finding that becomes a new work unit must have a deterministic `Verify` command the runner can execute.
-
-## Running the axes
-
-Run both. They can be parallel (two passes over the same diff) or sequential. The order doesn't matter — what matters is that each axis is evaluated independently, without the other's conclusions bleeding in.
-
-## Confidence and evidence
-
-Every finding must cite the specific `file:line` that motivates it and state a confidence level. Before you write a finding into the report, quote the code that motivates it. If you can't, it goes to the appendix, not the report.
-
-- **high** — you read the specific code and can quote the line. Promoted to the report.
-- **medium** — pattern match, likely but not verified against the actual code. Promoted but flagged.
-- **low / uncitable** — you can't point to a specific line. **Not promoted.** Banished to `## Speculative`.
-
-Confidence is orthogonal to classification. This discipline exists because reviewers overcorrect — asked to explain and propose fixes, LLMs systematically misclassify correct code as defective (overcorrection-bias). Citing a line you actually read is the filter that keeps false negatives out of the report.
-
-## Findings become input to the fix skill
-
-- **Trivial** findings (a typo, a missing newline) can be fixed inline during review — but only interactively. In batch the reviewer prompt forbids editing source, so hand them to `fix` like any actionable finding.
-- **Actionable** findings are handed to `fix`. In a batch cycle they're written to `.loop/<name>/REVIEW.md` for `fix` to triage into new work units; do not write the units yourself, `fix` owns that. Interactively, hand them to the human or act on them directly.
-- **Disputed** or **deferred** findings are recorded in the review summary, not turned into units.
-
-The output of review is a structured set of findings, not a queue edit.
-
-## What review is not
-
-- Not a lint pass — the verify gate already ran. Review is about what verify *can't* check.
-- Not a spec compliance check — specs are disposable and may have rotted. Review against the codebase.
-- Not a gate — the loop doesn't enforce review. It's invoked when the user wants it.
-
-## Output
-
-In a batch cycle, write the structured artifact to the requested review output path (`.loop/<name>/REVIEW.md`, or wherever the prompt's `Review output:` points). Interactively, communicate findings directly — the format below is the batch contract the loop's parser reads; use it when there's a runner, skip it when there isn't.
-
-`REVIEW.md` must have exactly these top-level sections:
+Write the requested `REVIEW.md` with exactly these sections:
 
 1. `## Standards`
 2. `## Intent`
 3. `## Speculative`
 4. `## Summary`
 
-Put standards-axis findings under `## Standards`, intent-axis under `## Intent`. Use `## Speculative` for plausible-but-ungrounded concerns. If a section is clean, write `No issues found.`
-
-Each finding must include:
-
-- A stable id (`S1`, `I1`, `X1`)
-- Classification: `trivial`, `actionable`, `disputed`, or `deferred`
-- Confidence: `high`, `medium`, or `low`
-- Evidence: a `path/to/file:line` reference and a short quoted excerpt
-- Finding: the issue in one or two sentences
-- Fix direction: a single, unambiguous direction for `fix`, or `None` for non-actionable findings. Do not offer options or conditional branches — the fixer should not have to make a judgment call. If you see two valid approaches, pick one and state it. (Ambiguity invites the fixer to overcorrect; the design note, if provided, should help you decide.)
-
 Finding shape:
 
 ```markdown
 - S1 | actionable | high
-  evidence: `path/to/file:42` — "the quoted line or block that motivates this"
-  finding: The change violates the repo's existing queue parser behavior.
-  fix direction: Align the parser with the shell loop's unit-header rules.
+  evidence: `path/to/file:42` — "quoted code"
+  finding: The change violates the repository's established parser boundary.
+  fix direction: Route all queue consumers through the canonical parser.
 ```
 
-The full shape — with `evidence: file:line` — applies to Standards and Intent findings. Speculative findings relax it: free-form grounding, or omit `evidence:` (they're in `## Speculative` precisely because you couldn't cite a specific line).
+Use `S`, `I`, or `X` ids for standards, intent, or speculative findings. Write `No issues found.` for a clean section.
 
-The `## Summary` section must include counts:
+The summary is machine-readable:
 
 ```markdown
 ## Summary
@@ -141,4 +91,4 @@ The `## Summary` section must include counts:
 - deferred: 0
 ```
 
-The `- actionable: N` line is the loop's continue/stop signal. Count only findings classified as `actionable`. If there are none, write `- actionable: 0`.
+`- actionable: N` is the runner's continue/stop signal. Count only actionable findings. Interactively, communicate the same evidence without manufacturing a review artifact unless one is useful.

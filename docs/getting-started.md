@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 
@@ -18,11 +19,7 @@ Once installed, invoke a skill by name: `nospec-scout`, `nospec-shape`, `nospec-
 
 ## Use the skills interactively
 
-```
-nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend → done
-```
-
-This is a default path, not a gate. `bug → nospec-shape → nospec-carve → done` is equally valid.
+Invoke only the skill the work needs. A clear change can go directly to `nospec-carve`; unresolved intent may need `nospec-scout`, and decomposition may need `nospec-shape`. No queue or Nospec artifact is required for interactive work.
 
 ## Run the loop (optional)
 
@@ -36,7 +33,11 @@ See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix 
 
 ## Write a queue
 
-Create `.loop/<name>/QUEUE.md` using the format in [`queue-format.md`](./queue-format.md). Each work unit needs an outcome, constraints, done criteria, and a deterministic `Verify:` command.
+Create `.loop/<name>/QUEUE.md` using the format in [`queue-format.md`](./queue-format.md). Each work unit needs an outcome, constraints, done criteria, and a deterministic `Verify:` command that meaningfully distinguishes success from failure. Before leaving, run:
+
+```bash
+nospec lint .loop/<name>/QUEUE.md
+```
 
 ## Test the repo
 

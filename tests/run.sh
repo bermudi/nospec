@@ -24,9 +24,6 @@ make_queue() {
 Goal:
 Exercise the loop.
 
-Stop condition:
-\`$verify\` exits 0.
-
 ## the test fixture reaches its verify condition
 
 Read first:
@@ -51,6 +48,178 @@ bash -n "$root/skills/nospec/scripts/nospec"
 "$root/skills/nospec/scripts/nospec" run "$root/examples/smoke/.loop/smoke/QUEUE.md" --dry-run >/tmp/loop-dry-run.txt
 assert_contains /tmp/loop-dry-run.txt "Verify:"
 assert_contains /tmp/loop-dry-run.txt "test -f smoke.done"
+"$root/skills/nospec/scripts/nospec" lint "$root/examples/smoke/.loop/smoke/QUEUE.md" >/tmp/loop-lint.txt
+assert_contains /tmp/loop-lint.txt "queue valid"
+
+# Parser accessors do not rerun Bash syntax checks after preflight.
+accessor_bin="$tmp/accessor-bin"
+mkdir -p "$accessor_bin"
+cat > "$accessor_bin/bash" <<'EOF'
+#!/usr/bin/env sh
+exit 99
+EOF
+chmod +x "$accessor_bin/bash"
+PATH="$accessor_bin:$PATH" python "$root/skills/nospec/scripts/queue_parser.py" \
+  first-pending-title "$root/examples/smoke/.loop/smoke/QUEUE.md" >/tmp/accessor-title.txt
+assert_contains /tmp/accessor-title.txt "the smoke fixture creates a file that the verify gate can see"
+
+# Preflight validates the entire queue, not only the first pending unit.
+repo_lint="$tmp/repo-lint"
+mkdir -p "$repo_lint/.loop"
+cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: malformed later unit
+
+Goal:
+Prove every unit is parsed before execution.
+
+## the first unit is valid
+
+Verify:
+```bash
+true
+```
+
+Status: done
+
+## the later unit has malformed shell
+
+Verify:
+```bash
+printf '%s\n' 'unterminated
+```
+
+Status: pending
+EOF
+set +e
+"$root/skills/nospec/scripts/nospec" lint "$repo_lint/.loop/QUEUE.md" >/tmp/loop-lint-fail.txt 2>&1
+lint_code=$?
+"$root/skills/nospec/scripts/nospec" run "$repo_lint/.loop/QUEUE.md" --dry-run >/tmp/loop-dry-run-fail.txt 2>&1
+dry_code=$?
+set -e
+if [[ $lint_code -eq 0 || $dry_code -eq 0 ]]; then
+  echo "expected lint and dry-run to reject malformed later unit" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-lint-fail.txt "invalid Verify shell syntax"
+assert_contains /tmp/loop-dry-run-fail.txt "queue preflight failed"
+
+# Markdown headings inside Verify are shell comments, not work units.
+cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: fence-aware parsing
+
+Goal:
+Keep fenced content inside its unit.
+
+## the parser ignores headings inside fences
+
+Verify:
+```bash
+## harmless shell comment
+true
+```
+
+Status: pending
+EOF
+"$root/skills/nospec/scripts/nospec" lint "$repo_lint/.loop/QUEUE.md" >/tmp/loop-lint-fence.txt
+assert_contains /tmp/loop-lint-fence.txt "queue valid"
+
+# Field-shaped text inside fenced examples cannot hijack execution.
+cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: fenced examples
+
+Goal:
+Execute only fields parsed from the unit itself.
+
+## fenced examples remain inert
+
+````markdown
+Agent: touch hijacked
+Verify:
+```bash
+true
+```
+````
+
+Agent: touch real.done
+
+Verify:
+```bash
+test -f real.done
+```
+
+Status: pending
+EOF
+LOOP_AGENT_CMD='touch fallback.done' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_lint/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-fenced-fields.txt
+test -f "$repo_lint/real.done"
+if [[ -e "$repo_lint/hijacked" ]]; then
+  echo "fenced Agent field hijacked execution" >&2
+  exit 1
+fi
+
+# Run uses the parser's normalized title rather than reparsing raw whitespace.
+printf '%s\n' \
+  '# Loop Queue: normalized title' \
+  '' \
+  'Goal:' \
+  'Accept valid Markdown heading whitespace.' \
+  '' \
+  $'##\tnormalized outcome\t' \
+  '' \
+  'Agent: touch normalized.done' \
+  '' \
+  'Verify:' \
+  '```bash' \
+  'test -f normalized.done' \
+  '```' \
+  '' \
+  'Status: pending' > "$repo_lint/.loop/QUEUE.md"
+"$root/skills/nospec/scripts/nospec" run "$repo_lint/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-normalized-title.txt
+test -f "$repo_lint/normalized.done"
+
+# Unknown statuses and duplicate outcomes are structural errors.
+cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: invalid structure
+
+Goal:
+Reject ambiguous queue state.
+
+## repeated outcome
+
+Verify:
+```bash
+true
+```
+
+Status: maybe
+
+## repeated outcome
+
+Verify:
+```bash
+true
+```
+
+Status: pending
+
+## missing status outcome
+
+Verify:
+```bash
+true
+```
+EOF
+set +e
+"$root/skills/nospec/scripts/nospec" lint "$repo_lint/.loop/QUEUE.md" >/tmp/loop-lint-structure.txt 2>&1
+structure_code=$?
+set -e
+if [[ $structure_code -eq 0 ]]; then
+  echo "expected lint to reject unknown status and duplicate outcome" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-lint-structure.txt "unknown status"
+assert_contains /tmp/loop-lint-structure.txt "duplicate work unit outcome"
+assert_contains /tmp/loop-lint-structure.txt "missing Status field"
 
 repo1="$tmp/repo-pass"
 mkdir -p "$repo1"
@@ -59,6 +228,17 @@ LOOP_AGENT_CMD='touch smoke.done; echo worker pass' "$root/skills/nospec/scripts
 assert_contains "$repo1/.loop/QUEUE.md" "Status: done"
 assert_contains "$repo1/.loop/EVIDENCE.md" "Status: done"
 assert_contains "$repo1/.loop/EVIDENCE.md" "worker pass"
+
+# Standard named-cycle paths infer the repository above `.loop`.
+repo_named="$tmp/repo-named-cycle"
+mkdir -p "$repo_named"
+make_queue "$repo_named" "test -f named.done"
+mkdir -p "$repo_named/.loop/cycle"
+mv "$repo_named/.loop/QUEUE.md" "$repo_named/.loop/cycle/QUEUE.md"
+LOOP_AGENT_CMD='pwd > named.pwd; touch named.done' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_named/.loop/cycle/QUEUE.md" --max-ticks 1 >/tmp/loop-named.txt
+assert_contains "$repo_named/named.pwd" "$repo_named"
+test -f "$repo_named/named.done"
 
 repo2="$tmp/repo-fail"
 mkdir -p "$repo2"
@@ -115,6 +295,69 @@ assert_contains "$repo5/.loop/QUEUE.md" "Status: blocked"
 assert_contains "$repo5/.loop/HANDOFF.md" "## In progress"
 assert_contains "$repo5/.loop/HANDOFF.md" "blocked"
 
+# A successful worker process can still report a machine-readable blocker.
+repo_signal="$tmp/repo-blocker-signal"
+mkdir -p "$repo_signal"
+make_queue "$repo_signal" "true"
+set +e
+LOOP_AGENT_CMD='printf "blocked\narchitecture choice required\n" > "$LOOP_RESULT_FILE"' \
+  "$root/skills/nospec/scripts/nospec" run "$repo_signal/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-blocker-signal.txt 2>&1
+signal_code=$?
+set -e
+if [[ $signal_code -eq 0 ]]; then
+  echo "expected blocker signal to stop before verification" >&2
+  exit 1
+fi
+assert_contains "$repo_signal/.loop/QUEUE.md" "Status: blocked"
+assert_contains "$repo_signal/.loop/EVIDENCE.md" "architecture choice required"
+assert_contains /tmp/loop-blocker-signal.txt "worker reported blocker"
+
+# Non-pending unresolved work prevents later pending units from bypassing it.
+repo_recovery="$tmp/repo-recovery-order"
+mkdir -p "$repo_recovery/.loop"
+cat > "$repo_recovery/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: recovery order
+
+Goal:
+Resume failed work before later units.
+
+## first unresolved outcome
+
+Verify:
+```bash
+test -f first.done
+```
+
+Status: blocked
+
+## later pending outcome
+
+Verify:
+```bash
+test -f second.done
+```
+
+Status: pending
+EOF
+recovery_worker='if grep -q "first unresolved outcome" "$LOOP_PROMPT_FILE"; then echo first >> order.txt; touch first.done; else echo second >> order.txt; touch second.done; fi'
+set +e
+LOOP_AGENT_CMD="$recovery_worker" \
+  "$root/skills/nospec/scripts/nospec" run "$repo_recovery/.loop/QUEUE.md" --max-ticks 2 >/tmp/loop-recovery-required.txt 2>&1
+recovery_code=$?
+set -e
+if [[ $recovery_code -eq 0 ]]; then
+  echo "expected unresolved blocked unit to require --resume" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-recovery-required.txt "rerun with --resume"
+test ! -e "$repo_recovery/second.done"
+LOOP_AGENT_CMD="$recovery_worker" \
+  "$root/skills/nospec/scripts/nospec" run "$repo_recovery/.loop/QUEUE.md" --resume --max-ticks 2 >/tmp/loop-recovered.txt
+assert_contains /tmp/loop-recovered.txt "resuming first unresolved outcome from blocked"
+assert_contains "$repo_recovery/.loop/QUEUE.md" "Status: done"
+[[ $(sed -n '1p' "$repo_recovery/order.txt") == "first" ]]
+[[ $(sed -n '2p' "$repo_recovery/order.txt") == "second" ]]
+
 # ADR-0016: registry-derived proof claims replace the vacuous negative.
 # The verify `test -f smoke.done` should derive "file exists: smoke.done".
 assert_contains "$repo1/.loop/EVIDENCE.md" "file exists: smoke.done"
@@ -132,12 +375,24 @@ assert_contains "$repo1/.loop/EVIDENCE.md" "- (none)"
 repo_pin="$tmp/repo-pin-alerts"
 mkdir -p "$repo_pin"
 git init -q "$repo_pin"
-echo "# AGENTS v1" > "$repo_pin/AGENTS.md"
+cat > "$repo_pin/AGENTS.md" <<'EOF'
+---
+nospec: true
+role: record
+owns: operational-context
+---
+# AGENTS v1
+EOF
+echo "# unadopted README v1" > "$repo_pin/README.md"
 make_queue "$repo_pin" "test -f pin1.done"
 ( cd "$repo_pin" && git add -A && git commit -q -m init )
-LOOP_AGENT_CMD='touch pin1.done; echo "# AGENTS v2" > AGENTS.md' \
+LOOP_AGENT_CMD='touch pin1.done; sed -i "s/AGENTS v1/AGENTS v2/" AGENTS.md; sed -i "s/README v1/README v2/" README.md' \
   "$root/skills/nospec/scripts/nospec" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pinned: AGENTS.md @"
+if grep -q 'Pinned: README.md' "$repo_pin/.loop/EVIDENCE.md"; then
+  echo "expected unadopted README to remain outside pin state" >&2
+  exit 1
+fi
 # No pin alerts on the first cycle
 if grep -q 'Pin alert:' "$repo_pin/.loop/EVIDENCE.md"; then
   echo "expected no pin alerts on first cycle" >&2
@@ -145,7 +400,7 @@ if grep -q 'Pin alert:' "$repo_pin/.loop/EVIDENCE.md"; then
 fi
 ( cd "$repo_pin" && git add -A && git commit -q -m "cycle 1" )
 make_queue "$repo_pin" "test -f pin2.done"
-LOOP_AGENT_CMD='touch pin2.done; echo "# AGENTS v3" > AGENTS.md' \
+LOOP_AGENT_CMD='touch pin2.done; sed -i "s/AGENTS v2/AGENTS v3/" AGENTS.md' \
   "$root/skills/nospec/scripts/nospec" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
 # Second cycle should have a pin alert for AGENTS.md
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pin alert: AGENTS.md moved since"
@@ -160,9 +415,6 @@ cat > "$repo4/.loop/QUEUE.md" <<EOF
 
 Goal:
 Test per-unit Agent override.
-
-Stop condition:
-\`test -f override.done\` exits 0.
 
 ## the override worker runs instead of LOOP_AGENT_CMD
 
@@ -224,9 +476,6 @@ cat > "$repo_review/.loop/QUEUE.md" <<'EOF'
 
 Goal:
 Exercise build, review, fix, and review again.
-
-Stop condition:
-The generated app is fixed and review reports no actionable issues.
 
 ## the initial build creates a reviewable app file
 
@@ -404,9 +653,6 @@ cat > "$repo_view/.loop/feature-a/QUEUE.md" <<'EOF'
 Goal:
 Test the view dashboard.
 
-Stop condition:
-All units done.
-
 ## first unit is done
 
 Verify:
@@ -454,23 +700,25 @@ No issues found.
 EOF
 
 cat > "$repo_view/decisions/0001-first-ruling.md" <<'EOF'
+---
+nospec: true
+id: 0001
+date: 2026-07-17
+status: accepted
+spine: false
+---
 # 0001: First ruling
-
-Date: 2026-07-17
-Status: accepted
-
-## Context
-Test.
 EOF
 
-cat > "$repo_view/decisions/0002-proposed-ruling.md" <<'EOF'
-# 0002: Proposed ruling
-
-Date: 2026-07-17
-Status: proposed
-
-## Context
-Test.
+cat > "$repo_view/decisions/0002-retired-ruling.md" <<'EOF'
+---
+nospec: true
+id: 0002
+date: 2026-07-17
+status: superseded
+spine: false
+---
+# 0002: Retired ruling
 EOF
 
 "$root/skills/nospec/scripts/nospec" view --repo "$repo_view" >/tmp/loop-view.txt
@@ -484,7 +732,7 @@ assert_contains /tmp/loop-view.txt "Decisions"
 assert_contains /tmp/loop-view.txt "0001"
 assert_contains /tmp/loop-view.txt "accepted"
 assert_contains /tmp/loop-view.txt "0002"
-assert_contains /tmp/loop-view.txt "proposed"
+assert_contains /tmp/loop-view.txt "superseded"
 
 # view with no cycles and no decisions is not an error
 repo_empty="$tmp/repo-empty"
@@ -526,17 +774,122 @@ if [[ "$spine_count" -ne 8 ]]; then
   cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
-# adrs should list all 20 ADRs (19 + ADR-0020 for the rename)
+# adrs should list all 21 ADRs
 "$root/skills/nospec/scripts/nospec" --repo "$root" adrs >/tmp/nospec-adrs.txt
 adr_count=$(grep -c '^ADR-' /tmp/nospec-adrs.txt)
-if [[ "$adr_count" -ne 20 ]]; then
-  echo "expected 20 ADRs, got $adr_count" >&2
+if [[ "$adr_count" -ne 21 ]]; then
+  echo "expected 21 ADRs, got $adr_count" >&2
   cat /tmp/nospec-adrs.txt >&2
   exit 1
 fi
 # check must pass on the real repo
 "$root/skills/nospec/scripts/nospec" --repo "$root" check >/tmp/nospec-check.txt
 assert_contains /tmp/nospec-check.txt "all checks passed"
+
+# Nospec's own source inventory remains strict even though the distributed
+# checker ignores unadopted Markdown in foreign repositories.
+for doc in "$root/AGENTS.md" "$root/glossary.md" "$root/README.md" "$root"/docs/*.md; do
+  [[ $(head -1 "$doc") == "---" ]] || { echo "missing source frontmatter: $doc" >&2; exit 1; }
+  grep -q '^nospec: true' "$doc" || { echo "missing source nospec marker: $doc" >&2; exit 1; }
+  grep -q '^role:' "$doc" || { echo "missing source role: $doc" >&2; exit 1; }
+  if grep -q '^role: record' "$doc"; then
+    grep -q '^owns:' "$doc" || { echo "missing source ownership: $doc" >&2; exit 1; }
+  fi
+done
+for doc in "$root"/decisions/*.md; do
+  grep -q '^nospec: true' "$doc" || { echo "missing source nospec marker: $doc" >&2; exit 1; }
+  for field in id date status spine; do
+    grep -q "^$field:" "$doc" || { echo "missing source ADR field $field: $doc" >&2; exit 1; }
+  done
+done
+
+# Availability is not adoption: ordinary repository docs are not Nospec artifacts.
+repo_foreign="$tmp/repo-foreign-docs"
+mkdir -p "$repo_foreign/docs"
+printf '# Foreign project\n' > "$repo_foreign/README.md"
+printf '# Local agent instructions\n' > "$repo_foreign/AGENTS.md"
+cat > "$repo_foreign/docs/guide.md" <<'EOF'
+---
+role: tutorial
+---
+# Guide with unrelated generic metadata
+EOF
+mkdir -p "$repo_foreign/decisions"
+printf '# Ordinary numbered note\n' > "$repo_foreign/decisions/0001-note.md"
+printf '# Foreign glossary\n\n## Local term\n' > "$repo_foreign/glossary.md"
+"$root/skills/nospec/scripts/nospec" --repo "$repo_foreign" check >/tmp/check-foreign.txt
+"$root/skills/nospec/scripts/nospec" view --repo "$repo_foreign" >/tmp/view-foreign.txt
+assert_contains /tmp/check-foreign.txt "all checks passed"
+if grep -Eq "Decisions|Glossary:" /tmp/view-foreign.txt; then
+  echo "view should ignore unadopted numbered notes and glossary" >&2
+  cat /tmp/view-foreign.txt >&2
+  exit 1
+fi
+
+# Once a document opts in with namespaced metadata, its schema is enforced.
+repo_adopted="$tmp/repo-adopted-docs"
+mkdir -p "$repo_adopted/docs"
+cat > "$repo_adopted/docs/record.md" <<'EOF'
+---
+nospec: true
+role: record
+---
+# Record without ownership
+EOF
+set +e
+"$root/skills/nospec/scripts/nospec" --repo "$repo_adopted" check >/tmp/check-adopted.txt 2>&1
+adopted_code=$?
+set -e
+if [[ $adopted_code -eq 0 ]]; then
+  echo "expected an adopted record without owns to fail" >&2
+  exit 1
+fi
+assert_contains /tmp/check-adopted.txt "missing frontmatter field(s): owns"
+
+cat > "$repo_adopted/docs/record.md" <<'EOF'
+---
+nospec: true
+role: record
+owns: shared-claim
+---
+# First owner
+EOF
+cat > "$repo_adopted/docs/other.md" <<'EOF'
+---
+nospec: true
+role: record
+owns: shared-claim
+---
+# Duplicate owner
+EOF
+set +e
+"$root/skills/nospec/scripts/nospec" --repo "$repo_adopted" check >/tmp/check-duplicate.txt 2>&1
+duplicate_code=$?
+set -e
+if [[ $duplicate_code -eq 0 ]]; then
+  echo "expected duplicate adopted ownership to fail" >&2
+  exit 1
+fi
+assert_contains /tmp/check-duplicate.txt "duplicate ownership"
+# Ownership values are exact identifiers, not regular expressions.
+sed -i 's/owns: shared-claim/owns: axb/' "$repo_adopted/docs/record.md"
+sed -i 's/owns: shared-claim/owns: a.b/' "$repo_adopted/docs/other.md"
+"$root/skills/nospec/scripts/nospec" --repo "$repo_adopted" check >/tmp/check-exact-ownership.txt
+assert_contains /tmp/check-exact-ownership.txt "all checks passed"
+
+# CRLF frontmatter is still recognized as explicitly adopted metadata.
+repo_crlf="$tmp/repo-crlf"
+mkdir -p "$repo_crlf/docs"
+printf '%s\r\n' '---' 'nospec: true' 'role: record' '---' '# CRLF record' > "$repo_crlf/docs/record.md"
+set +e
+"$root/skills/nospec/scripts/nospec" --repo "$repo_crlf" check >/tmp/check-crlf.txt 2>&1
+crlf_code=$?
+set -e
+if [[ $crlf_code -eq 0 ]]; then
+  echo "expected CRLF adopted record without owns to fail" >&2
+  exit 1
+fi
+assert_contains /tmp/check-crlf.txt "missing frontmatter field(s): owns"
 
 # nospec install: symlinks the runner onto PATH (in a temp PATH)
 install_bin="$tmp/fake-bin"
@@ -554,6 +907,11 @@ target=$(readlink "$install_bin/nospec")
 # And it must be invocable via PATH
 PATH="$install_bin:$PATH" nospec --help >/tmp/nospec-via-path.txt 2>&1
 assert_contains /tmp/nospec-via-path.txt "nospec run"
+# Parser- and prompt-dependent verbs must resolve assets through the symlink.
+PATH="$install_bin:$PATH" nospec lint "$root/examples/smoke/.loop/smoke/QUEUE.md" >/tmp/nospec-symlink-lint.txt
+PATH="$install_bin:$PATH" nospec run "$root/examples/smoke/.loop/smoke/QUEUE.md" --dry-run >/tmp/nospec-symlink-run.txt
+assert_contains /tmp/nospec-symlink-lint.txt "queue valid"
+assert_contains /tmp/nospec-symlink-run.txt "test -f smoke.done"
 
 # check must catch all four spine re-enumeration patterns
 # Each test case gets its own mini-repo with the drift file in docs/
@@ -568,6 +926,7 @@ EOF
 # Pattern A: markdown links to decision files on one line
 repo_a="$tmp/repo-drift-a"
 make_drift_repo "$repo_a" '---
+nospec: true
 role: view
 ---
 # Pattern A
@@ -585,6 +944,7 @@ fi
 # Pattern B: em-dash spine entries (3+)
 repo_b="$tmp/repo-drift-b"
 make_drift_repo "$repo_b" '---
+nospec: true
 role: view
 ---
 # Pattern B
@@ -604,6 +964,7 @@ fi
 # Pattern C: comma-separated ADR numbers on one line (3+)
 repo_c="$tmp/repo-drift-c"
 make_drift_repo "$repo_c" '---
+nospec: true
 role: view
 ---
 # Pattern C
@@ -621,6 +982,7 @@ fi
 # Pattern D: bulleted ADR entries without separator (3+)
 repo_d="$tmp/repo-drift-d"
 make_drift_repo "$repo_d" '---
+nospec: true
 role: view
 ---
 # Pattern D
@@ -640,6 +1002,7 @@ fi
 # Prose references (2 ADRs in a sentence) must NOT trigger a failure
 repo_prose="$tmp/repo-drift-prose"
 make_drift_repo "$repo_prose" '---
+nospec: true
 role: view
 ---
 # Prose

@@ -1,4 +1,5 @@
 ---
+nospec: true
 id: 0017
 date: 2026-07-18
 status: accepted
@@ -8,6 +9,8 @@ builds_on: [0015]
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`, `decide` → `nospec-rule`, `document` → `nospec-curator`. Also amended by [ADR-0018](0018-one-command-with-verbs.md): separate commands (`knack spine`, `knack check`, `knack adrs`) collapsed into `nospec <verb>`.
+>
+> **Adoption boundary added by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** the distributed checker validates only artifacts marked `nospec: true`; Nospec's own exact inventory remains a source-test concern.
 
 # 0017: Derivable artifact metadata via a bash CLI
 

@@ -1,43 +1,38 @@
 ---
 name: nospec-scout
-description: Use when investigating a codebase, grilling intent, or stress-testing ideas before planning or building work. Read code, challenge assumptions, surface the real problem, and capture decisions as they crystallize. Triggers on "explore", "investigate", "let me understand", "what's going on with", "grill this", "stress-test", "help me decide", "what should I do next", or when the real problem isn't clear yet.
+description: Use when the real problem or binding intent is unclear and codebase investigation is needed before choosing or decomposing work.
 license: MIT
 metadata:
   author: bermudi
   version: "1.0.0"
 ---
 
-# Explore
+# Scout
 
-Read the codebase, grill the intent, stress-test ideas. The goal is clarity before work is planned or built — reaching the same theory as the codebase so the work that follows aims at the real problem, not a symptom of it. The output of explore is a clearer head, not a file on disk.
+Reach clarity before committing work. The failure this skill prevents is precise execution against the wrong problem.
 
-That core is the same whether you're exploring interactively with the human or preparing to leave a plan for unattended batch execution. Explore is a human-present activity: it produces understanding, not an artifact, so it has no mechanical verify and isn't a batch unit — it runs *before* batch, not in it. No edits land during explore except durable traces (an ADR, a glossary entry) written inline when a decision crystallizes.
+Scouting is human-present and normally read-only. It produces understanding, not a mandatory artifact or phase. Skip it when the task is already clear, such as a small fix with a reproduction.
 
-The failure mode explore prevents is working on the wrong problem. A precisely executed solution to the wrong problem is still wrong, and most wasted effort comes from solving the wrong problem, not from solving the right one badly. The user's stated goal is often a guessed-at solution to an unspoken problem; explore settles the target before work is committed.
+## Read for the codebase's theory
 
-## What explore does
+Start with the project's operational context and authoritative records, then inspect the relevant code, tests, and history. Read to uncover constraints and prior choices, not to collect every fact.
 
-These are concepts, not a script — they interleave, not sequence. Read the work and decide how much of each it needs.
+Look for the existing path before proposing a new one. A nearby parser, helper, or convention may already encode edge cases that a parallel implementation would rediscover badly. Extend before duplicating.
 
-- **Read the codebase.** Not to gather facts, but to surface the decisions the code already embodies. Code carries rulings and constraints the surface — README, stated intent, even the user's description — doesn't state; reading it is how you reach the codebase's actual theory. Code clarifies spec runs in reverse here: if implementing code clarifies a spec, reading existing code clarifies the real intent. Read the durable context first — `AGENTS.md`, `decisions/`, `glossary.md`, and `.loop/<name>/EVIDENCE.md` if a cycle has run (it survives the queue's deletion, so it's the record of what was already proven) — then the code the task touches and the tests that show what it's supposed to do. If a cycle is in flight, read its `.loop/<name>/HANDOFF.md` and `QUEUE.md` too.
+## Challenge the request
 
-- **Grill the intent.** The user's stated goal may not be the real goal. Ask what outcome they're after, what's actually binding, whether the stated problem is the real one or a symptom, what "done" looks like to them. Settling the right problem is cheapest here, before any code moves.
+Distinguish the desired outcome from the user's guessed solution:
 
-- **Stress-test ideas.** Before committing to an approach, poke holes. What breaks if we do it this way? What's the simplest thing that could work? What are we assuming that might be wrong? Is there an existing pattern in the codebase to follow?
+- What is actually failing or missing?
+- What must remain true?
+- What would count as success?
+- Which assumptions are uncertain?
+- Is the named problem a cause or a symptom?
 
-- **Find the existing path before building a new one.** Before committing to an approach, find the machinery that already does — or nearly does — what's needed, and plan to extend it rather than parallel it. Reinventing existing capability produces a worse copy: it misses the edge cases the original already handled, and it's usually larger too. The failure mode is subtle — you find the right code, read it as context, then rebuild it from scratch instead of calling it. A sibling format, parser, matcher, or helper that solves an adjacent problem is the template, not the competition. Surfacing this during explore is what keeps build from reinventing it.
+Use concrete counterexamples. Ask what breaks under the proposed approach, what the simplest viable alternative is, and whether the repository already prefers another shape.
 
-- **Capture decisions inline.** If a ruling crystallizes during exploration — "we'll use X because Y" — write the ADR now via the `nospec-rule` skill, not queued for later. If a domain term is ambiguous or inconsistent, define it now via `nospec-lexicon`. Decisions made during exploration are recorded during exploration.
+## Report the useful result
 
-## What explore is not
+Return the real problem, relevant evidence, constraints, and recommended next action. That action may be direct editing, `nospec-shape`, a decision request, or no change at all. Do not automatically manufacture a plan.
 
-- Not planning — that's `nospec-shape`. Explore doesn't write `QUEUE.md`.
-- Not a spec phase — no proposals or designs. Those are disposable and belong in `nospec-shape` if they're needed at all.
-- Not a code phase — no edits. Read-only, except durable traces captured inline.
-
-Explore is where you figure out what the problem actually is.
-
-## Reasoned defaults
-
-- **Default to exploring when the real problem isn't clear yet.** Override: skip it when the problem is already clear — a small fix, code you already know, a bug report with a reproduction. The skills are composable; reach for explore when clarity is the missing ingredient, not as a mandatory first step.
-- **Communicate what you found.** The real problem if it differs from the stated one, the approach you'd take and why, the decisions and terms you captured. Then the next step is whatever the clarity points to — `nospec-shape` to decompose, direct edits, or nothing — not automatically `nospec-shape`.
+A recommendation is not an accepted ruling. If exploration exposes a consequential trade-off, present it to the decision owner. Use `nospec-rule` only after the owner accepts a direction or has explicitly delegated that authority. Resolve recurring ambiguous domain language with `nospec-lexicon`.

@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 
@@ -82,19 +83,11 @@ The same skills serve all three modes; only who runs verification and whether a 
 
 ### Interactive
 
-```
-nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend → done
-```
-
-Skip steps as needed. `bug → nospec-shape → nospec-carve → done` is valid. The agent runs `Verify:` itself before declaring done.
+Invoke only the skill whose problem is present: scout uncertainty, shape outcomes, carve a bounded change, trial an existing diff, or mend known findings. No queue is required. The agent runs the relevant verification itself before declaring done.
 
 ### Plan-then-leave
 
-```
-nospec-scout + nospec-shape (interactive) → queue written → agent builds while human absent → done
-```
-
-The queue is a shared to-do list. Verification discipline is still the agent's.
+The human settles the judgment-heavy parts, then leaves the agent enough bounded context to continue. Use scouting or shaping only if the work needs them. A queue is optional cross-session coordination state; without the runner, verification discipline remains the agent's.
 
 ### Batch (AFK)
 
@@ -108,7 +101,7 @@ The loop owns the verify gate: it invokes the agent, runs `Verify:` outside the 
 
 Green tests and valid links do not prove that durable docs agree with rulings, terms, or the current code. Coherence is a separate, judgment-based check: do the records and their projections still tell the same story? The `nospec-curator` skill exists to surface and route these problems.
 
-Some structural drift is mechanically detectable: `nospec check` catches re-enumerated spine lists, duplicate ownership claims, and missing frontmatter (ADR-0017). It does not catch semantic contradiction — that remains judgment.
+Some structural drift is mechanically detectable: `nospec check` validates metadata and ownership for artifacts that explicitly opt in with `nospec: true`. Ordinary repository Markdown is ignored; installing Nospec does not adopt a document schema. The command does not catch semantic contradiction — that remains judgment.
 
 ## Grounding
 

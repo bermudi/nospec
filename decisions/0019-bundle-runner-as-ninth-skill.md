@@ -1,4 +1,5 @@
 ---
+nospec: true
 id: 0019
 date: 2026-07-20
 status: accepted
@@ -8,6 +9,8 @@ builds_on: [0009]
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. The ninth skill directory is `skills/nospec/`, the runner is `skills/nospec/scripts/nospec`, and all path references below are amended accordingly.
+>
+> **Authority boundary added by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** installing the runner grants capability, not adoption of Nospec's metadata schema or authority to accept architectural rulings.
 
 # 0019: Bundle the runner as the ninth skill
 

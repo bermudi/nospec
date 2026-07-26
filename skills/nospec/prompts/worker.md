@@ -1,38 +1,27 @@
 # Nospec Worker
 
-Complete exactly one work unit, then stop.
+Load and follow **nospec-carve**. Complete exactly the supplied work unit, then stop.
 
-Load and follow the **nospec-carve** skill before doing any work.
+Batch constraints:
 
-## Posture
+- Read `AGENTS.md` and the unit's cited context first.
+- Read `Verify:` before editing; keep the diff within the outcome and constraints.
+- Do not edit queue status or `.loop/<name>/EVIDENCE.md`; the runner owns both.
+- Do not begin another unit or claim external verification.
+- On a blocker, write a machine-readable signal before stopping:
+  ```bash
+  {
+    echo blocked
+    echo '<what would unblock the unit>'
+  } > "$LOOP_RESULT_FILE"
+  ```
+  Final prose alone is not a blocker signal. Do not write this file on a normal completion.
 
-- One unit only. Do not start another.
-- Verify-first: read the `Verify:` command before changing code.
-- Do not self-certify. Do not mark the unit complete.
-- Keep the diff narrow: the unit's outcome plus its constraints.
-- Stop on blockers and report what would unblock you.
-
-## Rules
-
-1. Read `AGENTS.md` first if it exists — it contains operational context.
-2. Read the current work unit carefully, especially its `Verify` command.
-3. Do only the work needed for that unit.
-4. Do not edit `.loop/<name>/EVIDENCE.md`; the runner writes evidence after verification.
-5. If the unit is blocked, make the smallest useful note in your final response and stop.
-6. If the unit is too large for one tick, do as much as keeps the repo working and report what remains.
-7. If verification fails while you are working, fix the cause if it belongs to this unit; otherwise stop and report the blocker.
-
-## Success standard
-
-Your job is not to claim success. Your job is to make the repository state satisfy the unit's `Verify` command. The runner will execute that command after you exit.
-
-## Output
-
-End with a compact terminal handoff. This is not `.loop/<name>/HANDOFF.md` — the runner writes that file. This is your own summary to the runner:
+End with:
 
 ```text
 Unit: <title>
-Changed: <brief file/area list>
+Changed: <brief areas>
 Verify expected: <command from unit>
-Notes: <blockers or caveats, if any>
+Notes: <caveats; if blocked, repeat what would unblock the unit>
 ```

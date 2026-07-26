@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 
@@ -9,7 +10,7 @@ role: view
 ## Usage
 
 ```bash
-nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
+nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run] [--resume]
 ```
 
 - `queue` — path to `QUEUE.md`. Usually `.loop/<name>/QUEUE.md`.
@@ -17,7 +18,8 @@ nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds 
 - `--max-ticks N` — maximum units to attempt. Default is `3`.
 - `--review` — opt into the bounded review/fix subloop after pending build units drain. Default behavior does not run review.
 - `--max-review-rounds N` — maximum review/fix rounds when `--review` is enabled. Default is `2`.
-- `--dry-run` — parse the first pending unit and print its title, repo, and verify command, then exit.
+- `--dry-run` — preflight every unit, then print the first pending unit's title, repo, and verify command without invoking a worker.
+- `--resume` — explicitly reset the first unresolved `in_progress`, `verify_failed`, `no_progress`, or `blocked` unit to `pending` and retry it before any later unit.
 
 ## Environment variables
 
@@ -26,7 +28,7 @@ nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds 
 - `LOOP_REVIEW_CMD` — optional command used for the review phase when `--review` is enabled. Defaults to `LOOP_AGENT_CMD`, or to the loop's default `pi` invocation if neither is set.
 - `LOOP_FIX_CMD` — optional command used for the fix phase when `--review` is enabled. Defaults to `LOOP_AGENT_CMD`, or to the loop's default `pi` invocation if neither is set.
 
-During every phase, the loop also sets `LOOP_PHASE`, `LOOP_QUEUE_FILE`, `LOOP_EVIDENCE_FILE`, and `LOOP_REVIEW_FILE` for the worker process.
+During every phase, the loop also sets `LOOP_PHASE`, `LOOP_QUEUE_FILE`, `LOOP_EVIDENCE_FILE`, and `LOOP_REVIEW_FILE`. Build workers additionally receive `LOOP_RESULT_FILE`: writing `blocked` on its first line plus a reason on later lines stops the runner before verification, even when the worker process exits zero.
 
 ## Per-unit agent override
 
@@ -41,11 +43,11 @@ Agent: claude --print --no-session-persistence --dangerously-skip-permissions "$
 
 ## Per-tick behavior
 
-1. Read the first `Status: pending` unit.
+1. Read the first unit whose status is not `done`. If it is not `pending`, stop; `--resume` explicitly resets it before continuing. Later units never bypass it.
 2. Mark it `in_progress`.
 3. Snapshot the repo state (diff + untracked files outside `.loop`).
 4. Invoke the agent with the worker prompt and the unit.
-5. If the agent exits non-zero, mark the unit `blocked`, append evidence, and stop.
+5. If the agent exits non-zero or writes a `blocked` result signal, mark the unit `blocked`, append evidence, and stop before verification.
 6. Run the unit's `Verify:` command.
 7. On success: mark `done`, append evidence, continue.
 8. On failure:
@@ -72,15 +74,17 @@ The subloop stops cleanly only when review reports zero actionable findings. Rea
 - `pending` — not yet started.
 - `in_progress` — currently being worked.
 - `done` — verify passed.
-- `verify_failed` — verify failed; may be retried once.
-- `no_progress` — verify failed twice with no snapshot change.
-- `blocked` — worker exited non-zero.
+- `verify_failed` — verify failed after changing the repository; requires explicit `--resume` after diagnosis.
+- `no_progress` — verify failed twice with no snapshot change; requires explicit `--resume` after diagnosis.
+- `blocked` — worker exited non-zero or emitted a blocker signal; requires explicit `--resume` after the blocker is addressed.
+
+An interrupted `in_progress` unit also requires `--resume`. Recovery always targets the first unresolved unit in queue order.
 
 ## Output files
 
 `nospec run` writes next to the queue:
 
-- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary (what this verify mechanically proves, derived from the command), and a pin-state record (which durable docs were touched and whether any prior pins have moved). It is durable; keep it after deleting `QUEUE.md` so completed work still anchors its ADR references. Pin alerts in the ledger are triage triggers for the `nospec-trial` skill, not coherence gates (ADR-0016).
+- `EVIDENCE.md` — append-only ledger. Includes the full unit, changed files, verify command, verify output, worker output, a registry-derived proof boundary, and pins for changed Markdown artifacts explicitly marked `nospec: true`. Untagged host-repository documents receive no Nospec pin semantics. Keep the ledger after deleting `QUEUE.md`; pin alerts are triage triggers for `nospec-trial`, not coherence gates.
 - `HANDOFF.md` — written on non-clean exit. Sections cover completed, in-progress, and remaining units plus unresolved actionable review findings and the next action. It is removed automatically only when both the build queue and review state are clean.
 - `REVIEW.md` — structured review artifact written by the review worker when `--review` is enabled. The loop reads only its `- actionable: N` summary line. `nospec view` projects a non-zero count as `REVIEW BLOCKED` even when every build unit is done.
 
@@ -107,6 +111,6 @@ nospec run .loop/<name>/QUEUE.md --review
 
 ## Verification notes
 
-- `nospec run` does **not** validate `QUEUE.md` structure. The loop trusts the format; use the `nospec-shape` skill or inspect the file directly before running.
+- `nospec lint <queue>` preflights every unit: headings, statuses, duplicate fields, fenced Bash verifies, and shell syntax. `nospec run` performs the same preflight before any worker runs or status changes, including after a fixer appends units.
 - `nospec run` invokes review and fix workers only when `--review` is set. Without that flag it still reads an existing `REVIEW.md` summary so unresolved review cannot become false success; it does not judge findings or manage ADRs/glossary.
-- The `Verify:` command must be deterministic and executable by the runner — tests, builds, type checks, not an LLM-as-judge.
+- The `Verify:` command must be deterministic, runner-executable, and discriminating: it should fail for a plausible state where the unit's central outcome is absent. Tests, builds, and type checks qualify when they actually exercise that outcome; an LLM judgment or vacuous `true` does not.

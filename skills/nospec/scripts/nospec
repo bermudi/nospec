@@ -10,14 +10,21 @@
 
 set -euo pipefail
 
-# SCRIPT_DIR is where this script lives — .../nospec/scripts/. The sibling
-# skills (build, review, fix, ...) and the prompts/ directory install alongside
-# it, so the runner finds them relative to SCRIPT_DIR:
+# SCRIPT_DIR is the real .../nospec/scripts/ directory even when this entry
+# point is invoked through the symlink created by `nospec install`. Prompts and
+# the canonical queue parser ship beside it and are resolved from that path:
 #   - Installed: $SCRIPT_DIR/..        = .agents/skills/  (or ~/.agents/skills/)
 #   - Dev:        $SCRIPT_DIR/../..    = skills/          (nospec's own repo)
 # REPO_ROOT is the repo to operate on (derive, lint, inspect); it defaults to
 # the current working directory and can be overridden by a leading `--repo DIR`.
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SOURCE_PATH="${BASH_SOURCE[0]}"
+while [[ -L "$SOURCE_PATH" ]]; do
+    SOURCE_DIR="$(cd -P "$(dirname "$SOURCE_PATH")" && pwd)"
+    SOURCE_PATH="$(readlink "$SOURCE_PATH")"
+    [[ "$SOURCE_PATH" == /* ]] || SOURCE_PATH="$SOURCE_DIR/$SOURCE_PATH"
+done
+SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE_PATH")" && pwd)"
+QUEUE_PARSER="$SCRIPT_DIR/queue_parser.py"
 REPO_ROOT="$(pwd)"
 
 # Allow --repo DIR to override the repo root (for testing and external use)
@@ -33,7 +40,9 @@ done
 fm_get() {
     local file="$1" field="$2"
     awk -v field="$field" '
-        /^---/ { in_fm = !in_fm; next }
+        { sub(/\r$/, "") }
+        NR == 1 { if ($0 != "---") exit; in_fm = 1; next }
+        in_fm && /^---$/ { exit }
         in_fm && $0 ~ "^" field ":" {
             sub("^" field ":[[:space:]]*", "")
             gsub(/^"|"$/, "")
@@ -48,7 +57,9 @@ fm_get() {
 fm_title() {
     local file="$1"
     awk '
-        /^---/ { in_fm = !in_fm; next }
+        { sub(/\r$/, "") }
+        NR == 1 && $0 == "---" { in_fm = 1; next }
+        in_fm && /^---$/ { in_fm = 0; next }
         !in_fm && /^# / {
             sub(/^# [0-9]+:[[:space:]]*/, "")
             sub(/^# /, "")
@@ -56,12 +67,6 @@ fm_title() {
             exit
         }
     ' "$file"
-}
-
-# Check whether a file has YAML frontmatter at all.
-# Usage: fm_has <file>
-fm_has() {
-    head -1 "$1" | grep -q '^---'
 }
 
 # ─────────────────────────── Shared helpers ────────────────────────────
@@ -80,8 +85,8 @@ abs_path() {
 # nospec spine — print the spine ADRs derived from frontmatter.
 cmd_spine() {
     local f id title
-    for f in "$REPO_ROOT"/decisions/00*.md; do
-        [[ -f "$f" ]] || continue
+    while IFS= read -r f; do
+        [[ -n "$f" ]] || continue
         local spine
         spine=$(fm_get "$f" "spine")
         if [[ "$spine" == "true" ]]; then
@@ -89,19 +94,19 @@ cmd_spine() {
             title=$(fm_title "$f")
             printf "ADR-%s — %s\n" "$id" "$title"
         fi
-    done
+    done < <(list_adrs)
 }
 
-# nospec adrs — print all ADRs with id, status, title.
+# nospec adrs — print all adopted ADRs with id, status, title.
 cmd_adrs() {
     local f id status title
-    for f in "$REPO_ROOT"/decisions/00*.md; do
-        [[ -f "$f" ]] || continue
+    while IFS= read -r f; do
+        [[ -n "$f" ]] || continue
         id=$(fm_get "$f" "id")
         status=$(fm_get "$f" "status")
         title=$(fm_title "$f")
         printf "ADR-%s [%s] %s\n" "$id" "$status" "$title"
-    done
+    done < <(list_adrs)
 }
 
 # nospec check — fail on structural drift.
@@ -130,7 +135,7 @@ cmd_check() {
     while IFS= read -r doc; do
         [[ -z "$doc" ]] && continue
         local body
-        body=$(awk '/^---/{in_fm=!in_fm;next} !in_fm' "$doc")
+        body=$(awk '{ sub(/\r$/, "") } NR == 1 && $0 == "---" { in_fm=1; next } in_fm && /^---$/ { in_fm=0; next } !in_fm' "$doc")
 
         # Pattern A: 2+ markdown links to decision files on a single line
         if echo "$body" | grep -qP '\[00\d{2}\]\(decisions/.*\[00\d{2}\]\(decisions/'; then
@@ -192,25 +197,24 @@ cmd_check() {
         [[ -z "$doc" ]] && continue
         owns_value=$(fm_get "$doc" "owns")
         [[ -z "$owns_value" ]] && continue
-        if echo "$owns_map" | grep -qP "^${owns_value}$"; then
+        if printf '%s' "$owns_map" | grep -Fqx -- "$owns_value"; then
             echo "FAIL: duplicate ownership — '$owns_value' claimed by multiple records"
             failures=$((failures + 1))
         fi
         owns_map="$owns_map$owns_value"$'\n'
     done < <(list_records)
 
-    # ── Check 3: Durable docs must have required frontmatter ──
-    check_frontmatter "$REPO_ROOT/AGENTS.md" "role" "owns" || failures=$((failures + 1))
-    check_frontmatter "$REPO_ROOT/glossary.md" "role" "owns" || failures=$((failures + 1))
-    check_frontmatter "$REPO_ROOT/README.md" "role" || failures=$((failures + 1))
-    for f in "$REPO_ROOT"/docs/*.md; do
-        [[ -f "$f" ]] || continue
-        check_frontmatter "$f" "role" || failures=$((failures + 1))
-    done
-    for f in "$REPO_ROOT"/decisions/00*.md; do
-        [[ -f "$f" ]] || continue
-        check_frontmatter "$f" "id" "date" "status" "spine" || failures=$((failures + 1))
-    done
+    # ── Check 3: Opted-in artifacts must satisfy their declared schema ──
+    # Ordinary Markdown is not implicitly owned by nospec. An artifact opts in
+    # only through the namespaced `nospec: true` frontmatter marker.
+    while IFS= read -r f; do
+        [[ -n "$f" ]] || continue
+        check_adopted_doc "$f" || failures=$((failures + 1))
+    done < <(list_durable_docs)
+    while IFS= read -r f; do
+        [[ -n "$f" ]] || continue
+        check_adr "$f" || failures=$((failures + 1))
+    done < <(list_adrs)
 
     if [[ "$failures" -gt 0 ]]; then
         echo ""
@@ -224,23 +228,34 @@ cmd_check() {
 # ──────────────────────────── Helpers ────────────────────────────
 
 list_durable_docs() {
-    # All durable docs outside decisions/ that have frontmatter
-    local f
-    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT/README.md" \
-             "$REPO_ROOT"/docs/*.md; do
-        [[ -f "$f" ]] || continue
-        fm_has "$f" && echo "$f"
-    done
+    # Markdown documents explicitly adopted through the nospec marker.
+    local f adopted
+    while IFS= read -r f; do
+        adopted=$(fm_get "$f" "nospec")
+        [[ "$adopted" == "true" ]] && echo "$f"
+    done < <(find "$REPO_ROOT" -type f -name '*.md' \
+        -not -path '*/.git/*' -not -path '*/.loop/*' -not -path '*/node_modules/*' \
+        -not -path '*/decisions/*' | sort)
+    return 0
 }
 
 list_records() {
-    # Docs with role: record
     local f role
-    for f in "$REPO_ROOT/AGENTS.md" "$REPO_ROOT/glossary.md" "$REPO_ROOT"/docs/*.md "$REPO_ROOT/README.md"; do
-        [[ -f "$f" ]] || continue
+    while IFS= read -r f; do
         role=$(fm_get "$f" "role")
         [[ "$role" == "record" ]] && echo "$f"
+    done < <(list_durable_docs)
+    return 0
+}
+
+list_adrs() {
+    local f adopted
+    for f in "$REPO_ROOT"/decisions/*.md; do
+        [[ -f "$f" ]] || continue
+        adopted=$(fm_get "$f" "nospec")
+        [[ "$adopted" == "true" ]] && echo "$f"
     done
+    return 0
 }
 
 # check_frontmatter <file> <field1> [field2] ...
@@ -262,6 +277,32 @@ check_frontmatter() {
     return 0
 }
 
+check_adopted_doc() {
+    local file=$1 role
+    check_frontmatter "$file" "nospec" "role" || return 1
+    role=$(fm_get "$file" "role")
+    case "$role" in
+        record) check_frontmatter "$file" "owns" || return 1 ;;
+        view|ledger) ;;
+        *) echo "FAIL: $file — invalid role '$role' (expected record, view, or ledger)"; return 1 ;;
+    esac
+}
+
+check_adr() {
+    local file=$1 status spine
+    check_frontmatter "$file" "nospec" "id" "date" "status" "spine" || return 1
+    status=$(fm_get "$file" "status")
+    spine=$(fm_get "$file" "spine")
+    if [[ "$status" != "accepted" && "$status" != "superseded" ]]; then
+        echo "FAIL: $file — invalid status '$status' (expected accepted or superseded)"
+        return 1
+    fi
+    if [[ "$spine" != "true" && "$spine" != "false" ]]; then
+        echo "FAIL: $file — invalid spine '$spine' (expected true or false)"
+        return 1
+    fi
+}
+
 # ──────────────────────────── Loop: view ────────────────────────────
 
 # nospec view — read-only dashboard of cycles, work units, and decisions.
@@ -279,29 +320,22 @@ cmd_view() {
         esac
     done
     [[ -d "$repo_dir" ]] || die "repo not found: $repo_dir"
-    python - "$repo_dir" <<'PY'
+    PYTHONDONTWRITEBYTECODE=1 python - "$repo_dir" "$QUEUE_PARSER" <<'PY'
 import sys, re, time
 from pathlib import Path
 
 repo = Path(sys.argv[1])
+sys.path.insert(0, str(Path(sys.argv[2]).parent))
+from queue_parser import parse_queue as parse_queue_file
 W = "=" * 60
 D = "-" * 60
 
 def parse_queue(path):
-    units = []
-    current = None
-    for line in path.read_text().splitlines():
-        if re.match(r'^## ', line) and not re.match(r'^###', line):
-            if current:
-                units.append(current)
-            current = {"title": line[3:].strip(), "status": "pending"}
-        elif current:
-            m = re.match(r'^Status:\s*(\S+)', line)
-            if m:
-                current["status"] = m.group(1)
-    if current:
-        units.append(current)
-    return units
+    units, diagnostics = parse_queue_file(path, validate_shell=False)
+    if diagnostics:
+        details = "; ".join(f"line {item.line}: {item.message}" for item in diagnostics)
+        raise SystemExit(f"nospec view: malformed queue {path}: {details}")
+    return [{"title": unit.title, "status": unit.status} for unit in units]
 
 def parse_review_actionable(path):
     if not path.is_file():
@@ -358,22 +392,36 @@ for cycle in cycles:
     review_blocked_cycles += int(review_actionable > 0)
 
 # --- Decisions ---
+def frontmatter(text):
+    lines = text.splitlines()
+    if not lines or lines[0] != "---":
+        return {}
+    metadata = {}
+    for line in lines[1:]:
+        if line == "---":
+            return metadata
+        if ":" in line:
+            key, value = line.split(":", 1)
+            metadata[key.strip()] = value.strip().strip('"')
+    return {}
+
 decisions = []
 dec_dir = repo / "decisions"
 if dec_dir.is_dir():
     for f in sorted(dec_dir.glob("*.md")):
-        text = f.read_text()
-        sm = re.search(r'^[Ss]tatus:\s*(\S+)', text, re.MULTILINE)
-        status = sm.group(1) if sm else "unknown"
-        m = re.match(r'(\d+)-(.+)', f.stem)
-        num = m.group(1) if m else "?"
-        slug = m.group(2) if m else f.stem
+        metadata = frontmatter(f.read_text())
+        if metadata.get("nospec") != "true":
+            continue
+        num = metadata.get("id", "?")
+        status = metadata.get("status", "unknown")
+        m = re.match(r'\d+-(.+)', f.stem)
+        slug = m.group(1) if m else f.stem
         decisions.append((num, slug, status))
 
 # --- Glossary ---
 glossary_terms = 0
 glossary = repo / "glossary.md"
-if glossary.is_file():
+if glossary.is_file() and frontmatter(glossary.read_text()).get("nospec") == "true":
     for line in glossary.read_text().splitlines():
         if re.match(r'^##\s+', line) and not re.match(r'^###', line):
             glossary_terms += 1
@@ -392,12 +440,9 @@ if t_review_actionable:
     print(f"  ! Review: {t_review_actionable} actionable across {review_blocked_cycles} {label}")
 if decisions:
     accepted = sum(1 for d in decisions if d[2] == "accepted")
-    proposed = sum(1 for d in decisions if d[2] == "proposed")
     superseded = sum(1 for d in decisions if d[2] == "superseded")
-    other = len(decisions) - accepted - proposed - superseded
+    other = len(decisions) - accepted - superseded
     parts = [f"{accepted} accepted"]
-    if proposed:
-        parts.append(f"{proposed} proposed")
     if superseded:
         parts.append(f"{superseded} superseded")
     if other:
@@ -495,77 +540,52 @@ cmd_install() {
 
 # ──────────────────────────── Loop: run ────────────────────────────
 
+preflight_queue() {
+    python "$QUEUE_PARSER" validate "$1" || die "queue preflight failed"
+}
+
 first_pending_unit() {
-    awk '
-        BEGIN { in_block = 0; block = ""; status = ""; found = 0 }
-        /^## / {
-            if (in_block && status == "pending") { printf "%s", block; found = 1; exit }
-            in_block = 1; block = $0 "\n"; status = ""; next
-        }
-        in_block {
-            block = block $0 "\n"
-            if ($0 ~ /^Status:[[:space:]]*pending[[:space:]]*$/) status = "pending"
-        }
-        END { if (!found && in_block && status == "pending") printf "%s", block }
-    ' "$1"
+    python "$QUEUE_PARSER" first-pending "$1"
 }
 
-extract_verify() {
-    awk '
-        BEGIN { after_verify = 0; in_fence = 0 }
-        after_verify && /^```/ { if (!in_fence) { in_fence = 1; next } else exit }
-        after_verify && in_fence { print; next }
-        /^Verify:[[:space:]]*$/ { after_verify = 1 }
-    ' "$1"
+first_pending_title() {
+    python "$QUEUE_PARSER" first-pending-title "$1"
 }
 
-extract_agent() {
-    awk '/^Agent:[[:space:]]+/ { sub(/^Agent:[[:space:]]*/, ""); gsub(/[[:space:]]+$/, ""); print; exit }' "$1"
+first_unresolved_unit() {
+    python "$QUEUE_PARSER" first-unresolved "$1"
+}
+
+first_unresolved_title() {
+    python "$QUEUE_PARSER" first-unresolved-title "$1"
+}
+
+first_unresolved_status() {
+    python "$QUEUE_PARSER" first-unresolved-status "$1"
+}
+
+parsed_unit_verify() {
+    python "$QUEUE_PARSER" unit-verify "$1" "$2"
+}
+
+parsed_unit_agent() {
+    python "$QUEUE_PARSER" unit-agent "$1" "$2"
 }
 
 set_status() {
-    python - "$1" "$2" "$3" <<'PY'
-import sys
-from pathlib import Path
-
-queue, title, status = sys.argv[1:]
-path = Path(queue)
-lines = path.read_text().splitlines(keepends=True)
-heading = f"## {title}"
-inside = False
-changed = False
-out = []
-for line in lines:
-    stripped = line.strip()
-    if stripped.startswith("## ") and not stripped.startswith("### "):
-        if inside and not changed:
-            out.append(f"Status: {status}\n")
-            changed = True
-        inside = stripped == heading
-    if inside and stripped.startswith("Status:") and not changed:
-        out.append(f"Status: {status}\n")
-        changed = True
-        continue
-    out.append(line)
-if inside and not changed:
-    if out and not out[-1].endswith("\n"):
-        out[-1] += "\n"
-    out.append(f"Status: {status}\n")
-    changed = True
-if not changed:
-    raise SystemExit(f"unit not found or status already changed: {title}")
-path.write_text("".join(out))
-PY
+    python "$QUEUE_PARSER" set-status "$1" "$2" "$3"
 }
 
 write_handoff() {
-    python - "$1" "$2" "$3" <<'PY'
+    PYTHONDONTWRITEBYTECODE=1 python - "$1" "$2" "$3" "$QUEUE_PARSER" <<'PY'
 import sys, re
 from pathlib import Path
 from datetime import datetime
 
-queue, evidence, handoff = sys.argv[1:]
+queue, evidence, handoff, parser = sys.argv[1:]
 queue_path = Path(queue)
+sys.path.insert(0, str(Path(parser).parent))
+from queue_parser import parse_queue
 review_path = queue_path.with_name("REVIEW.md")
 lines = queue_path.read_text().splitlines()
 
@@ -579,19 +599,10 @@ if review_path.is_file():
     if match:
         review_actionable = int(match.group(1))
 
-units = []
-current = None
-for line in lines:
-    if re.match(r'^## ', line) and not re.match(r'^###', line):
-        if current:
-            units.append(current)
-        current = {"title": line[3:].strip(), "status": "pending"}
-    elif current:
-        m = re.match(r'^Status:\s*(\S+)', line)
-        if m:
-            current["status"] = m.group(1)
-if current:
-    units.append(current)
+parsed_units, diagnostics = parse_queue(queue_path, validate_shell=False)
+if diagnostics:
+    sys.exit(0)  # preflight owns diagnostics; do not replace them from EXIT trap
+units = [{"title": unit.title, "status": unit.status} for unit in parsed_units]
 
 pending = [u for u in units if u["status"] != "done"]
 if not pending and review_actionable == 0:
@@ -719,18 +730,24 @@ from pathlib import Path
 
 evidence_path, repo_dir = sys.argv[1], sys.argv[2]
 
-# Durable-doc patterns (nospec-specific; see ADR-0016)
-DURABLE_PATTERNS = [
-    re.compile(r'^decisions/.*\.md$'),
-    re.compile(r'^glossary\.md$'),
-    re.compile(r'^AGENTS\.md$'),
-    re.compile(r'^README\.md$'),
-    re.compile(r'^docs/.*\.md$'),
-    re.compile(r'^skills/.*SKILL\.md$'),
-]
-
-def is_durable(path):
-    return any(p.match(path) for p in DURABLE_PATTERNS)
+def is_adopted(path):
+    full = os.path.join(repo_dir, path)
+    if not os.path.isfile(full) or not path.endswith('.md'):
+        return False
+    try:
+        lines = Path(full).read_text().splitlines()
+    except (OSError, UnicodeError):
+        return False
+    if not lines or lines[0] != '---':
+        return False
+    for line in lines[1:]:
+        if line == '---':
+            return False
+        if ':' in line:
+            key, value = line.split(':', 1)
+            if key.strip() == 'nospec' and value.strip().strip('"') == 'true':
+                return True
+    return False
 
 def file_sha(repo_dir, path):
     full = os.path.join(repo_dir, path)
@@ -761,7 +778,7 @@ if result.returncode == 0:
         path = line[3:].strip()
         if path.startswith('.loop/'):
             continue
-        if is_durable(path):
+        if is_adopted(path):
             changed_durable.append(path)
 
 # Scan prior evidence entries for pins on the same paths
@@ -936,7 +953,7 @@ EOF
 }
 
 run_phase_agent() {
-    local phase=$1 prompt=$2 output=$3 cmd=${4:-}
+    local phase=$1 prompt=$2 output=$3 cmd=${4:-} result_file=${5:-}
     if [[ -n "$cmd" ]]; then
         (
             cd "$repo_dir"
@@ -945,6 +962,7 @@ run_phase_agent() {
                 LOOP_QUEUE_FILE="$queue_abs" \
                 LOOP_EVIDENCE_FILE="$evidence" \
                 LOOP_REVIEW_FILE="$review_file" \
+                LOOP_RESULT_FILE="$result_file" \
                 bash -lc "$cmd"
         ) > "$output" 2>&1
     else
@@ -955,6 +973,7 @@ run_phase_agent() {
                 LOOP_QUEUE_FILE="$queue_abs" \
                 LOOP_EVIDENCE_FILE="$evidence" \
                 LOOP_REVIEW_FILE="$review_file" \
+                LOOP_RESULT_FILE="$result_file" \
                 pi -p --no-session --approve "$(cat "$prompt")"
         ) > "$output" 2>&1
     fi
@@ -976,14 +995,14 @@ run_one_unit() {
     unit=$(first_pending_unit "$queue_abs")
     [[ -n "$unit" ]] || return 1
 
-    local unit_file verify_file agent_out verify_out
-    unit_file=$(mktemp); verify_file=$(mktemp); agent_out=$(mktemp); verify_out=$(mktemp)
+    local unit_file verify_file agent_out verify_out result_file
+    unit_file=$(mktemp); verify_file=$(mktemp); agent_out=$(mktemp); verify_out=$(mktemp); result_file=$(mktemp)
     printf '%s' "$unit" > "$unit_file"
 
-    local first_line title verify
-    first_line=$(awk 'NR == 1 { print; exit }' "$unit_file")
-    title=${first_line#\#\# }
-    verify=$(extract_verify "$unit_file")
+    local title verify
+    title=$(first_pending_title "$queue_abs")
+    [[ -n "$title" ]] || die "pending work unit has no outcome"
+    verify=$(parsed_unit_verify "$queue_abs" "$title")
     [[ -n "$verify" ]] || die "work unit has no Verify fenced block: $title"
     printf '%s\n' "$verify" > "$verify_file"
 
@@ -1012,14 +1031,14 @@ EOF
 
     local agent_cmd unit_agent
     agent_cmd="${LOOP_AGENT_CMD:-}"
-    unit_agent=$(extract_agent "$unit_file")
+    unit_agent=$(parsed_unit_agent "$queue_abs" "$title")
     if [[ -n "$unit_agent" ]]; then
         agent_cmd="$unit_agent"
     fi
 
     local agent_code
     set +e
-    run_phase_agent "build" "$run_prompt" "$agent_out" "$agent_cmd"
+    run_phase_agent "build" "$run_prompt" "$agent_out" "$agent_cmd" "$result_file"
     agent_code=$?
     set -e
 
@@ -1029,6 +1048,27 @@ EOF
         append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
         cat "$agent_out"
         die "worker exited nonzero for $title"
+    fi
+
+    if [[ -s "$result_file" ]]; then
+        local worker_result
+        worker_result=$(head -1 "$result_file")
+        if [[ "$worker_result" != "blocked" ]]; then
+            printf '\nInvalid worker result signal:\n' >> "$agent_out"
+            cat "$result_file" >> "$agent_out"
+            set_status "$queue_abs" "$title" "blocked"
+            : > "$verify_out"
+            append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+            cat "$agent_out"
+            die "invalid worker result signal for $title"
+        fi
+        printf '\nWorker blocker signal:\n' >> "$agent_out"
+        tail -n +2 "$result_file" >> "$agent_out"
+        set_status "$queue_abs" "$title" "blocked"
+        : > "$verify_out"
+        append_evidence "$evidence" "$title" "blocked" "$verify" "$verify_out" "$agent_out" "$repo_dir" "$unit_file"
+        cat "$agent_out"
+        die "worker reported blocker for $title"
     fi
 
     local after
@@ -1071,13 +1111,29 @@ EOF
 # Build phase: process pending units until the queue drains or max ticks hit.
 # Terminates the process if max ticks is reached with pending work remaining.
 run_build_phase() {
+    preflight_queue "$queue_abs"
+
+    local unresolved_title unresolved_status
     while (( tick <= max_ticks )); do
+        unresolved_title=$(first_unresolved_title "$queue_abs")
+        [[ -n "$unresolved_title" ]] || break
+        unresolved_status=$(first_unresolved_status "$queue_abs")
+        if [[ "$unresolved_status" != "pending" ]]; then
+            if [[ "$resume_enabled" == 0 ]]; then
+                die "first unresolved unit is $unresolved_status: $unresolved_title (address it, then rerun with --resume)"
+            fi
+            echo "nospec: resuming $unresolved_title from $unresolved_status"
+            set_status "$queue_abs" "$unresolved_title" "pending"
+        fi
         run_one_unit || break
     done
 
     if [[ -n "$(first_pending_unit "$queue_abs")" ]]; then
         die "reached max ticks ($max_ticks) with pending work"
     fi
+    local unresolved
+    unresolved=$(first_unresolved_unit "$queue_abs")
+    [[ -z "$unresolved" ]] || die "queue has unresolved work but no pending unit: $unresolved"
 }
 
 # Review-fix phase: run review, then fix if actionable findings.
@@ -1155,10 +1211,21 @@ run_review_fix_phase() {
         die "fix worker exited nonzero"
     fi
 
+    preflight_queue "$queue_abs"
     if [[ -z "$(first_pending_unit "$queue_abs")" ]]; then
         cat "$fix_out"
         die "fix produced no new units while review still has $actionable actionable issue(s)"
     fi
+}
+
+cmd_lint() {
+    [[ $# -eq 1 ]] || die "usage: nospec lint <queue>"
+    local queue_abs
+    queue_abs=$(abs_path "$1")
+    [[ -f "$queue_abs" ]] || die "queue not found: $queue_abs"
+    [[ -f "$QUEUE_PARSER" ]] || die "queue parser not found: $QUEUE_PARSER"
+    python "$QUEUE_PARSER" validate "$queue_abs" || die "queue preflight failed"
+    echo "nospec lint: queue valid"
 }
 
 cmd_run() {
@@ -1168,8 +1235,9 @@ cmd_run() {
     queue_abs=$(abs_path "$1")
     shift
     [[ -f "$queue_abs" ]] || die "queue not found: $queue_abs"
+    [[ -f "$QUEUE_PARSER" ]] || die "queue parser not found: $QUEUE_PARSER"
 
-    local max_ticks=3 max_review_rounds=2 review_enabled=0 dry_run=0 repo_override=""
+    local max_ticks=3 max_review_rounds=2 review_enabled=0 dry_run=0 resume_enabled=0 repo_override=""
     while [[ $# -gt 0 ]]; do
         case "$1" in
             --repo)
@@ -1195,9 +1263,14 @@ cmd_run() {
                 dry_run=1
                 shift
                 ;;
+            --resume)
+                resume_enabled=1
+                shift
+                ;;
             *) die "unknown argument: $1" ;;
         esac
     done
+    [[ "$dry_run" == 0 || "$resume_enabled" == 0 ]] || die "--dry-run and --resume cannot be combined"
 
     local prompt_file="$SCRIPT_DIR/../prompts/worker.md"
     [[ -f "$prompt_file" ]] || die "worker prompt not found: $prompt_file"
@@ -1210,6 +1283,8 @@ cmd_run() {
         repo_dir="$repo_override"
     elif [[ $(basename "$queue_dir") == ".loop" ]]; then
         repo_dir=$(dirname "$queue_dir")
+    elif [[ $(basename "$(dirname "$queue_dir")") == ".loop" ]]; then
+        repo_dir=$(dirname "$(dirname "$queue_dir")")
     else
         repo_dir=$(pwd)
     fi
@@ -1247,7 +1322,8 @@ Inspection:
   nospec spine    Print the spine ADRs (derived from frontmatter)
   nospec adrs     Print all ADRs with id, status, title
   nospec view     Read-only dashboard of cycles, work units, and decisions
-  nospec check    Fail on structural drift (re-enumerated lists, duplicate ownership, missing frontmatter)
+  nospec check    Check opted-in artifact metadata and structural drift
+  nospec lint <queue>  Validate every queue unit and Verify shell command
 
 Setup:
   nospec install [dir]  Symlink this runner onto PATH (run once after npx skills add).
@@ -1255,7 +1331,7 @@ Setup:
                        Optional dir arg overrides the choice.
 
 Batch (optional, AFK):
-  nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run]
+  nospec run <queue> [--repo DIR] [--max-ticks N] [--review] [--max-review-rounds N] [--dry-run] [--resume]
                  Run work units behind a verify gate. The queue is usually
                  .loop/<name>/QUEUE.md. Use --repo when the queue lives outside
                  the repository it should operate on.
@@ -1277,6 +1353,7 @@ main() {
         spine)  cmd_spine "$@" ;;
         adrs)   cmd_adrs "$@" ;;
         check)  cmd_check "$@" ;;
+        lint)   cmd_lint "$@" ;;
         view)   cmd_view "$@" ;;
         install) cmd_install "$@" ;;
         run)    cmd_run "$@" ;;

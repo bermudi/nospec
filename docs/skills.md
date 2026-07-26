@@ -1,4 +1,5 @@
 ---
+nospec: true
 role: view
 ---
 
@@ -10,12 +11,12 @@ Skills are agent-agnostic procedural knowledge stored in `.agents/skills/<name>/
 
 | Skill | Purpose |
 |---|---|
-| `nospec-scout` | **Entry point.** Investigate a codebase, grill intent, and stress-test ideas before planning. Read-only, no artifacts, reaches clarity before any `QUEUE.md` is written. |
-| `nospec-shape` | Convert intent into a disposable `QUEUE.md` of verifiable work units. |
-| `nospec-carve` | Implement one work unit from `QUEUE.md`; do not self-certify. |
+| `nospec-scout` | Investigate when the real problem or binding intent is unclear. Read-only; no mandatory artifact. |
+| `nospec-shape` | Decompose intent into verifiable outcomes; serialize a queue only for handoff or batch. |
+| `nospec-carve` | Implement one bounded outcome, conversational or queued; verify before claiming success. |
 | `nospec-trial` | Run two-axis adversarial review (standards + intent) and generate findings. |
 | `nospec-mend` | Convert review findings into new work units. |
-| `nospec-rule` | Capture architectural rulings as ADRs in `decisions/`. |
+| `nospec-rule` | Record an architectural ruling after explicit acceptance or delegated authority. |
 | `nospec-lexicon` | Define and update `glossary.md` terms. |
 | `nospec-curator` | Route knowledge to its authoritative artifact and maintain coherent projections. |
 | `nospec` *(optional)* | The batch runner. Carries `scripts/nospec` and transmits the batch-mode concept — when to reach for AFK execution and what the verify gate guarantees. |
@@ -53,14 +54,6 @@ Without `--review`, nospec-trial and nospec-mend remain manual skill invocations
 
 After `npx skills add`, the project owns the `.agents/skills/` directory. Edit, override, or delete skills as needed. The repo's `skills/` directory is the source; `npx skills update` refreshes the local copies.
 
-## Composable flows
+## Composable use
 
-Skills are not a rigid gate. The default flow is `nospec-scout → nospec-shape → nospec-carve → nospec-trial → nospec-mend`, but any valid subset is fine:
-
-```text
-small fix → nospec-shape → nospec-carve → done
-bug report → nospec-scout → nospec-shape → nospec-carve → done
-big feature → nospec-scout → nospec-shape → nospec-carve --review → nospec-trial → nospec-mend → nospec-carve → done
-```
-
-Decisions are captured inline throughout the flow using the `nospec-rule` skill, terms are updated using `nospec-lexicon`, and durable-context placement is checked using `nospec-curator`.
+There is no default pipeline. Invoke the narrow skill whose problem is present: scout uncertainty, shape outcomes, carve one bounded change, trial an existing diff, or mend known findings. Use `nospec-rule` only for an accepted ruling, `nospec-lexicon` for unresolved domain language, and `nospec-curator` for durable-context ownership or coherence.

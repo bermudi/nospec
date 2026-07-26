@@ -1,4 +1,5 @@
 ---
+nospec: true
 id: 0009
 date: 2026-07-11
 status: accepted
@@ -6,6 +7,8 @@ spine: true
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. All skill name references (`explore`, `plan`, `build`, `review`, `fix`, `decide`, `domain-modeling`, `document`) are now `nospec-` prefixed.
+>
+> **Decision authority narrowed by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** a ruling is recorded only after the decision owner accepts it or delegates authority; an agent recommendation does not become an accepted ADR merely because it crystallizes.
 
 # 0009: Skills are the product; the loop is an optional batch companion
 
