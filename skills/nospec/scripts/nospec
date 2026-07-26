@@ -27,6 +27,19 @@ SCRIPT_DIR="$(cd -P "$(dirname "$SOURCE_PATH")" && pwd)"
 QUEUE_PARSER="$SCRIPT_DIR/queue_parser.py"
 REPO_ROOT="$(pwd)"
 
+PYTHON_BIN=""
+for candidate in python3 python; do
+    if command -v "$candidate" >/dev/null 2>&1 \
+        && "$candidate" -c 'import sys; raise SystemExit(sys.version_info < (3, 10))' >/dev/null 2>&1; then
+        PYTHON_BIN="$candidate"
+        break
+    fi
+done
+if [[ -z "$PYTHON_BIN" ]]; then
+    echo "nospec: Python 3.10 or newer is required" >&2
+    exit 1
+fi
+
 # Allow --repo DIR to override the repo root (for testing and external use)
 while [[ "${1:-}" == --repo ]]; do
     REPO_ROOT="$2"
@@ -77,7 +90,7 @@ die() {
 }
 
 abs_path() {
-    python -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "$1"
+    "$PYTHON_BIN" -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "$1"
 }
 
 # ──────────────────────────── Subcommands ────────────────────────────
@@ -138,19 +151,19 @@ cmd_check() {
         body=$(awk '{ sub(/\r$/, "") } NR == 1 && $0 == "---" { in_fm=1; next } in_fm && /^---$/ { in_fm=0; next } !in_fm' "$doc")
 
         # Pattern A: 2+ markdown links to decision files on a single line
-        if echo "$body" | grep -qP '\[00\d{2}\]\(decisions/.*\[00\d{2}\]\(decisions/'; then
+        if echo "$body" | grep -qE '\[00[0-9]{2}\]\(decisions/.*\[00[0-9]{2}\]\(decisions/'; then
             echo "FAIL: $doc — multiple decision-file links on a single line (spine re-enumeration)"
-            echo "$body" | grep -nP '\[00\d{2}\]\(decisions/.*\[00\d{2}\]\(decisions/' | head -3 | sed 's/^/  /'
+            echo "$body" | grep -nE '\[00[0-9]{2}\]\(decisions/.*\[00[0-9]{2}\]\(decisions/' | head -3 | sed 's/^/  /'
             failures=$((failures + 1))
         fi
 
         # Pattern B: 3+ lines matching the spine-entry shape with separators
         #   "ADR-NNNN — ..." or "**ADR-NNNN**" (bold ADR as list header)
         local spine_entries
-        spine_entries=$(echo "$body" | grep -cP '(ADR-00\d{2}\s*[—–-]|\*\*ADR-00\d{2}\*\*)' || true)
+        spine_entries=$(echo "$body" | grep -cE '(ADR-00[0-9]{2}[[:space:]]*[—–-]|\*\*ADR-00[0-9]{2}\*\*)' || true)
         if [[ "$spine_entries" -ge 3 ]]; then
             echo "FAIL: $doc — $spine_entries spine-list entries with separators (spine re-enumeration)"
-            echo "$body" | grep -nP '(ADR-00\d{2}\s*[—–-]|\*\*ADR-00\d{2}\*\*)' | head -5 | sed 's/^/  /'
+            echo "$body" | grep -nE '(ADR-00[0-9]{2}[[:space:]]*[—–-]|\*\*ADR-00[0-9]{2}\*\*)' | head -5 | sed 's/^/  /'
             failures=$((failures + 1))
         fi
 
@@ -167,8 +180,8 @@ cmd_check() {
         if [[ -n "$adr_lines" ]]; then
             while IFS= read -r line; do
                 local count comma_pairs
-                count=$(echo "$line" | grep -oP 'ADR-00\d{2}' | wc -l || true)
-                comma_pairs=$(echo "$line" | grep -oP 'ADR-00\d{2}\s*,\s*(and\s+)?ADR-00\d{2}' | wc -l || true)
+                count=$(echo "$line" | grep -oE 'ADR-00[0-9]{2}' | wc -l || true)
+                comma_pairs=$(echo "$line" | grep -oE 'ADR-00[0-9]{2}[[:space:]]*,[[:space:]]*(and[[:space:]]+)?ADR-00[0-9]{2}' | wc -l || true)
                 if [[ "$count" -ge 3 && "$comma_pairs" -ge 1 ]]; then
                     echo "FAIL: $doc — $count ADR references in comma-separated list on a single line (spine re-enumeration)"
                     echo "  $line" | head -c 200
@@ -182,10 +195,10 @@ cmd_check() {
         # Pattern D: 3+ bulleted lines starting with ADR-NNNN (no separator)
         #   Catches "- ADR-0009 synopsis" / "- ADR-0010 ..." without em-dash
         local bullet_adr_lines
-        bullet_adr_lines=$(echo "$body" | grep -cP '^\s*[-*]\s+ADR-00\d{2}' || true)
+        bullet_adr_lines=$(echo "$body" | grep -cE '^[[:space:]]*[-*][[:space:]]+ADR-00[0-9]{2}' || true)
         if [[ "$bullet_adr_lines" -ge 3 ]]; then
             echo "FAIL: $doc — $bullet_adr_lines bulleted ADR entries without separator (spine re-enumeration)"
-            echo "$body" | grep -nP '^\s*[-*]\s+ADR-00\d{2}' | head -5 | sed 's/^/  /'
+            echo "$body" | grep -nE '^[[:space:]]*[-*][[:space:]]+ADR-00[0-9]{2}' | head -5 | sed 's/^/  /'
             failures=$((failures + 1))
         fi
     done <<< "$docs"
@@ -234,8 +247,8 @@ list_durable_docs() {
         adopted=$(fm_get "$f" "nospec")
         [[ "$adopted" == "true" ]] && echo "$f"
     done < <(find "$REPO_ROOT" -type f -name '*.md' \
-        -not -path '*/.git/*' -not -path '*/.loop/*' -not -path '*/node_modules/*' \
-        -not -path '*/decisions/*' | sort)
+        ! -path '*/.git/*' ! -path '*/.loop/*' ! -path '*/node_modules/*' \
+        ! -path '*/decisions/*' | sort)
     return 0
 }
 
@@ -320,7 +333,7 @@ cmd_view() {
         esac
     done
     [[ -d "$repo_dir" ]] || die "repo not found: $repo_dir"
-    PYTHONDONTWRITEBYTECODE=1 python - "$repo_dir" "$QUEUE_PARSER" <<'PY'
+    PYTHONDONTWRITEBYTECODE=1 "$PYTHON_BIN" - "$repo_dir" "$QUEUE_PARSER" <<'PY'
 import sys, re, time
 from pathlib import Path
 
@@ -541,43 +554,43 @@ cmd_install() {
 # ──────────────────────────── Loop: run ────────────────────────────
 
 preflight_queue() {
-    python "$QUEUE_PARSER" validate "$1" || die "queue preflight failed"
+    "$PYTHON_BIN" "$QUEUE_PARSER" validate "$1" || die "queue preflight failed"
 }
 
 first_pending_unit() {
-    python "$QUEUE_PARSER" first-pending "$1"
+    "$PYTHON_BIN" "$QUEUE_PARSER" first-pending "$1"
 }
 
 first_pending_title() {
-    python "$QUEUE_PARSER" first-pending-title "$1"
+    "$PYTHON_BIN" "$QUEUE_PARSER" first-pending-title "$1"
 }
 
 first_unresolved_unit() {
-    python "$QUEUE_PARSER" first-unresolved "$1"
+    "$PYTHON_BIN" "$QUEUE_PARSER" first-unresolved "$1"
 }
 
 first_unresolved_title() {
-    python "$QUEUE_PARSER" first-unresolved-title "$1"
+    "$PYTHON_BIN" "$QUEUE_PARSER" first-unresolved-title "$1"
 }
 
 first_unresolved_status() {
-    python "$QUEUE_PARSER" first-unresolved-status "$1"
+    "$PYTHON_BIN" "$QUEUE_PARSER" first-unresolved-status "$1"
 }
 
 parsed_unit_verify() {
-    python "$QUEUE_PARSER" unit-verify "$1" "$2"
+    "$PYTHON_BIN" "$QUEUE_PARSER" unit-verify "$1" "$2"
 }
 
 parsed_unit_agent() {
-    python "$QUEUE_PARSER" unit-agent "$1" "$2"
+    "$PYTHON_BIN" "$QUEUE_PARSER" unit-agent "$1" "$2"
 }
 
 set_status() {
-    python "$QUEUE_PARSER" set-status "$1" "$2" "$3"
+    "$PYTHON_BIN" "$QUEUE_PARSER" set-status "$1" "$2" "$3"
 }
 
 write_handoff() {
-    PYTHONDONTWRITEBYTECODE=1 python - "$1" "$2" "$3" "$QUEUE_PARSER" <<'PY'
+    PYTHONDONTWRITEBYTECODE=1 "$PYTHON_BIN" - "$1" "$2" "$3" "$QUEUE_PARSER" <<'PY'
 import sys, re
 from pathlib import Path
 from datetime import datetime
@@ -652,7 +665,7 @@ work_snapshot() {
         {
             git -C "$repo_dir" diff -- . ':(exclude).loop' || true
             git -C "$repo_dir" status --short --untracked-files=all | awk '$2 !~ /^\.loop\// { print }'
-        } | sha256sum | awk '{print $1}'
+        } | "$PYTHON_BIN" -c 'import hashlib, sys; print(hashlib.sha256(sys.stdin.buffer.read()).hexdigest())'
     else
         echo "__no_git__"
     fi
@@ -660,7 +673,7 @@ work_snapshot() {
 
 derive_proof_claims() {
     local verify_cmd=$1
-    python - "$verify_cmd" <<'PY'
+    "$PYTHON_BIN" - "$verify_cmd" <<'PY'
 import re, sys
 
 def classify(segment):
@@ -724,7 +737,7 @@ PY
 
 record_pin_state() {
     local evidence=$1 repo_dir=$2
-    python - "$evidence" "$repo_dir" <<'PY'
+    "$PYTHON_BIN" - "$evidence" "$repo_dir" <<'PY'
 import re, sys, subprocess, os
 from pathlib import Path
 
@@ -758,19 +771,22 @@ def file_sha(repo_dir, path):
             ['git', '-C', repo_dir, 'hash-object', full],
             capture_output=True, text=True
         )
-        if result.returncode == 0:
-            return result.stdout.strip()[:12]
-    except Exception:
-        pass
+    except FileNotFoundError:
+        return None
+    if result.returncode == 0:
+        return result.stdout.strip()[:12]
     return None
 
 # Get changed files from git status, filter for durable docs
 changed_durable = []
-result = subprocess.run(
-    ['git', '-C', repo_dir, 'status', '--short', '--untracked-files=all'],
-    capture_output=True, text=True
-)
-if result.returncode == 0:
+try:
+    result = subprocess.run(
+        ['git', '-C', repo_dir, 'status', '--short', '--untracked-files=all'],
+        capture_output=True, text=True
+    )
+except FileNotFoundError:
+    result = None
+if result is not None and result.returncode == 0:
     for line in result.stdout.strip().split('\n'):
         if not line.strip():
             continue
@@ -844,7 +860,9 @@ append_evidence() {
     mkdir -p "$(dirname "$evidence")"
     {
         echo
-        echo "## $(date -Iseconds) — $title"
+        local timestamp
+        timestamp=$("$PYTHON_BIN" -c 'from datetime import datetime; print(datetime.now().astimezone().isoformat(timespec="seconds"))')
+        echo "## $timestamp — $title"
         echo
         echo "Status: $status"
         echo
@@ -1224,7 +1242,7 @@ cmd_lint() {
     queue_abs=$(abs_path "$1")
     [[ -f "$queue_abs" ]] || die "queue not found: $queue_abs"
     [[ -f "$QUEUE_PARSER" ]] || die "queue parser not found: $QUEUE_PARSER"
-    python "$QUEUE_PARSER" validate "$queue_abs" || die "queue preflight failed"
+    "$PYTHON_BIN" "$QUEUE_PARSER" validate "$queue_abs" || die "queue preflight failed"
     echo "nospec lint: queue valid"
 }
 

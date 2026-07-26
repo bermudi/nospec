@@ -10,7 +10,7 @@ nospec's domain-specific terms. For the underlying concepts — doc-rot, backpre
 
 ## work unit
 
-One chunk of work in a `QUEUE.md`, written as a `## <outcome>` header with `Read first:`, `Constraints:`, `Done means:`, and `Verify:`. The atom the loop processes.
+One chunk of work in a `QUEUE.md`: a nonempty `## <outcome>` header with required `Done means:` and `Verify:` fields, plus `Read first:` or `Constraints:` when context or boundaries need stating. The atom the loop processes.
 
 ## verify gate
 

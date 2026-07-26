@@ -7,6 +7,8 @@ spine: false
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `build` → `nospec-carve`, `plan` → `nospec-shape`, `review` → `nospec-trial`, `fix` → `nospec-mend`.
+>
+> **Batch contract amended by [ADR-0022](0022-batch-lint-enforces-the-minimum-work-unit-contract.md):** `Done means:` is now parser-required; `Read first:` and `Constraints:` are optional but validated when present.
 
 # 0005: Work units carry shape, not scripts
 

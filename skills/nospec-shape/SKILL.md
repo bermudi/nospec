@@ -25,10 +25,12 @@ These are trade-offs, not required phases. Use the cut that produces the earlies
 
 A unit is one observable outcome. It carries:
 
-- `Read first:` — relevant records or code areas; context, not a list of files to edit.
-- `Constraints:` — what must remain true or is out of bounds.
-- `Done means:` — acceptance criteria.
-- `Verify:` — the mechanically checkable subset of those criteria.
+- `Read first:` — optional relevant records or code areas; context, not a list of files to edit.
+- `Constraints:` — optional boundaries: what must remain true or is out of bounds.
+- `Done means:` — required, nonempty acceptance criteria.
+- `Verify:` — the required mechanically checkable subset of those criteria.
+
+Omit optional fields when they carry no information; placeholder bullets are ceremony, not shape.
 
 The worker owns the implementation path. Prescribing edits in `Read first:` or `Constraints:` turns an outcome into a brittle script.
 
@@ -40,7 +42,7 @@ Ask:
 
 > Can a believable bad implementation pass this command while violating the unit's central outcome?
 
-If the answer is easily yes, strengthen the assertion, split the unit, or keep the work interactive. Put every mechanically checkable critical criterion in `Verify:`. What remains in `Done means:` is unverified judgment surface; review can inspect it, not convert it into deterministic proof.
+If the answer is easily yes, strengthen the assertion, split the unit, or keep the work interactive. `nospec lint` rejects mechanically obvious non-verification such as `true`, `:`, and `exit 0`, but it cannot judge whether an otherwise valid command exercises the outcome. Put every mechanically checkable critical criterion in `Verify:`. What remains in `Done means:` is unverified judgment surface; review can inspect it, not convert it into deterministic proof.
 
 Typical shapes:
 

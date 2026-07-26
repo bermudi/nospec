@@ -111,6 +111,6 @@ nospec run .loop/<name>/QUEUE.md --review
 
 ## Verification notes
 
-- `nospec lint <queue>` preflights every unit: headings, statuses, duplicate fields, fenced Bash verifies, and shell syntax. `nospec run` performs the same preflight before any worker runs or status changes, including after a fixer appends units.
+- `nospec lint <queue>` preflights every unit: nonempty outcomes; required, unique `Done means:`, `Verify:`, and `Status:` fields; optional-but-nonempty unique context fields; fenced Bash verifies; obvious vacuity; and shell syntax. `nospec run` performs the same preflight before any worker runs or status changes, including after a fixer appends units.
 - `nospec run` invokes review and fix workers only when `--review` is set. Without that flag it still reads an existing `REVIEW.md` summary so unresolved review cannot become false success; it does not judge findings or manage ADRs/glossary.
 - The `Verify:` command must be deterministic, runner-executable, and discriminating: it should fail for a plausible state where the unit's central outcome is absent. Tests, builds, and type checks qualify when they actually exercise that outcome; an LLM judgment or vacuous `true` does not.

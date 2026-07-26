@@ -53,7 +53,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 - A batch `Verify` command must be deterministic, runner-executable, and discriminating: it should fail for a plausible state where the unit's central outcome is absent.
 - `LOOP_AGENT_CMD` overrides the worker invocation (agent-agnostic). `LOOP_REVIEW_CMD` / `LOOP_FIX_CMD` override review/fix. Per-unit `Agent:` overrides for one unit.
 - A batch worker signals a blocker by writing `blocked` plus its reason to `LOOP_RESULT_FILE`; the runner consumes it before verify. Non-`pending` unresolved units hold queue order and require explicit `--resume` after their cause is addressed.
-- Work units are `## <outcome>` headers with `Read first:`, `Constraints:`, `Done means:`, `Verify:`. `Done means:` is acceptance criteria; `Verify:` is the mechanically enforceable subset. The gap is the review surface.
+- Work units have a nonempty `## <outcome>` plus unique, required `Done means:`, `Verify:`, and `Status:` fields. Add unique `Read first:` and `Constraints:` only when context or boundaries exist; if present, they must be nonempty. `Verify:` is the mechanically enforceable subset of `Done means:`; the gap is the review surface.
 - Specs are disposable. Decisions are durable. Code is the source of truth.
 - Durable-artifact hygiene (orphan ADRs, stale glossary terms, stale projections in docs) is judgment. `nospec check` handles only structural drift in artifacts carrying `nospec: true`; generic repository Markdown metadata is outside its authority. Nospec's own exact metadata inventory is enforced by source tests.
 - An accepted ADR records a ruling already made by the decision owner or under explicitly delegated authority. Recommendations stay in conversation or disposable design material; a batch worker blocks on a newly discovered consequential trade-off.
@@ -66,7 +66,7 @@ The load-bearing distinction: specs are disposable; code, decisions, and skills 
 ./tests/run.sh
 ```
 
-Exercises `nospec lint` / `run` (whole-queue preflight, verify gate, handoff, review-fix), `nospec view`, source metadata inventory, foreign-repository adoption boundaries, and `nospec check`; validates skill frontmatter via `skills-ref` when available.
+Exercises `nospec lint` / `run` (whole-queue contract preflight, verify gate, handoff, review-fix), `nospec view`, source metadata inventory, foreign-repository adoption boundaries, and `nospec check`; validates skill frontmatter via `skills-ref` when available. `.github/workflows/test.yml` runs the suite on Ubuntu and macOS with Python 3.10.
 
 ## Lessons learned
 

@@ -5,7 +5,7 @@ role: view
 
 # Getting started
 
-nospec is a skills collection plus an optional bash loop for unattended batch work. Most work is interactive; reach for the loop when you want to leave.
+nospec is a skills collection plus an optional Bash loop for unattended batch work. Most work is interactive; reach for the loop when you want to leave. The runner supports macOS and Linux and requires Python 3.10 or newer.
 
 ## Install the skills
 
@@ -33,7 +33,7 @@ See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix 
 
 ## Write a queue
 
-Create `.loop/<name>/QUEUE.md` using the format in [`queue-format.md`](./queue-format.md). Each work unit needs an outcome, constraints, done criteria, and a deterministic `Verify:` command that meaningfully distinguishes success from failure. Before leaving, run:
+Create `.loop/<name>/QUEUE.md` using the format in [`queue-format.md`](./queue-format.md). Each work unit needs an outcome, nonempty done criteria, and a deterministic `Verify:` command that meaningfully distinguishes success from failure. Add context and constraints only when they carry information. Before leaving, run:
 
 ```bash
 nospec lint .loop/<name>/QUEUE.md

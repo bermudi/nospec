@@ -2,6 +2,7 @@
 set -euo pipefail
 
 root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
+python_bin=$(command -v python3 || command -v python)
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
@@ -32,13 +33,13 @@ Read first:
 Constraints:
 - Do not modify the queue by hand.
 
+Done means:
+- The verify command exits 0.
+
 Verify:
 \`\`\`bash
 $verify
 \`\`\`
-
-Done means:
-- The verify command exits 0.
 
 Status: pending
 EOF
@@ -59,7 +60,7 @@ cat > "$accessor_bin/bash" <<'EOF'
 exit 99
 EOF
 chmod +x "$accessor_bin/bash"
-PATH="$accessor_bin:$PATH" python "$root/skills/nospec/scripts/queue_parser.py" \
+PATH="$accessor_bin:$PATH" "$python_bin" "$root/skills/nospec/scripts/queue_parser.py" \
   first-pending-title "$root/examples/smoke/.loop/smoke/QUEUE.md" >/tmp/accessor-title.txt
 assert_contains /tmp/accessor-title.txt "the smoke fixture creates a file that the verify gate can see"
 
@@ -74,14 +75,20 @@ Prove every unit is parsed before execution.
 
 ## the first unit is valid
 
+Done means:
+- The queue remains readable.
+
 Verify:
 ```bash
-true
+test -f .loop/QUEUE.md
 ```
 
 Status: done
 
 ## the later unit has malformed shell
+
+Done means:
+- The malformed command is rejected before execution.
 
 Verify:
 ```bash
@@ -112,10 +119,13 @@ Keep fenced content inside its unit.
 
 ## the parser ignores headings inside fences
 
+Done means:
+- The heading-shaped shell comment remains part of this unit.
+
 Verify:
 ```bash
 ## harmless shell comment
-true
+grep -q '^## the parser ignores headings inside fences$' .loop/QUEUE.md
 ```
 
 Status: pending
@@ -134,6 +144,12 @@ Execute only fields parsed from the unit itself.
 
 ````markdown
 Agent: touch hijacked
+Read first:
+- hijacked context
+Constraints:
+- hijacked boundary
+Done means:
+- hijacked acceptance criterion
 Verify:
 ```bash
 true
@@ -141,6 +157,9 @@ true
 ````
 
 Agent: touch real.done
+
+Done means:
+- Only the real agent override runs.
 
 Verify:
 ```bash
@@ -168,6 +187,9 @@ printf '%s\n' \
   '' \
   'Agent: touch normalized.done' \
   '' \
+  'Done means:' \
+  '- The normalized agent override runs.' \
+  '' \
   'Verify:' \
   '```bash' \
   'test -f normalized.done' \
@@ -186,27 +208,36 @@ Reject ambiguous queue state.
 
 ## repeated outcome
 
+Done means:
+- The queue remains readable.
+
 Verify:
 ```bash
-true
+test -f .loop/QUEUE.md
 ```
 
 Status: maybe
 
 ## repeated outcome
 
+Done means:
+- The queue remains readable.
+
 Verify:
 ```bash
-true
+test -f .loop/QUEUE.md
 ```
 
 Status: pending
 
 ## missing status outcome
 
+Done means:
+- The queue remains readable.
+
 Verify:
 ```bash
-true
+test -f .loop/QUEUE.md
 ```
 EOF
 set +e
@@ -220,6 +251,188 @@ fi
 assert_contains /tmp/loop-lint-structure.txt "unknown status"
 assert_contains /tmp/loop-lint-structure.txt "duplicate work unit outcome"
 assert_contains /tmp/loop-lint-structure.txt "missing Status field"
+
+# Batch lint requires acceptance criteria, rejects empty optional fields, and
+# catches only verification commands whose vacuity is mechanically obvious.
+cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: invalid work-unit contracts
+
+Goal:
+Reject queues that cannot communicate or verify their outcomes.
+
+## missing acceptance criteria
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## empty acceptance criteria
+
+Done means:
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## duplicate context fields
+
+Read first:
+- Existing behavior.
+
+Read first:
+- The same context again.
+
+Done means:
+- The queue remains readable.
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## empty context when present
+
+Read first:
+
+Done means:
+- The queue remains readable.
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## empty constraints when present
+
+Constraints:
+
+Done means:
+- The queue remains readable.
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## duplicate constraints fields
+
+Constraints:
+- Preserve current behavior.
+
+Constraints:
+- Preserve it twice.
+
+Done means:
+- The queue remains readable.
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## inline acceptance criteria
+
+Done means: Inline content is not the documented field shape.
+
+Verify:
+```bash
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+
+## vacuous true verification
+
+Done means:
+- A real outcome is established.
+
+Verify:
+```bash
+true
+```
+
+Status: pending
+
+## vacuous colon verification
+
+Done means:
+- A real outcome is established.
+
+Verify:
+```bash
+:
+```
+
+Status: pending
+
+## vacuous successful exit verification
+
+Done means:
+- A real outcome is established.
+
+Verify:
+```bash
+exit 0
+```
+
+Status: pending
+EOF
+set +e
+"$root/skills/nospec/scripts/nospec" lint "$repo_lint/.loop/QUEUE.md" >/tmp/loop-lint-contract.txt 2>&1
+contract_code=$?
+set -e
+if [[ $contract_code -eq 0 ]]; then
+  echo "expected lint to reject incomplete work-unit contracts" >&2
+  exit 1
+fi
+assert_contains /tmp/loop-lint-contract.txt "missing Done means field"
+assert_contains /tmp/loop-lint-contract.txt "Done means field is empty"
+assert_contains /tmp/loop-lint-contract.txt "duplicate Read first fields"
+assert_contains /tmp/loop-lint-contract.txt "Read first field is empty"
+assert_contains /tmp/loop-lint-contract.txt "Constraints field is empty"
+assert_contains /tmp/loop-lint-contract.txt "duplicate Constraints fields"
+assert_contains /tmp/loop-lint-contract.txt "Done means content must start on the following line"
+if [[ $(grep -c 'Verify command is obviously vacuous' /tmp/loop-lint-contract.txt) -ne 3 ]]; then
+  echo "expected all three obvious vacuous verifies to be rejected" >&2
+  cat /tmp/loop-lint-contract.txt >&2
+  exit 1
+fi
+
+cat > "$repo_lint/.loop/QUEUE.md" <<'EOF'
+# Loop Queue: optional context
+
+Goal:
+Keep absent context fields non-ceremonial.
+
+## acceptance and verification are enough when no extra boundary exists
+
+Done means:
+- The queue remains readable.
+
+Verify:
+```bash
+true # A harmless successful command must not hide the real assertion below.
+test -f .loop/QUEUE.md
+```
+
+Status: pending
+EOF
+"$root/skills/nospec/scripts/nospec" lint "$repo_lint/.loop/QUEUE.md" >/tmp/loop-lint-optional.txt
+assert_contains /tmp/loop-lint-optional.txt "queue valid"
 
 repo1="$tmp/repo-pass"
 mkdir -p "$repo1"
@@ -298,7 +511,7 @@ assert_contains "$repo5/.loop/HANDOFF.md" "blocked"
 # A successful worker process can still report a machine-readable blocker.
 repo_signal="$tmp/repo-blocker-signal"
 mkdir -p "$repo_signal"
-make_queue "$repo_signal" "true"
+make_queue "$repo_signal" "test -f blocker-must-stop-before-verify"
 set +e
 LOOP_AGENT_CMD='printf "blocked\narchitecture choice required\n" > "$LOOP_RESULT_FILE"' \
   "$root/skills/nospec/scripts/nospec" run "$repo_signal/.loop/QUEUE.md" --max-ticks 1 >/tmp/loop-blocker-signal.txt 2>&1
@@ -323,6 +536,9 @@ Resume failed work before later units.
 
 ## first unresolved outcome
 
+Done means:
+- The first marker exists.
+
 Verify:
 ```bash
 test -f first.done
@@ -331,6 +547,9 @@ test -f first.done
 Status: blocked
 
 ## later pending outcome
+
+Done means:
+- The second marker exists.
 
 Verify:
 ```bash
@@ -386,7 +605,7 @@ EOF
 echo "# unadopted README v1" > "$repo_pin/README.md"
 make_queue "$repo_pin" "test -f pin1.done"
 ( cd "$repo_pin" && git add -A && git commit -q -m init )
-LOOP_AGENT_CMD='touch pin1.done; sed -i "s/AGENTS v1/AGENTS v2/" AGENTS.md; sed -i "s/README v1/README v2/" README.md' \
+LOOP_AGENT_CMD='touch pin1.done; sed "s/AGENTS v1/AGENTS v2/" AGENTS.md > AGENTS.tmp && mv AGENTS.tmp AGENTS.md; sed "s/README v1/README v2/" README.md > README.tmp && mv README.tmp README.md' \
   "$root/skills/nospec/scripts/nospec" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pinned: AGENTS.md @"
 if grep -q 'Pinned: README.md' "$repo_pin/.loop/EVIDENCE.md"; then
@@ -400,7 +619,7 @@ if grep -q 'Pin alert:' "$repo_pin/.loop/EVIDENCE.md"; then
 fi
 ( cd "$repo_pin" && git add -A && git commit -q -m "cycle 1" )
 make_queue "$repo_pin" "test -f pin2.done"
-LOOP_AGENT_CMD='touch pin2.done; sed -i "s/AGENTS v2/AGENTS v3/" AGENTS.md' \
+LOOP_AGENT_CMD='touch pin2.done; sed "s/AGENTS v2/AGENTS v3/" AGENTS.md > AGENTS.tmp && mv AGENTS.tmp AGENTS.md' \
   "$root/skills/nospec/scripts/nospec" run "$repo_pin/.loop/QUEUE.md" --max-ticks 1 >/dev/null 2>&1
 # Second cycle should have a pin alert for AGENTS.md
 assert_contains "$repo_pin/.loop/EVIDENCE.md" "Pin alert: AGENTS.md moved since"
@@ -655,27 +874,36 @@ Test the view dashboard.
 
 ## first unit is done
 
+Done means:
+- The dashboard counts this unit as done.
+
 Verify:
 ```bash
-true
+test -f .loop/feature-a/QUEUE.md
 ```
 
 Status: done
 
 ## second unit is pending
 
+Done means:
+- The dashboard counts this unit as pending.
+
 Verify:
 ```bash
-true
+test -f .loop/feature-a/QUEUE.md
 ```
 
 Status: pending
 
 ## third unit is in progress
 
+Done means:
+- The dashboard counts this unit as in progress.
+
 Verify:
 ```bash
-true
+test -f .loop/feature-a/QUEUE.md
 ```
 
 Status: in_progress
@@ -774,11 +1002,11 @@ if [[ "$spine_count" -ne 8 ]]; then
   cat /tmp/nospec-spine.txt >&2
   exit 1
 fi
-# adrs should list all 21 ADRs
+# adrs should list all 22 ADRs
 "$root/skills/nospec/scripts/nospec" --repo "$root" adrs >/tmp/nospec-adrs.txt
 adr_count=$(grep -c '^ADR-' /tmp/nospec-adrs.txt)
-if [[ "$adr_count" -ne 21 ]]; then
-  echo "expected 21 ADRs, got $adr_count" >&2
+if [[ "$adr_count" -ne 22 ]]; then
+  echo "expected 22 ADRs, got $adr_count" >&2
   cat /tmp/nospec-adrs.txt >&2
   exit 1
 fi
@@ -872,8 +1100,10 @@ if [[ $duplicate_code -eq 0 ]]; then
 fi
 assert_contains /tmp/check-duplicate.txt "duplicate ownership"
 # Ownership values are exact identifiers, not regular expressions.
-sed -i 's/owns: shared-claim/owns: axb/' "$repo_adopted/docs/record.md"
-sed -i 's/owns: shared-claim/owns: a.b/' "$repo_adopted/docs/other.md"
+sed 's/owns: shared-claim/owns: axb/' "$repo_adopted/docs/record.md" > "$repo_adopted/docs/record.tmp"
+mv "$repo_adopted/docs/record.tmp" "$repo_adopted/docs/record.md"
+sed 's/owns: shared-claim/owns: a.b/' "$repo_adopted/docs/other.md" > "$repo_adopted/docs/other.tmp"
+mv "$repo_adopted/docs/other.tmp" "$repo_adopted/docs/other.md"
 "$root/skills/nospec/scripts/nospec" --repo "$repo_adopted" check >/tmp/check-exact-ownership.txt
 assert_contains /tmp/check-exact-ownership.txt "all checks passed"
 

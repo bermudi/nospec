@@ -18,6 +18,12 @@ FENCE_RE = re.compile(r"^ {0,3}(`{3,}|~{3,})([^\r\n]*)\r?\n?$")
 STATUS_RE = re.compile(r"^Status:[ \t]*(.*?)[ \t]*\r?\n?$")
 AGENT_RE = re.compile(r"^Agent:[ \t]*(.*?)[ \t]*\r?\n?$")
 VERIFY_RE = re.compile(r"^Verify:[ \t]*\r?\n?$")
+CONTENT_FIELD_RE = re.compile(
+    r"^(Read first|Constraints|Done means):[ \t]*(.*?)[ \t]*\r?\n?$"
+)
+FIELD_BOUNDARY_RE = re.compile(
+    r"^(?:Agent|Why|Read first|Constraints|Done means|Verify|Status):"
+)
 
 
 @dataclass(frozen=True)
@@ -77,6 +83,38 @@ def _outside_fence_lines(lines: list[str]) -> tuple[list[bool], int | None]:
     return outside, fence_start
 
 
+def _field_has_content(
+    lines: list[str], outside: list[bool], index: int, end: int
+) -> bool:
+    for candidate in range(index + 1, end):
+        if not outside[candidate]:
+            continue
+        if FIELD_BOUNDARY_RE.match(lines[candidate]) is not None:
+            break
+        if lines[candidate].strip():
+            return True
+    return False
+
+
+def _verify_is_obviously_vacuous(command: str) -> bool:
+    meaningful_lines = [
+        line.strip()
+        for line in command.splitlines()
+        if line.strip() and not line.lstrip().startswith("#")
+    ]
+    if not meaningful_lines:
+        return True
+    if len(meaningful_lines) != 1:
+        return False
+    return (
+        re.fullmatch(
+            r"(?:true|:|exit[ \t]+0)[ \t]*;?[ \t]*(?:#.*)?",
+            meaningful_lines[0],
+        )
+        is not None
+    )
+
+
 def _shell_diagnostic(command: str, source_line: int, label: str) -> Diagnostic | None:
     result = subprocess.run(
         ["bash", "-n"],
@@ -132,6 +170,11 @@ def parse_queue(
         status_matches: list[tuple[int, str]] = []
         agent_matches: list[tuple[int, str]] = []
         verify_labels: list[int] = []
+        content_fields: dict[str, list[tuple[int, str]]] = {
+            "Read first": [],
+            "Constraints": [],
+            "Done means": [],
+        }
         for index in range(start + 1, end):
             if not outside[index]:
                 continue
@@ -145,6 +188,38 @@ def parse_queue(
                 continue
             if VERIFY_RE.match(lines[index]) is not None:
                 verify_labels.append(index)
+                continue
+            content_match = CONTENT_FIELD_RE.match(lines[index])
+            if content_match is not None:
+                content_fields[content_match.group(1)].append(
+                    (index, content_match.group(2))
+                )
+
+        for field in ("Read first", "Constraints", "Done means"):
+            matches = content_fields[field]
+            if not matches:
+                if field == "Done means":
+                    diagnostics.append(
+                        Diagnostic(start_line, "missing Done means field")
+                    )
+                continue
+            if len(matches) > 1:
+                diagnostics.append(
+                    Diagnostic(matches[1][0] + 1, f"duplicate {field} fields")
+                )
+                continue
+            field_index, inline = matches[0]
+            if inline:
+                diagnostics.append(
+                    Diagnostic(
+                        field_index + 1,
+                        f"{field} content must start on the following line",
+                    )
+                )
+            elif not _field_has_content(lines, outside, field_index, end):
+                diagnostics.append(
+                    Diagnostic(field_index + 1, f"{field} field is empty")
+                )
 
         status = ""
         status_index = -1
@@ -221,6 +296,13 @@ def parse_queue(
                     if not verify.strip():
                         diagnostics.append(
                             Diagnostic(verify_line, "Verify command is empty")
+                        )
+                    elif _verify_is_obviously_vacuous(verify):
+                        diagnostics.append(
+                            Diagnostic(
+                                verify_line,
+                                "Verify command is obviously vacuous; assert the unit outcome",
+                            )
                         )
                     elif validate_shell:
                         shell_error = _shell_diagnostic(verify, verify_line, "Verify")

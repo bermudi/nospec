@@ -1,7 +1,7 @@
 ---
 name: nospec
 description: Use when installing Nospec, deciding whether work is safe for AFK execution, or intentionally running an already-shaped queue behind the external verify gate.
-compatibility: Requires bash and python 3. The runner is invoked as `scripts/nospec` from this skill directory (or via `nospec` on PATH after `nospec install`).
+compatibility: Requires Bash and Python 3.10 or newer. The runner supports macOS and Linux and is invoked as `scripts/nospec` from this skill directory (or via `nospec` on PATH after `nospec install`).
 license: MIT
 metadata:
   author: bermudi
@@ -20,7 +20,7 @@ Optional review inspects unverified acceptance surface; it does not convert subj
 
 ## Mechanical guarantee
 
-Before mutation, the runner preflights every unit and its shell syntax. Per tick it invokes one worker, then executes that unit's `Verify:` command outside the agent. It marks the unit done only when the command exits zero. The worker cannot self-certify.
+Before mutation, the runner requires each unit to have a nonempty outcome, `Done means:`, fenced Bash `Verify:`, and valid `Status:`. Optional `Read first:` and `Constraints:` fields must be unique and nonempty when present. Preflight also checks shell syntax and rejects obviously vacuous verifies (`true`, `:`, and `exit 0`). Per tick it invokes one worker, then executes `Verify:` outside the agent. It marks the unit done only when that command exits zero. The worker cannot self-certify.
 
 This proves the verify command passed in that repository state—nothing beyond its scope. `EVIDENCE.md` records the command, output, changed files, and a conservative proof boundary.
 
