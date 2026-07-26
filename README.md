@@ -23,10 +23,10 @@ Work happens across three levels of human attention, and the same skills serve a
 ## Install
 
 ```bash
-npx skills add bermudi/nospec --all
+skills add -p bermudi/nospec --skill '*'
 ```
 
-`--all` installs every skill without prompting. Without it, the CLI shows an interactive multi-select. [`npx skills`](https://github.com/vercel-labs/skills) auto-detects your agent(s) — Claude Code, Codex, Cursor, Pi, Gemini, Copilot, opencode, and [70+ more](https://skills.sh) — and installs into each one's native skills path. Update with `npx skills update`; remove with `npx skills remove`.
+This installs every nospec skill into the current project. Update with `skills update -p`; remove with `skills remove`.
 
 The runner ships as the `nospec` skill's `scripts/nospec`. skills.sh installs skill files but does not touch PATH, so to invoke the runner as `nospec` from anywhere, run the install verb once (your agent will do this for you when you ask it to set up nospec):
 
@@ -37,7 +37,7 @@ The runner ships as the `nospec` skill's `scripts/nospec`. skills.sh installs sk
 
 That symlinks the runner onto PATH. Then `nospec run ...` works from any directory.
 
-> **On skills.sh.** Install with `npx skills add bermudi/nospec --all`. Update with `npx skills update`; remove with `npx skills remove`.
+> **On skills.sh.** Install with `skills add -p bermudi/nospec --skill '*'`. Update with `skills update -p`; remove with `skills remove`.
 
 ## The skills
 

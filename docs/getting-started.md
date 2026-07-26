@@ -9,10 +9,10 @@ nospec is a skills collection plus an optional bash loop for unattended batch wo
 ## Install the skills
 
 ```bash
-npx skills add bermudi/nospec --all
+skills add -p bermudi/nospec --skill '*'
 ```
 
-[`npx skills`](https://github.com/vercel-labs/skills) detects your agent and installs into its native skills path. Update with `npx skills update`; remove with `npx skills remove`.
+This installs every nospec skill into the current project. Update with `skills update -p`; remove with `skills remove`.
 
 Once installed, invoke a skill by name: `nospec-scout`, `nospec-shape`, `nospec-carve`, `nospec-trial`, `nospec-mend`, `nospec-rule`, `nospec-lexicon`, `nospec-curator`, or `nospec` (the runner skill, for batch mode).
 
