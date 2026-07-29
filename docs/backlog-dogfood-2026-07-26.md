@@ -3,249 +3,128 @@ nospec: true
 role: view
 ---
 
-# Backlog: Dogfood Findings Not Yet Implemented
+# Closed Dogfood Findings: 2026-07-26
 
-Source: Two dogfood sessions on 2026-07-26 where nospec was installed into an
-external project (`pi-session-search`) and evaluated by both the worker (Pi/GPT)
-and a reviewer (Opus). The worker produced two detailed verdicts; the reviewer
-produced a code-review-style findings list and a litespec comparison.
+Source: Two dogfood sessions where nospec was installed into an external project
+(`pi-session-search`) and evaluated by both the worker (Pi/GPT) and a reviewer
+(Opus). The worker produced two detailed verdicts; the reviewer produced a
+code-review-style findings list and a litespec comparison.
 
 Session: `~/.pi/agent/sessions/--home-daniel-build-nospec--/2026-07-26T01-16-03-302Z`
 
-Cross-referenced with git history: the 2026-07-28 consolidation commit
-(`d45062d`, "Consolidate skills around five behavioral stances") and the
-preceding ADRs (0021–0025, 0022, 0023) resolved findings #1–#7, #9, #11, and
-#13. This file now tracks only the **partial** and **open** findings from the
-original list: #8, #10, #12, #14, #15, #16, #17.
+The 2026-07-28 consolidation commit (`d45062d`, “Consolidate skills around five
+behavioral stances”) and preceding ADRs resolved findings #1–#7, #9, #11, and
+#13. The remaining findings are now closed below. This file is a historical
+view, not an active backlog.
 
 ---
 
-## 8. `nospec-shape` drops ADR-0010 reasoning
+## 8. `nospec-shape` reasoning
 
-**Severity:** P2 — skill quality  
-**Sources:** Opus review (finding #5)  
-**Category:** Skill content
+**Disposition: resolved.**
 
-### Problem
+The cut guidance now explains, for tracer bullets, vertical slices, and
+horizontal breadth:
 
-ADR-0010 says skills must transmit concepts AND reasoning (why, failure modes,
-trade-offs). The current nospec-shape skill describes vertical slices and
-horizontal breadth as definitions/labels without explaining why each cut helps
-or when it becomes risky.
+- when the cut is useful;
+- what evidence it produces;
+- what remains unproven; and
+- how the cut fails when misapplied.
 
-### Current state
+This restores ADR-0010’s concepts-and-reasoning requirement without turning the
+cuts into mandatory phases.
 
-Shape skill is 102 lines. It does include some trade-off language ("A slice
-too thin... gives false confidence; one too broad delays the feedback") but
-the Opus review found it insufficient compared to ADR-0010's requirements.
+## 10. Runner/parser tests
 
-### Proposed direction
+**Disposition: resolved.**
 
-Restore the "why" and "failure modes" for each cut type. One paragraph per
-cut explaining: when to use it, what it proves, what it misses, and what
-goes wrong when misapplied.
+The original finding understated the existing shell suite. `tests/run.sh`
+already exercises whole-queue parser edge cases, every public runner verb,
+baseline refusal and recording, blocker signals, verify failure and recovery,
+handoff invalidation, review/fix limits, pin state, adoption boundaries, and
+foreign-repository behavior.
 
----
+Focused standard-library unit tests now call `queue_parser.py` directly for
+field/fence parsing, combined malformed-input diagnostics, shell-error source
+mapping, accessors, status mutation, and invalid mutations. The shell suite also
+checks that an operating-system interruption exits nonzero while preserving the
+in-progress queue state and writing a recoverable handoff. No pytest dependency
+or second test command was introduced; `./tests/run.sh` remains the project’s
+verification entry point.
 
-## 10. Add runner/parser tests
+## 12. Worker ownership of reversible choices
 
-**Severity:** P2 — quality  
-**Sources:** Opus review (finding #4)  
-**Category:** Testing
+**Disposition: resolved by the current skill boundary.**
 
-### Problem
+The worker adapter explicitly loads `nospec-carve`. Carve says reversible local
+implementation choices are worker-owned and distinguishes them from novel,
+consequential trade-offs, which block unattended execution unless authority was
+delegated. Repeating the concept in the adapter prompt would create another
+owner for the same instruction.
 
-The runner is ~1,494 lines of Bash and the queue parser is ~482 lines of
-Python. Neither has unit test coverage. The existing `tests/run.sh` exercises
-the runner end-to-end but doesn't cover parser edge cases, signal handling,
-or baseline recording in isolation.
+## 14. Family taxonomy
 
-### What was said
+**Disposition: superseded by ADR-0026.**
 
-> "The installed artifact contains no runner tests." — Opus review
+The reviewed Understand/Change/Challenge/Remember/Leave taxonomy and
+`metadata.family` field no longer exist. ADR-0026 owns the current five-skill,
+stance-based topology; the source suite enforces the exact skill inventory and
+runner role mapping. A `nospec family` verb would derive a deleted taxonomy, so
+none is added.
 
-### Proposed direction
+The public catalog remains a deliberate view of ADR-0026 and the installed
+skill records, not a second taxonomy.
 
-- Python: add pytest tests for queue_parser.py (field validation, shell syntax
-  checking, accessor correctness, malformed-input handling).
-- Bash: add integration tests for runner verbs (lint, spine, adrs, check, view)
-  with fixture queues. The existing `tests/run.sh` is a start but exercises only
-  the happy path.
+## 15. Proposed versus accepted ADRs
 
----
+**Disposition: resolved by ADR-0021.**
 
-## 12. Worker prompt: don't escalate reversible choices
+Nospec deliberately does not create durable proposed ADRs. Recommendations and
+unresolved trade-offs remain conversational or in disposable design material.
+Only a ruling accepted by the decision owner, made under delegated authority,
+or covered by an established project convention becomes an accepted record.
+`nospec-shape`, `nospec-carve`, and `nospec-curator` all transmit this boundary;
+batch workers report a blocker rather than self-authorizing a ruling.
 
-**Severity:** P3 — prompting  
-**Sources:** Opus review (finding #7)  
-**Category:** Skill content
+## 16. AFK safety and worktrees
 
-### Problem
+**Disposition: resolved by ADR-0024.**
 
-Agents loaded with nospec skills tend to ask permission for every reversible
-implementation detail, treating minor decisions as if they need ADR-level
-confirmation. The worker prompt should explicitly counter this.
+The runner now refuses a first mutating run with staged, unstaged, or untracked
+paths outside `.loop/`, and refuses when Git cannot establish a baseline.
+`--accept-dirty-baseline` explicitly records and accepts that risk; `--repo`
+selects an operator-created worktree.
 
-### What was said
+ADR-0024 explicitly rejects automatic worktree creation. It would make Nospec
+own branch naming, queue transfer, result promotion, conflict handling, and
+cleanup while still providing no security sandbox. Isolation beyond workspace
+separation belongs to the harness, container, or operating system.
 
-> "Reversible local choices are worker-owned; only consequential trade-offs
-> block execution." — Opus review
+## 17. Combining nospec and litespec
 
-### Current state
+**Disposition: rejected by the current architecture.**
 
-The worker prompt (`skills/nospec-loop/prompts/worker.md`) does not contain this
-line. The nospec-shape skill mentions it implicitly but not with the directness
-the reviewer recommended.
-
-### Proposed direction
-
-Add to worker.md (and possibly shape's prompt):
-
-> "Do not ask permission for reversible local choices — variable naming, file
-> organization within the outcome, implementation technique, test structure.
-> Only escalate when the choice is consequential, hard to reverse, or affects
-> an external contract."
-
----
-
-## 14. Family taxonomy reintroduces ADR-0017's violation
-
-**Severity:** P2 — design consistency  
-**Sources:** Opus review of ADR-0025  
-**Category:** ADR consistency
-
-### Problem
-
-The family taxonomy (Understand/Change/Challenge/Remember/Leave) is a derivable
-fact from ADR frontmatter, but it was re-enumerated by hand in README.md,
-AGENTS.md, docs/architecture.md, docs/skills.md, and docs/getting-started.md.
-This is exactly the spine-list failure that ADR-0017 was written to kill.
-
-Additionally:
-- The ordering implies a pipeline but every table has to say "not phases" (5
-  disclaimers across docs is a tell).
-- `metadata.family` with a closed five-value set is enforced by tests but has
-  no ADR — it's a new taxonomy with no ruling.
-
-### What was said
-
-> "Either add a nospec verb (and let the docs point at it, as architecture.md's
-> spine section already does), or accept the projections and add a check that
-> they match frontmatter." — Opus review
-
-### Proposed direction
-
-1. Add an ADR for the family taxonomy (or explicitly reject it).
-2. Derive family membership from frontmatter via `nospec family` (like `nospec
-   spine`).
-3. Add a `nospec check` rule that fails on re-enumerated family lists in docs.
-4. Break the ordering appearance (alphabetize, or lead with Change).
+ADR-0025 preserves project-designated contracts while rejecting a universal
+behavioral canon and any inference of authority from a spec-like filename.
+`docs/theory.md` correspondingly rejects importing litespec’s
+canon/delta/archive model. Nospec keeps disposable work queues, external
+verification, code/tests as the authority for implemented behavior, and
+human-owned accepted rulings without becoming a combined litespec successor.
+Reopening that direction would require superseding the accepted architecture,
+not another backlog task.
 
 ---
 
-## 15. ADR threshold: distinguish proposed vs. accepted
+## Final status
 
-**Severity:** P2 — process design  
-**Sources:** First worker review  
-**Category:** Skill content / process
+| # | Item | Disposition |
+|---|---|---|
+| 8 | Shape cut reasoning | Resolved |
+| 10 | Runner/parser tests | Resolved |
+| 12 | Reversible worker choices | Resolved by Carve ownership |
+| 14 | Family taxonomy | Superseded by ADR-0026 |
+| 15 | Proposed vs. accepted ADRs | Resolved by ADR-0021 |
+| 16 | AFK worktree safety | Resolved by ADR-0024 |
+| 17 | Nospec/litespec combination | Rejected by ADR-0025 |
 
-### Problem
-
-The shaping instructions pushed the worker to record an *accepted* ADR while
-the architectural choice was only implicitly accepted. The lazy-indexing ruling
-was definite; the catalog architecture was still a recommendation.
-
-Durable records should have a stronger confirmation threshold than ephemeral
-plans.
-
-### What was said
-
-> "Nospec should distinguish: observed requirement, proposed ruling, explicitly
-> accepted ruling." — Worker review
-
-### Current state
-
-ADR frontmatter has `status: accepted` but no mechanism for "proposed" or
-"under review." The nospec-curator skill says agents must not launder
-recommendations into accepted ADRs, but there's no structural enforcement.
-
-### Proposed direction
-
-Either:
-- Add a `status: proposed` state to ADR frontmatter with its own lifecycle, or
-- Make nospec-curator explicitly warn when a worker is writing an ADR without
-  human confirmation.
-
----
-
-## 16. AFK safety: isolated worktrees by default
-
-**Severity:** P2 — safety  
-**Sources:** Opus review  
-**Category:** Runner safety
-
-### Problem
-
-The default worker command runs with full permissions in the current worktree.
-There is no clean-tree requirement, no isolated worktree, no checkpoint, and no
-rollback. The external verify proves its command passed but doesn't prove the
-worker avoided collateral damage.
-
-### Current state
-
-`--repo DIR` exists for pointing at a different directory. `--accept-dirty-
-baseline` records and accepts dirty-state risk. But isolation is opt-in, not
-default.
-
-### What was said
-
-> "I'd want isolated worktrees by default, or at minimum a dirty-tree refusal
-> requiring --allow-dirty." — Opus review
-
-### Proposed direction
-
-Default to `git worktree add` for each cycle. Refuse to run on the main
-worktree without `--allow-dirty` or `--repo`. This is a significant UX change
-but aligns with the safety framing.
-
----
-
-## 17. Combine best of nospec and litespec
-
-**Severity:** P3 — vision  
-**Sources:** Litespec comparison  
-**Category:** Product vision
-
-### Problem
-
-The dogfood comparison identified that the best system would combine:
-
-- Litespec's behavioral canon and delta engine for durable public capabilities
-- Nospec's disposable work queues and external verification for execution
-- Code/tests as authority for implemented behavior
-- Explicit amendment (not "never go backward")
-- Human-owned archive/ruling decisions
-
-### Status
-
-This was identified as a direction, not a specific task. No work has been done.
-The two projects remain separate.
-
-### What to decide
-
-Is this worth pursuing as a combined project, or are nospec and litespec
-better as separate tools with complementary strengths?
-
----
-
-## Summary
-
-| # | Item | Severity | Effort |
-|---|------|----------|--------|
-| 8 | Shape drops ADR-0010 reasoning | P2 quality | Low |
-| 10 | Runner/parser tests | P2 quality | High |
-| 12 | Worker: don't escalate reversible | P3 prompting | Low |
-| 14 | Family taxonomy: derive, don't re-enum | P2 consistency | Medium |
-| 15 | ADR threshold: proposed vs accepted | P2 process | Medium |
-| 16 | AFK safety: isolated worktrees | P2 safety | High |
-| 17 | Combine nospec + litespec | P3 vision | Unknown |
+**Open findings: none.**

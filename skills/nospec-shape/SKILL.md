@@ -9,33 +9,33 @@ metadata:
 
 # Shape
 
-Turn intent into bounded, observable work. Scouting and decomposition are levels of one evidence-seeking stance, not required phases. Skip them when a clear small change can go directly to `nospec-carve`.
+Turn intent into bounded, observable work. Scouting and decomposition are optional levels of one evidence-seeking stance; clear small changes go directly to `nospec-carve`.
 
 ## Raise fidelity only as needed
 
-Start with project operational context and authoritative records, then inspect relevant code, tests, and history. Separate the desired outcome from the proposed solution, find existing implementation paths, and identify what must remain true.
+Read operational context, authoritative records, relevant code, tests, and history. Separate the desired outcome from its proposed solution; find existing paths and invariants.
 
-When reading and discussion cannot resolve a consequential question about how something should look, behave, or fit the system, read [`references/scouting.md`](references/scouting.md). A runnable experiment is evidence, not automatically production code.
+When inspection cannot resolve a consequential question, read [`references/scouting.md`](references/scouting.md). A runnable experiment is evidence, not automatically production code.
 
-A recommendation is not an accepted ruling. Present consequential choices to the decision owner; after acceptance, use the project's ADR practice or `nospec-curator` when installed.
+Recommendations are not rulings. Present consequential choices to the decision owner; record them only after acceptance.
 
 ## Cut for useful evidence
 
 One work unit produces one observable outcome. Choose the cut that exposes the relevant risk earliest:
 
-- A **tracer bullet** crosses an uncertain path end to end; it is waste when no integration assumption needs proving.
-- A **vertical slice** exposes cross-layer contract mismatches; too thin gives false confidence, too broad delays feedback.
-- **Horizontal breadth** efficiently applies an already-proven contract; used too early, it multiplies the same wrong assumption.
+- Use a **tracer bullet** when the uncertainty is whether components connect at all. It proves one representative path can cross the real boundaries, not that variants and edge cases work; without an integration assumption to test it is waste, and treating the trace as complete coverage hides breadth risk.
+- Use a **vertical slice** when an observable behavior spans layers whose contracts may disagree. It proves those layers align for the chosen behavior, not that neighboring behavior is covered; a slice too thin gives false confidence, while one too broad delays the feedback it exists to obtain.
+- Use **horizontal breadth** when an end-to-end contract is already proven and the remaining risk is consistent application across a layer or family of cases. It proves breadth against that contract, not integration; used before the contract is sound, it multiplies the same wrong assumption and postpones discovery.
 
-A unit may carry `Read first:` context and `Constraints:` boundaries. It must carry nonempty `Done means:` criteria and a mechanically checkable `Verify:` subset. The worker owns the implementation path; context and constraints must not become an edit script.
+A unit may carry `Read first:` context and `Constraints:` boundaries. It requires nonempty `Done means:` criteria and a mechanically checkable `Verify:` subset. The worker owns the implementation path; do not smuggle in an edit script.
 
-Verification must fail for a believable state where the central outcome is absent. If it cannot, strengthen the assertion, split the outcome, establish a better verification seam first, or keep the work interactive. Review may inspect the remaining judgment surface but cannot turn it into deterministic proof.
+Verification must fail when a believable implementation lacks the central outcome. Otherwise strengthen it, split the outcome, establish a better seam, or stay interactive. Review inspects the remaining judgment surface; it does not create deterministic proof.
 
 ## Disclose the applicable mode
 
-Interactive shaping can remain conversational. Work specs are disposable coordination state; project-designated contracts are durable regardless of filename.
+Interactive shaping can remain conversational. Work specs are disposable; project-designated contracts remain durable.
 
 - When execution needs a cross-session or batch handoff, read [`references/queue-format.md`](references/queue-format.md). Batch requires every unit to be bounded, runner-verifiable, and free of unresolved decisions.
 - When the loop supplies `REVIEW.md` for conversion into new units, also read [`references/review-findings.md`](references/review-findings.md). This fixer mode appends queue units and never edits source.
 
-Return clarified intent and bounded outcomes, an optional queue, a decision request, or a justified no-change conclusion. Do not manufacture a plan merely because this skill was invoked.
+Return clarified intent, bounded outcomes, an optional queue, a decision request, or justified no change. Do not manufacture a plan.

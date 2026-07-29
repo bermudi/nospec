@@ -47,6 +47,8 @@ EOF
 }
 
 bash -n "$root/skills/nospec-loop/scripts/nospec"
+PYTHONDONTWRITEBYTECODE=1 "$python_bin" -m unittest discover \
+  -s "$root/tests" -p 'test_*.py'
 "$root/skills/nospec-loop/scripts/nospec" run "$root/examples/smoke/.loop/smoke/QUEUE.md" --dry-run >/tmp/loop-dry-run.txt
 assert_contains /tmp/loop-dry-run.txt "Verify:"
 assert_contains /tmp/loop-dry-run.txt "test -f smoke.done"
@@ -585,6 +587,38 @@ fi
 assert_contains "$repo_signal/.loop/QUEUE.md" "Status: blocked"
 assert_contains "$repo_signal/.loop/EVIDENCE.md" "architecture choice required"
 assert_contains /tmp/loop-blocker-signal.txt "worker reported blocker"
+
+# An operating-system interruption leaves recoverable queue state and writes a
+# handoff through the EXIT trap instead of silently losing the in-flight unit.
+repo_interrupt="$tmp/repo-interrupt"
+mkdir -p "$repo_interrupt"
+make_queue "$repo_interrupt" "test -f interrupt.done"
+LOOP_AGENT_CMD='touch worker.started; sleep 10; touch worker.finished' \
+  "$root/skills/nospec-loop/scripts/nospec" run "$repo_interrupt/.loop/QUEUE.md" --max-ticks 1 \
+  >/tmp/loop-interrupt.txt 2>&1 &
+interrupt_pid=$!
+for _ in $(seq 1 100); do
+  [[ -f "$repo_interrupt/worker.started" ]] && break
+  sleep 0.05
+done
+if [[ ! -f "$repo_interrupt/worker.started" ]]; then
+  echo "worker did not start before interruption test timeout" >&2
+  kill -TERM "$interrupt_pid" 2>/dev/null || true
+  wait "$interrupt_pid" 2>/dev/null || true
+  exit 1
+fi
+kill -TERM "$interrupt_pid"
+set +e
+wait "$interrupt_pid"
+interrupt_code=$?
+set -e
+if [[ $interrupt_code -eq 0 ]]; then
+  echo "expected interrupted run to exit nonzero" >&2
+  exit 1
+fi
+assert_contains "$repo_interrupt/.loop/QUEUE.md" "Status: in_progress"
+assert_contains "$repo_interrupt/.loop/HANDOFF.md" "the test fixture reaches its verify condition (status: in_progress)"
+test ! -e "$repo_interrupt/worker.finished"
 
 # Non-pending unresolved work prevents later pending units from bypassing it.
 repo_recovery="$tmp/repo-recovery-order"
