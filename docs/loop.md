@@ -39,7 +39,7 @@ A Git worktree separates ordinary edits but is not a sandbox. An unrestricted wo
 
 ## Environment variables
 
-- `LOOP_AGENT_CMD` — optional command used to invoke the worker. If unset, the loop defaults to `pi -p --no-session --approve` with the prompt text as a single argument. If set, the command is evaluated by `bash -lc` in the repo directory, and `LOOP_PROMPT_FILE` is set to a temporary file containing the worker prompt (from `skills/nospec/prompts/worker.md`) plus the current work unit. The worker's harness auto-loads the `nospec-carve` skill by trigger text; no path configuration is needed.
+- `LOOP_AGENT_CMD` — optional command used to invoke the worker. If unset, the loop defaults to `pi -p --no-session --approve` with the prompt text as a single argument. If set, the command is evaluated by `bash -lc` in the repo directory, and `LOOP_PROMPT_FILE` is set to a temporary file containing the worker prompt (from `skills/nospec-loop/prompts/worker.md`) plus the current work unit. The worker's harness auto-loads the `nospec-carve` skill by trigger text; no path configuration is needed.
 - `LOOP_PROMPT_FILE` — set by the loop when `LOOP_AGENT_CMD` is used. Points to the generated prompt file. Do not override unless you are calling the worker manually.
 - `LOOP_REVIEW_CMD` — optional command used for the review phase when `--review` is enabled. Defaults to `LOOP_AGENT_CMD`, or to the loop's default `pi` invocation if neither is set.
 - `LOOP_FIX_CMD` — optional command used for the fix phase when `--review` is enabled. Defaults to `LOOP_AGENT_CMD`, or to the loop's default `pi` invocation if neither is set.
@@ -83,7 +83,7 @@ By default, `nospec run` stops when the build queue has no pending work, unless 
 6. Require the fix worker to append new `Status: pending` work units to the same `QUEUE.md`.
 7. Run the build pass again, then review again.
 
-The subloop stops cleanly only when review reports zero actionable findings. Reaching `--max-review-rounds`, exhausting `--max-ticks`, or producing no fix units while actionable findings remain is a non-clean stop. The actionable count remains cycle state until a later clean review replaces it; rerunning without `--review` does not turn an empty build queue into false success. The loop owns orchestration and stop conditions only; the `nospec-trial` and `nospec-mend` skills own judgment and work-unit generation.
+The subloop stops cleanly only when review reports zero actionable findings. Reaching `--max-review-rounds`, exhausting `--max-ticks`, or producing no fix units while actionable findings remain is a non-clean stop. The actionable count remains cycle state until a later clean review replaces it; rerunning without `--review` does not turn an empty build queue into false success. The loop owns orchestration and stop conditions only; the `nospec-trial` skill owns review judgment and the `nospec-shape`-driven fixer owns work-unit generation.
 
 ## Work unit statuses
 

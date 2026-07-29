@@ -8,6 +8,8 @@ amends: [0003, 0004, 0005, 0007, 0008, 0009, 0010, 0011, 0012, 0013, 0014, 0015,
 ---
 
 > **Contract-record boundary added by [ADR-0025](0025-work-specs-are-disposable-contract-records-are-project-owned.md):** the name rejects work-spec permanence and universal spec authority, not explicitly project-owned API schemas, protocol definitions, compatibility policies, or contract tests.
+>
+> **Consolidated by [ADR-0026](0026-consolidate-into-five-stance-based-skills.md):** the nine `nospec-` skills are consolidated into five stance-based skills. The runner skill is renamed `nospec` → `nospec-loop` (the CLI binary stays `nospec`); `nospec-scout`, `nospec-mend`, `nospec-rule`, and `nospec-lexicon` are merged into `nospec-shape`, `nospec-carve`, and `nospec-curator`. The `nospec-` prefix collision-safety rationale survives.
 
 # 0020: Rename to nospec
 

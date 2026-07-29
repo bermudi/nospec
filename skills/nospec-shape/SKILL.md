@@ -1,6 +1,6 @@
 ---
 name: nospec-shape
-description: Use when work must be decomposed into bounded, observable outcomes; emit `.loop/<name>/QUEUE.md` only when execution needs a cross-session handoff or the batch runner.
+description: Use when work must be understood or bounded before implementation — clarifying intent, investigating uncertainty, decomposing outcomes, or preparing a cross-session or batch queue.
 license: MIT
 metadata:
   author: bermudi
@@ -9,94 +9,33 @@ metadata:
 
 # Shape
 
-Decompose work into outcomes that can be checked independently. Interactive work can stay conversational; serialize a queue only when another session or the batch runner needs a durable handoff.
+Turn intent into bounded, observable work. Scouting and decomposition are levels of one evidence-seeking stance, not required phases. Skip them when a clear small change can go directly to `nospec-carve`.
 
-Plans and work specs—queues, handoffs, and scratch designs for the current change—are disposable coordination state. Regenerate a stale plan from current records instead of preserving it as a universal behavioral canon. Project-designated contracts such as API schemas, protocol definitions, compatibility policies, or contract tests remain durable. If no authoritative project context, accepted ruling, or established metadata convention designates one, ask rather than inferring authority from its filename.
+## Raise fidelity only as needed
 
-## Choose a useful cut
+Start with project operational context and authoritative records, then inspect relevant code, tests, and history. Separate the desired outcome from the proposed solution, find existing implementation paths, and identify what must remain true.
 
-- A **tracer bullet** crosses an uncertain path end to end so integration failures appear early instead of after broad implementation. It is waste when there is no uncertain path to prove.
-- A **vertical slice** produces visible behavior across the necessary layers, exposing contract mismatches that layer-local work hides. A slice too thin to exercise the integration gives false confidence; one too broad delays the feedback it exists to obtain.
-- **Horizontal breadth** applies a known contract efficiently across one layer or family of cases. Before that contract is proven, breadth multiplies the same wrong assumption everywhere and postpones integration feedback.
+When reading and discussion cannot resolve a consequential question about how something should look, behave, or fit the system, read [`references/scouting.md`](references/scouting.md). A runnable experiment is evidence, not automatically production code.
 
-These are trade-offs, not required phases. Use the cut that produces the earliest relevant evidence.
+A recommendation is not an accepted ruling. Present consequential choices to the decision owner; after acceptance, use the project's ADR practice or `nospec-curator` when installed.
 
-## Shape one work unit
+## Cut for useful evidence
 
-A unit is one observable outcome. It carries:
+One work unit produces one observable outcome. Choose the cut that exposes the relevant risk earliest:
 
-- `Read first:` — optional relevant records or code areas; context, not a list of files to edit.
-- `Constraints:` — optional boundaries: what must remain true or is out of bounds.
-- `Done means:` — required, nonempty acceptance criteria.
-- `Verify:` — the required mechanically checkable subset of those criteria.
+- A **tracer bullet** crosses an uncertain path end to end; it is waste when no integration assumption needs proving.
+- A **vertical slice** exposes cross-layer contract mismatches; too thin gives false confidence, too broad delays feedback.
+- **Horizontal breadth** efficiently applies an already-proven contract; used too early, it multiplies the same wrong assumption.
 
-Omit optional fields when they carry no information; placeholder bullets are ceremony, not shape.
+A unit may carry `Read first:` context and `Constraints:` boundaries. It must carry nonempty `Done means:` criteria and a mechanically checkable `Verify:` subset. The worker owns the implementation path; context and constraints must not become an edit script.
 
-The worker owns the implementation path. Prescribing edits in `Read first:` or `Constraints:` turns an outcome into a brittle script.
+Verification must fail for a believable state where the central outcome is absent. If it cannot, strengthen the assertion, split the outcome, establish a better verification seam first, or keep the work interactive. Review may inspect the remaining judgment surface but cannot turn it into deterministic proof.
 
-## Test the verification
+## Disclose the applicable mode
 
-Verification must discriminate between success and a plausible failure, not merely be deterministic.
+Interactive shaping can remain conversational. Work specs are disposable coordination state; project-designated contracts are durable regardless of filename.
 
-Ask:
+- When execution needs a cross-session or batch handoff, read [`references/queue-format.md`](references/queue-format.md). Batch requires every unit to be bounded, runner-verifiable, and free of unresolved decisions.
+- When the loop supplies `REVIEW.md` for conversion into new units, also read [`references/review-findings.md`](references/review-findings.md). This fixer mode appends queue units and never edits source.
 
-> Can a believable bad implementation pass this command while violating the unit's central outcome?
-
-If the answer is easily yes, strengthen the assertion, split the unit, or keep the work interactive. `nospec lint` rejects mechanically obvious non-verification such as `true`, `:`, and `exit 0`, but it cannot judge whether an otherwise valid command exercises the outcome. Put every mechanically checkable critical criterion in `Verify:`. What remains in `Done means:` is unverified judgment surface; review can inspect it, not convert it into deterministic proof.
-
-Typical shapes:
-
-- A bug fix needs a regression that fails before and passes after.
-- A behavior-preserving refactor needs tests covering the preserved contract.
-- An investigation can batch only when its evidence collection is mechanically observable; interpretation remains interactive judgment.
-
-A unit whose core success condition remains judgmental is not AFK-ready. Do not use `--review` to disguise that weakness.
-
-## Serialize only when warranted
-
-Plan-then-leave work may use `.loop/<name>/QUEUE.md` as a cross-session handoff while the agent remains responsible for verification. Runner-backed batch adds a harder threshold: every unit must be safe to execute without human judgment.
-
-Use the batch runner only when every unit:
-
-- is bounded;
-- has a deterministic runner-executable verify;
-- does not require a new decision during execution.
-
-Keep queues short enough to remain intelligible. If no credible verify exists, make establishing one an earlier outcome or stay interactive.
-
-Run `nospec lint .loop/<name>/QUEUE.md` before unattended execution. The runner performs the same whole-queue preflight before changing status.
-
-Write `.loop/<name>/DESIGN.md` only when a worker cannot recover important reasoning from the code and authoritative records. It is disposable too.
-
-A proposal discovered while shaping is not an ADR. Ask the decision owner; after explicit acceptance or delegated authority, record it with `nospec-rule`.
-
-## Queue format
-
-````markdown
-# Loop Queue: <short name>
-
-Goal:
-<desired end state>
-
-## <observable outcome>
-
-Agent: <optional shell command overriding LOOP_AGENT_CMD>
-
-Read first:
-- <records, rulings, or code areas>
-
-Constraints:
-- <what must remain true or is out of bounds>
-
-Done means:
-- <observable acceptance criterion>
-
-Verify:
-```bash
-<command that exits 0 only when the mechanical criteria hold>
-```
-
-Status: pending
-````
-
-When the cycle finishes, delete its queue, handoff, review, and scratch specs. Keep `EVIDENCE.md` as the verification ledger.
+Return clarified intent and bounded outcomes, an optional queue, a decision request, or a justified no-change conclusion. Do not manufacture a plan merely because this skill was invoked.

@@ -24,7 +24,7 @@ See [`docs/architecture.md`](./architecture.md) for the conceptual shape, human-
 | What does a nospec term mean? | [`glossary.md`](../glossary.md) |
 | How do I work on the nospec repo? | [`AGENTS.md`](../AGENTS.md) |
 | Where is the historical reasoning and wiki grounding? | [`theory.md`](./theory.md) |
-| Where are durability and documentation concepts? | [`skills/nospec-curator/`](../skills/nospec-curator/SKILL.md) and ADR-0015 |
+| Where are durability and documentation concepts? | [`skills/nospec-curator/`](../skills/nospec-curator/SKILL.md) and ADR-0015, ADR-0026 |
 | How do I check artifact coherence or derive the spine? | `nospec check` / `nospec spine` (ADR-0017) |
 
 ## Editing these docs

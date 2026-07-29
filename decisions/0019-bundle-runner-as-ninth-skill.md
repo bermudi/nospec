@@ -11,6 +11,8 @@ builds_on: [0009]
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `knack` → `nospec`. The ninth skill directory is `skills/nospec/`, the runner is `skills/nospec/scripts/nospec`, and all path references below are amended accordingly.
 >
 > **Authority boundary added by [ADR-0021](0021-capability-does-not-grant-repository-authority.md):** installing the runner grants capability, not adoption of Nospec's metadata schema or authority to accept architectural rulings.
+>
+> **Consolidated by [ADR-0026](0026-consolidate-into-five-stance-based-skills.md):** the nine skills are consolidated into five stance-based skills. The runner skill is renamed `nospec` → `nospec-loop`, at `skills/nospec-loop/scripts/nospec` and `skills/nospec-loop/prompts/`. The CLI binary stays `nospec`; the skill count is no longer "nine."
 
 # 0019: Bundle the runner as the ninth skill
 

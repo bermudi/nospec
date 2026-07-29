@@ -9,17 +9,26 @@ nospec is a skills collection plus an optional Bash loop for unattended batch wo
 
 ## Install the skills
 
+Install the three core stances:
+
 ```bash
-skills add -p bermudi/nospec --skill '*'
+skills add bermudi/nospec --skill nospec-shape nospec-carve nospec-trial
 ```
 
-This installs every nospec skill into the current project. Update with `skills update -p`; remove with `skills remove`.
+Add either optional companion only when its problem is present:
 
-Clear work can start with `nospec-carve`. Add Scout or Shape only for uncertainty or decomposition, Trial or Mend for review and correction, Rule/Lexicon/Curator for durable knowledge, and the optional `nospec` runner only for AFK execution.
+```bash
+skills add bermudi/nospec --skill nospec-curator  # durable knowledge
+skills add bermudi/nospec --skill nospec-loop     # AFK execution
+```
+
+Use `--skill '*'` for all five. Update project skills with `skills update -p`; remove with `skills remove`.
+
+Clear work can start with `nospec-carve`; Shape and Trial are available for uncertainty/decomposition and adversarial review without imposing a pipeline.
 
 ## Use the skills interactively
 
-Invoke only the skill the work needs. A clear change can go directly to `nospec-carve`; unresolved intent may need `nospec-scout`, and decomposition may need `nospec-shape`. No queue or Nospec artifact is required for interactive work.
+Invoke only the skill the work needs. A clear change can go directly to `nospec-carve`; unresolved intent or decomposition may need `nospec-shape`. No queue or Nospec artifact is required for interactive work.
 
 Nospec discards work specs used to coordinate a current change; it preserves project-designated contracts such as API schemas, protocol definitions, compatibility policies, and contract tests.
 

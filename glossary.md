@@ -50,7 +50,7 @@ A durable architectural ruling in `decisions/`. Records *why* the code is the wa
 
 ## loop
 
-The optional AFK runner (`nospec run`, shipped as `scripts/nospec` inside the `nospec` skill): runs a cycle's queue one tick at a time behind the verify gate, agent-agnostic via `LOOP_AGENT_CMD`. Skills serve interactive and plan-then-leave modes; the loop serves batch.
+The optional AFK runner (`nospec run`, shipped as `scripts/nospec` inside the `nospec-loop` skill): runs a cycle's queue one tick at a time behind the verify gate, agent-agnostic via `LOOP_AGENT_CMD`. Skills serve interactive and plan-then-leave modes; the loop serves batch.
 
 ## Concepts (external)
 

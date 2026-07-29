@@ -29,9 +29,9 @@ Skills serve all three. The loop serves only batch. Skills are the product; the 
 
 ## Skills and batch companion
 
-`nospec-carve` is the common implementation skill. Scout, Shape, Trial, and Mend address uncertainty, decomposition, review, and correction only when those problems occur. Rule, Lexicon, and Curator preserve the rulings, language, and context worth keeping after work state is discarded. Each remains independently invokable; their names do not define a workflow.
+Nospec provides three stances for verified change — Shape the intent, Carve the implementation, and Trial the result — plus an optional Curator that preserves what should outlive the work and an optional Loop that runs shaped work while the human is absent. `nospec-carve` is the common implementation skill; `nospec-shape` addresses uncertainty and decomposition; `nospec-trial` adversarially reviews a finished change; `nospec-curator` routes a lasting claim to its authoritative record and reconciles stale projections. Each is organized around a behavioral stance and uses progressive disclosure: the core reasoning lives in `SKILL.md`, specialized modes and formats in `references/` loaded only when their branch applies. Each remains independently invokable; their names do not define a workflow (ADR-0026).
 
-The ninth skill, `nospec`, transmits when AFK execution is appropriate and what its verify gate can establish, then carries the runner that enforces that concept in batch. The runner never reads skills itself: worker prompts name the relevant skill, and the worker's harness loads it. It knows only its queue, environment, repository state, process results, and evidence contract (ADR-0007, ADR-0019).
+The optional fifth skill, `nospec-loop`, transmits when AFK execution is appropriate and what its verify gate can establish, then carries the runner that enforces that concept in batch. The runner never reads skills itself: worker, reviewer, and fixer prompts name the relevant skill, and the worker's harness loads it. It knows only its queue, environment, repository state, process results, and evidence contract (ADR-0007, ADR-0019).
 
 ## Artifact roles
 
@@ -73,11 +73,11 @@ The same skills serve all three modes; only who runs verification and whether a 
 
 ### Interactive
 
-Invoke only the skill whose problem is present: scout uncertainty, shape outcomes, carve a bounded change, trial an existing diff, or mend known findings. No queue is required. The agent runs the relevant verification itself before declaring done.
+Invoke only the skill whose problem is present: shape uncertainty and outcomes, carve a bounded change, or trial an existing diff. No queue is required. The agent runs the relevant verification itself before declaring done.
 
 ### Plan-then-leave
 
-The human settles the judgment-heavy parts, then leaves the agent enough bounded context to continue. Use scouting or shaping only if the work needs them. A queue is optional cross-session coordination state; without the runner, verification discipline remains the agent's.
+The human settles the judgment-heavy parts, then leaves the agent enough bounded context to continue. Use shaping only if the work needs it. A queue is optional cross-session coordination state; without the runner, verification discipline remains the agent's.
 
 ### Batch (AFK)
 

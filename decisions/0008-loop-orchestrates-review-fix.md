@@ -7,6 +7,8 @@ spine: false
 ---
 
 > **Renamed by [ADR-0020](0020-rename-to-nospec.md):** `build` → `nospec-carve`, `review` → `nospec-trial`, `fix` → `nospec-mend`.
+>
+> **Fix stance consolidated by [ADR-0026](0026-consolidate-into-five-stance-based-skills.md):** the review worker still loads `nospec-trial`; the fixer now loads `nospec-shape` to append units, and later `nospec-carve` workers apply them. The loop/judgment boundary is unchanged.
 
 # 0008: The loop orchestrates the review-fix subloop; skills keep the judgment
 

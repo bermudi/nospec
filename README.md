@@ -23,28 +23,41 @@ Work happens across three levels of human attention, and the same skills serve a
 
 ## Install
 
+Install the three core stances:
+
 ```bash
-skills add -p bermudi/nospec --skill '*'
+skills add bermudi/nospec --skill nospec-shape nospec-carve nospec-trial
 ```
 
-This installs every nospec skill into the current project. Update with `skills update -p`; remove with `skills remove`.
-
-The runner ships as the `nospec` skill's `scripts/nospec`. skills.sh installs skill files but does not touch PATH, so to invoke the runner as `nospec` from anywhere, run the install verb once (your agent will do this for you when you ask it to set up nospec):
+Add durable-knowledge curation or AFK execution only when needed:
 
 ```bash
-.agents/skills/nospec/scripts/nospec install    # project-local install
-# or: ~/.agents/skills/nospec/scripts/nospec install  # global install (-g)
+skills add bermudi/nospec --skill nospec-curator
+skills add bermudi/nospec --skill nospec-loop
+```
+
+Use `--skill '*'` to install all five. Update project skills with `skills update -p`; remove with `skills remove`.
+
+Existing nine-skill installations should remove retired names before reinstalling, because an update may not delete old directories:
+
+```bash
+skills remove nospec-scout nospec-mend nospec-rule nospec-lexicon nospec -y
+```
+
+The runner ships as the optional `nospec-loop` skill's `scripts/nospec`. skills.sh installs skill files but does not touch PATH, so to invoke the runner as `nospec` from anywhere, run the install verb once (your agent will do this for you when you ask it to set up nospec):
+
+```bash
+.agents/skills/nospec-loop/scripts/nospec install    # project-local install
+# or: ~/.agents/skills/nospec-loop/scripts/nospec install  # global install (-g)
 ```
 
 That symlinks the runner onto PATH. Then `nospec run ...` works from any directory.
 
-> **On skills.sh.** Install with `skills add -p bermudi/nospec --skill '*'`. Update with `skills update -p`; remove with `skills remove`.
+> **On skills.sh.** Skill selection is explicit: install the three core names above, either optional companion, or `--skill '*'` for all five.
 
 ## The skills
 
-Clear work can go directly to `nospec-carve`, the common implementation skill. Reach for `nospec-scout` when the problem is unclear, `nospec-shape` when outcomes need decomposition, and `nospec-trial` / `nospec-mend` when a change needs adversarial review or supported correction.
-
-`nospec-rule`, `nospec-lexicon`, and `nospec-curator` preserve the decisions, shared language, and durable context worth keeping after disposable planning is gone. The optional `nospec` skill judges batch-worthiness and carries the runner used when the human leaves. These are independently invoked capabilities, not a prescribed workflow. See the [skills guide](docs/skills.md) for the full catalog.
+Nospec provides three stances for verified change — Shape the intent, Carve the implementation, and Trial the result — plus an optional Curator that preserves what should outlive the work and an optional Loop that runs shaped work while the human is absent. Clear work can go directly to `nospec-carve`, the common implementation skill. Reach for `nospec-shape` when the problem is unclear or outcomes need decomposition, and `nospec-trial` when a change needs adversarial review. `nospec-curator` preserves the decisions, shared language, and durable context worth keeping after disposable planning is gone. The optional `nospec-loop` skill judges batch-worthiness and carries the runner used when the human leaves. These are independently invoked capabilities, not a prescribed workflow. See the [skills guide](docs/skills.md) for the full catalog.
 
 ## Work specs and durable contracts
 
@@ -70,14 +83,14 @@ Run `nospec lint .loop/<name>/QUEUE.md` before leaving; `nospec run` repeats tha
 ## Repo layout
 
 ```
-skills/        the nine skills — the product (incl. the nospec runner skill)
+skills/        the five skills — the product (incl. the nospec-loop runner skill)
 decisions/     durable ADRs (YAML frontmatter: nospec, id, date, status, spine, ...)
 glossary.md    ubiquitous language (domain terms; wiki concepts linked, not redefined)
 docs/          user and architecture docs
 tests/run.sh   test harness for nospec
 ```
 
-The runner lives at `skills/nospec/scripts/nospec`; the worker/reviewer/fixer prompts at `skills/nospec/prompts/`. Both ship inside the `nospec` skill.
+The runner lives at `skills/nospec-loop/scripts/nospec`; the worker/reviewer/fixer prompts at `skills/nospec-loop/prompts/`. Both ship inside the `nospec-loop` skill.
 
 ## Testing
 
