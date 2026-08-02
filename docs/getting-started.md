@@ -28,7 +28,7 @@ Clear work can start with `nospec-carve`; Shape and Trial are available for unce
 
 ## Use the skills interactively
 
-Invoke only the skill the work needs. A clear change can go directly to `nospec-carve`; unresolved intent or decomposition may need `nospec-shape`. No queue or Nospec artifact is required for interactive work.
+Invoke only the skill the work needs. A clear change can go directly to `nospec-carve`; unresolved intent or decomposition may need `nospec-shape`. If shaping itself will cross fresh context windows, use Shape's disposable wayfinding map to carry the outcome, open questions, evidence, and frontier forward; hand off to a queue only once the route is bounded. No queue or Nospec artifact is required for ordinary interactive work.
 
 Nospec discards work specs used to coordinate a current change; it preserves project-designated contracts such as API schemas, protocol definitions, compatibility policies, and contract tests.
 
@@ -41,6 +41,12 @@ LOOP_AGENT_CMD='pi -p --no-session --approve "$(cat "$LOOP_PROMPT_FILE")"' nospe
 ```
 
 See [`loop.md`](./loop.md) for flags, environment variables, and the review-fix subloop.
+
+## Shape work across sessions
+
+Wayfinding is for work whose destination is visible but whose route is not. Name the outcome, record only questions precise enough to investigate, leave the rest as fog, and rechart after each answer. The map and question records are disposable coordination state; accepted rulings and current behavior belong in their existing authoritative records.
+
+Read [`wayfinding.md`](../skills/nospec-shape/references/wayfinding.md) from the Shape skill for the full branch.
 
 ## Write a queue
 

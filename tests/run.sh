@@ -1379,6 +1379,8 @@ if grep -R -nE 'nospec-(scout|mend|rule|lexicon)' "$root/skills" >/tmp/retired-s
   cat /tmp/retired-skill-ref.txt >&2
   exit 1
 fi
+assert_contains "$root/skills/nospec-shape/SKILL.md" 'references/wayfinding.md'
+test -f "$root/skills/nospec-shape/references/wayfinding.md"
 
 # Context budgets guard progressive disclosure against line-count games. They
 # count the prose actually loaded for representative branches, not only base
@@ -1394,8 +1396,8 @@ assert_word_budget() {
   fi
 }
 product_words=$(find "$root/skills" -type f -name '*.md' -exec cat {} + | wc -w | tr -d ' ')
-if (( product_words > 3800 )); then
-  echo "product prose budget exceeded: $product_words > 3800 words" >&2
+if (( product_words > 4000 )); then
+  echo "product prose budget exceeded: $product_words > 4000 words" >&2
   exit 1
 fi
 assert_word_budget worker 500 \
@@ -1413,6 +1415,9 @@ assert_word_budget fixer 900 \
 assert_word_budget scouting 600 \
   "$root/skills/nospec-shape/SKILL.md" \
   "$root/skills/nospec-shape/references/scouting.md"
+assert_word_budget wayfinding 700 \
+  "$root/skills/nospec-shape/SKILL.md" \
+  "$root/skills/nospec-shape/references/wayfinding.md"
 assert_word_budget curator-adr 550 \
   "$root/skills/nospec-curator/SKILL.md" \
   "$root/skills/nospec-curator/references/adr.md"

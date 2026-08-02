@@ -35,6 +35,7 @@ Verification must fail when a believable implementation lacks the central outcom
 
 Interactive shaping can remain conversational. Work specs are disposable; project-designated contracts remain durable.
 
+- When shaping is foggy across sessions, read [`references/wayfinding.md`](references/wayfinding.md).
 - When execution needs a cross-session or batch handoff, read [`references/queue-format.md`](references/queue-format.md). Batch requires every unit to be bounded, runner-verifiable, and free of unresolved decisions.
 - When the loop supplies `REVIEW.md` for conversion into new units, also read [`references/review-findings.md`](references/review-findings.md). This fixer mode appends queue units and never edits source.
 

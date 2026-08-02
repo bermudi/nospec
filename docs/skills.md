@@ -13,7 +13,7 @@ Nospec provides three stances for verified change — Shape the intent, Carve th
 
 | Skill | Stance | Purpose |
 |---|---|---|
-| `nospec-shape` | Understand and bound the work before implementation | Resolve unclear intent (read, challenge, or run a bounded experiment), decompose into verifiable outcomes, serialize a queue only for handoff or batch. |
+| `nospec-shape` | Understand and bound the work before implementation | Resolve unclear intent (read, challenge, or run a bounded experiment), carry foggy shaping across sessions, decompose into verifiable outcomes, serialize a queue only for handoff or batch. |
 | `nospec-carve` | Build or correct production code | Implement one bounded outcome, conversational or queued; resolve an accepted review finding; verify before claiming success. |
 | `nospec-trial` | Adversarially challenge an existing change | Run two-axis review (standards + intent) and generate findings. |
 | `nospec-curator` *(optional)* | Preserve newly crystallized durable knowledge | Route a lasting claim to its authoritative record (ADR, glossary, operational context, contract record) and reconcile stale projections. |
@@ -23,7 +23,7 @@ Clear work can start directly with `nospec-carve`. Reach for `nospec-shape` when
 
 ## Progressive disclosure
 
-Each skill carries its core stance in `SKILL.md` and moves specialized modes, formats, and mechanics into `references/` loaded only when their branch applies. A reference needs an explicit condition; if every invocation needs it, its content belongs in `SKILL.md`. References stay inside their owning skill, preserving self-containment (ADR-0013).
+Each skill carries its core stance in `SKILL.md` and moves specialized modes, formats, and mechanics into `references/` loaded only when their branch applies. Shape's wayfinding reference carries the map/fog/frontier model for work whose planning exceeds one session; it does not change the queue contract. A reference needs an explicit condition; if every invocation needs it, its content belongs in `SKILL.md`. References stay inside their owning skill, preserving self-containment (ADR-0013).
 
 ```text
 .agents/skills/
@@ -31,6 +31,7 @@ Each skill carries its core stance in `SKILL.md` and moves specialized modes, fo
     ├── SKILL.md
     └── references/
         ├── scouting.md       # loaded when an executable experiment is needed
+        ├── wayfinding.md     # loaded when shaping spans fresh sessions
         └── queue-format.md   # loaded when serializing batch work
 ```
 

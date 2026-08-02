@@ -57,6 +57,7 @@ The shared ground: validation is non-optional, outcomes must be observable, and 
 ## What we're stealing from mattpocock/skills
 
 - Composable skills, not a monolithic flow (each skill independently invokable)
+- Multi-session wayfinding: name the outcome, track precise decision questions, leave the rest as fog, work the frontier, and rechart after each answer; Nospec keeps the map disposable and hands bounded outcomes to implementation or a queue
 - Shared vocabulary skills (`domain-modeling`, `codebase-design` pattern → our `nospec-curator`, which routes ADRs, glossary terms, and coherence; consolidated by ADR-0026)
 - ADRs captured inline during grilling, not as a separate phase
 - Two-axis parallel review (Standards vs Intent, run as parallel sub-agents)

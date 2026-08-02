@@ -29,7 +29,7 @@ Skills serve all three. The loop serves only batch. Skills are the product; the 
 
 ## Skills and batch companion
 
-Nospec provides three stances for verified change — Shape the intent, Carve the implementation, and Trial the result — plus an optional Curator that preserves what should outlive the work and an optional Loop that runs shaped work while the human is absent. `nospec-carve` is the common implementation skill; `nospec-shape` addresses uncertainty and decomposition; `nospec-trial` adversarially reviews a finished change; `nospec-curator` routes a lasting claim to its authoritative record and reconciles stale projections. Each is organized around a behavioral stance and uses progressive disclosure: the core reasoning lives in `SKILL.md`, specialized modes and formats in `references/` loaded only when their branch applies. Each remains independently invokable; their names do not define a workflow (ADR-0026).
+Nospec provides three stances for verified change — Shape the intent, Carve the implementation, and Trial the result — plus an optional Curator that preserves what should outlive the work and an optional Loop that runs shaped work while the human is absent. `nospec-carve` is the common implementation skill; `nospec-shape` addresses uncertainty, multi-session wayfinding, and decomposition; `nospec-trial` adversarially reviews a finished change; `nospec-curator` routes a lasting claim to its authoritative record and reconciles stale projections. Each is organized around a behavioral stance and uses progressive disclosure: the core reasoning lives in `SKILL.md`, specialized modes and formats in `references/` loaded only when their branch applies. Each remains independently invokable; their names do not define a workflow (ADR-0026).
 
 The optional fifth skill, `nospec-loop`, transmits when AFK execution is appropriate and what its verify gate can establish, then carries the runner that enforces that concept in batch. The runner never reads skills itself: worker, reviewer, and fixer prompts name the relevant skill, and the worker's harness loads it. It knows only its queue, environment, repository state, process results, and evidence contract (ADR-0007, ADR-0019).
 
@@ -42,7 +42,7 @@ Durable knowledge is organized by role. Each fact has one owner; other documents
 | **Record** | `skills/`, `decisions/`, `glossary.md`, `AGENTS.md`, code/tests, project-designated contract records | Owns a class of claim |
 | **View** | `README.md`, `docs/architecture.md`, `docs/getting-started.md`, `docs/skills.md`, `docs/loop.md` | Helps readers understand records together |
 | **Ledger** | `.loop/<name>/EVIDENCE.md` | Append-only record of what happened |
-| **Work state** | `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, scratch work specs | Coordination state consumed then discarded |
+| **Work state** | `.loop/<name>/QUEUE.md`, `HANDOFF.md`, `REVIEW.md`, scratch work specs including maps and questions | Coordination state consumed then discarded |
 
 Views summarize and link; they do not independently redefine what they project. When a record changes, its projections are reconciled. When a view contradicts its record, the record wins.
 
@@ -77,7 +77,7 @@ Invoke only the skill whose problem is present: shape uncertainty and outcomes, 
 
 ### Plan-then-leave
 
-The human settles the judgment-heavy parts, then leaves the agent enough bounded context to continue. Use shaping only if the work needs it. A queue is optional cross-session coordination state; without the runner, verification discipline remains the agent's.
+The human settles the judgment-heavy parts, then leaves the agent enough bounded context to continue. When the route is still foggy across sessions, Shape can carry a disposable map of decision questions and evidence until the work becomes bounded. Use shaping only if the work needs it. A queue is optional cross-session coordination state; without the runner, verification discipline remains the agent's.
 
 ### Batch (AFK)
 

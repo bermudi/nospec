@@ -6,4 +6,4 @@ After build units drain, the runner invokes a `nospec-trial` reviewer to write `
 
 Review/fix rounds and worker ticks are bounded. Malformed review output, no appended units despite actionable findings, exhausted bounds, or remaining actionable state produces a non-clean handoff. Rerunning without `--review` cannot launder existing review debt into success.
 
-`LOOP_REVIEW_CMD` and `LOOP_FIX_CMD` may select agents distinct from `LOOP_AGENT_CMD`. The loop owns invocation and stop conditions; Trial owns findings, Shape owns work-unit generation, and Carve owns source correction.
+`LOOP_REVIEW_CMD` and `LOOP_FIX_CMD` may select agents distinct from `LOOP_AGENT_CMD`. The point of routing review to a **different model family** than the worker is a different blind spot: the verify gate proves only the mechanical contract, and the judgment surface left over is one the author shares with its own work — defect classes a same-family reviewer tends to miss too. The loop owns invocation and stop conditions; Trial owns findings, Shape owns work-unit generation, and Carve owns source correction.

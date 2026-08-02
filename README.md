@@ -9,6 +9,8 @@ A composable **skills collection** for turning intent into verified code while k
 
 It replaces `/plan` commands, spec-kit / openspec, and ad-hoc "ralph loops" with capabilities you pick only when their problem is present. It is not a pipeline.
 
+Your harness increasingly ships native plan mode, autopilot-style loops, and cross-model review — on their own, enough for interactive feature work. Nospec doesn't reimplement those mechanics. It supplies what the harness doesn't: a **discriminating verify gate the worker cannot self-certify**, **durable-vs-disposable contract discipline**, **AFK batch** behind an evidence ledger and baseline guard, and **multi-session coordination**. The harness gives you the loop; nospec is the judgment layer that makes it produce verified, durable work instead of plausible-looking output.
+
 ## Why
 
 Most agent tooling prescribes process. These skills do the opposite: they transmit **concepts and the reasoning behind them** ([ADR-0010](decisions/0010-skills-transmit-concepts-not-rules.md)) and let the agent apply judgment. The theory is cited, not redefined — every concept links back to the [AgenticWiki](https://github.com/bermudi/AgenticWiki), which is what distinguishes this from a theory-light skills dump.
@@ -57,11 +59,11 @@ That symlinks the runner onto PATH. Then `nospec run ...` works from any directo
 
 ## The skills
 
-Nospec provides three stances for verified change — Shape the intent, Carve the implementation, and Trial the result — plus an optional Curator that preserves what should outlive the work and an optional Loop that runs shaped work while the human is absent. Clear work can go directly to `nospec-carve`, the common implementation skill. Reach for `nospec-shape` when the problem is unclear or outcomes need decomposition, and `nospec-trial` when a change needs adversarial review. `nospec-curator` preserves the decisions, shared language, and durable context worth keeping after disposable planning is gone. The optional `nospec-loop` skill judges batch-worthiness and carries the runner used when the human leaves. These are independently invoked capabilities, not a prescribed workflow. See the [skills guide](docs/skills.md) for the full catalog.
+Nospec provides three stances for verified change — Shape the intent, Carve the implementation, and Trial the result — plus an optional Curator that preserves what should outlive the work and an optional Loop that runs shaped work while the human is absent. Clear work can go directly to `nospec-carve`, the common implementation skill. Reach for `nospec-shape` when the problem is unclear, outcomes need decomposition, or shaping itself spans multiple sessions; reach for `nospec-trial` when a change needs adversarial review. `nospec-curator` preserves the decisions, shared language, and durable context worth keeping after disposable planning is gone. The optional `nospec-loop` skill judges batch-worthiness and carries the runner used when the human leaves. These are independently invoked capabilities, not a prescribed workflow. See the [skills guide](docs/skills.md) for the full catalog.
 
 ## Work specs and durable contracts
 
-Nospec discards **work specs**—queues, handoffs, and scratch designs used to coordinate a current change. It does not discard contracts designated by the project's operational context, accepted rulings, or established metadata conventions, such as OpenAPI schemas, protocol definitions, compatibility policies, or executable contract tests. `nospec: true` opts into structural checks; it does not confer contract authority. Nospec creates no universal prose canon beside the code.
+Nospec discards **work specs**—queues, handoffs, scratch designs, and multi-session shaping maps used to coordinate a current change. It does not discard contracts designated by the project's operational context, accepted rulings, or established metadata conventions, such as OpenAPI schemas, protocol definitions, compatibility policies, or executable contract tests. `nospec: true` opts into structural checks; it does not confer contract authority. Nospec creates no universal prose canon beside the code.
 
 ## Optional: unattended batch mode
 

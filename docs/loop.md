@@ -125,6 +125,8 @@ LOOP_FIX_CMD='codex exec --dangerously-bypass-approvals-and-sandbox --ephemeral 
 nospec run .loop/<name>/QUEUE.md --review
 ```
 
+Routing review to a different model family than the worker is the point of that separation: the verify gate proves only the mechanical contract, and the judgment surface left over is one a same-family reviewer tends to share with the author. A different family brings a different blind spot.
+
 ## Verification notes
 
 - `nospec lint <queue>` preflights every unit: nonempty outcomes; required, unique `Done means:`, `Verify:`, and `Status:` fields; optional-but-nonempty unique context fields; fenced Bash verifies; obvious vacuity; and shell syntax. `nospec run` performs the same preflight before any worker runs or status changes, including after a fixer appends units.

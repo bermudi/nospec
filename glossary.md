@@ -20,6 +20,10 @@ A maintained artifact designated as the owner of a public promise or required be
 
 One chunk of work in a `QUEUE.md`: a nonempty `## <outcome>` header with required `Done means:` and `Verify:` fields, plus `Read first:` or `Constraints:` when context or boundaries need stating. The atom the loop processes.
 
+## decision question
+
+A precise unresolved question in disposable shaping state. It produces a decision or evidence needed for one; unlike a work unit, it does not ask the agent to implement code.
+
 ## verify gate
 
 A work unit's deterministic `Verify:` command, executed by the loop *outside* the agent. Exits 0 or the unit fails. The mechanical backpressure — the worker never self-certifies.
